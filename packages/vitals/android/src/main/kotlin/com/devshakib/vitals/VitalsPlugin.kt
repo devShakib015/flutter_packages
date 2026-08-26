@@ -25,7 +25,15 @@ import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.WeightRecord
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
+import androidx.health.connect.client.records.metadata.Metadata
 import androidx.health.connect.client.request.ReadRecordsRequest
+import androidx.health.connect.client.units.BloodGlucose
+import androidx.health.connect.client.units.Energy
+import androidx.health.connect.client.units.Length
+import androidx.health.connect.client.units.Mass
+import androidx.health.connect.client.units.Percentage
+import androidx.health.connect.client.units.Temperature
+import androidx.health.connect.client.units.Volume
 import androidx.health.connect.client.time.TimeRangeFilter
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
@@ -147,8 +155,8 @@ class VitalsPlugin :
       "readAccess" -> access(call, result, write = false)
       "read" -> read(call, result)
       "statistics" -> statistics(call, result)
-      "write" -> result.error("unsupported", "Writing lands in a later version.", null)
-      "delete" -> result.error("unsupported", "Deleting lands in a later version.", null)
+      "write" -> write(call, result)
+      "delete" -> delete(call, result)
       else -> result.notImplemented()
     }
   }
@@ -397,6 +405,126 @@ class VitalsPlugin :
         cursor = next
       }
       withContext(Dispatchers.Main) { result.success(out) }
+    }
+  }
+
+  // ---------------------------------------------------------------- writing
+
+  /**
+   * Builds a record from the canonical value the Dart side sends.
+   *
+   * Blood pressure is absent on purpose: Health Connect stores systolic and
+   * diastolic in one record, so writing either alone would mean inventing the
+   * other. It is reported unsupported instead.
+   */
+  private fun buildRecord(id: String, value: Double, from: Instant, to: Instant): Record? {
+    val meta = Metadata.manualEntry()
+    // Named arguments throughout: these constructors take long positional
+    // lists with optional fields in the middle, and getting one wrong compiles
+    // fine right up until the types happen to line up.
+    return when (id) {
+      "steps" -> StepsRecord(
+        startTime = from, startZoneOffset = null,
+        endTime = to, endZoneOffset = null,
+        count = value.toLong(), metadata = meta,
+      )
+      "flightsClimbed" -> FloorsClimbedRecord(
+        startTime = from, startZoneOffset = null,
+        endTime = to, endZoneOffset = null,
+        floors = value, metadata = meta,
+      )
+      "distanceWalkingRunning" -> DistanceRecord(
+        startTime = from, startZoneOffset = null,
+        endTime = to, endZoneOffset = null,
+        distance = Length.meters(value), metadata = meta,
+      )
+      "activeEnergyBurned" -> ActiveCaloriesBurnedRecord(
+        startTime = from, startZoneOffset = null,
+        endTime = to, endZoneOffset = null,
+        energy = Energy.kilocalories(value), metadata = meta,
+      )
+      "water" -> HydrationRecord(
+        startTime = from, startZoneOffset = null,
+        endTime = to, endZoneOffset = null,
+        volume = Volume.liters(value), metadata = meta,
+      )
+      "bodyMass" -> WeightRecord(
+        time = from, zoneOffset = null,
+        weight = Mass.kilograms(value), metadata = meta,
+      )
+      "leanBodyMass" -> LeanBodyMassRecord(
+        time = from, zoneOffset = null,
+        mass = Mass.kilograms(value), metadata = meta,
+      )
+      "height" -> HeightRecord(
+        time = from, zoneOffset = null,
+        height = Length.meters(value), metadata = meta,
+      )
+      // Health Connect percentages are 0-100; the Dart side sends a fraction.
+      "bodyFatPercentage" -> BodyFatRecord(
+        time = from, zoneOffset = null,
+        percentage = Percentage(value * 100), metadata = meta,
+      )
+      "oxygenSaturation" -> OxygenSaturationRecord(
+        time = from, zoneOffset = null,
+        percentage = Percentage(value * 100), metadata = meta,
+      )
+      "bodyTemperature" -> BodyTemperatureRecord(
+        time = from, zoneOffset = null,
+        temperature = Temperature.celsius(value), metadata = meta,
+      )
+      "bloodGlucose" -> BloodGlucoseRecord(
+        time = from, zoneOffset = null,
+        level = BloodGlucose.millimolesPerLiter(value), metadata = meta,
+      )
+      "restingHeartRate" -> RestingHeartRateRecord(
+        time = from, zoneOffset = null,
+        beatsPerMinute = value.toLong(), metadata = meta,
+      )
+      "respiratoryRate" -> RespiratoryRateRecord(
+        time = from, zoneOffset = null,
+        rate = value, metadata = meta,
+      )
+      else -> null
+    }
+  }
+
+  private fun write(call: MethodCall, result: MethodChannel.Result) {
+    val id = call.argument<String>("type") ?: return result.error(
+      "unknownType", "A type is required.", null
+    )
+    val from = Instant.ofEpochMilli(call.argument<Number>("from")!!.toLong())
+    val to = Instant.ofEpochMilli(call.argument<Number>("to")!!.toLong())
+    val value = call.argument<Number>("value")?.toDouble() ?: 0.0
+
+    val record = buildRecord(id, value, from, to) ?: return result.error(
+      "unsupportedOnAndroid", "Health Connect cannot store $id from a single value.", id
+    )
+    guard(result) {
+      client!!.insertRecords(listOf(record))
+      withContext(Dispatchers.Main) { result.success(null) }
+    }
+  }
+
+  private fun delete(call: MethodCall, result: MethodChannel.Result) {
+    val id = call.argument<String>("type") ?: return result.error(
+      "unknownType", "A type is required.", null
+    )
+    val klass = recordClass(id) ?: return result.error(
+      "unsupportedOnAndroid", "Health Connect does not model $id.", id
+    )
+    val from = Instant.ofEpochMilli(call.argument<Number>("from")!!.toLong())
+    val to = Instant.ofEpochMilli(call.argument<Number>("to")!!.toLong())
+
+    guard(result) {
+      // Count first: deleteRecords reports nothing, and the Dart contract
+      // promises how many went. Health Connect only ever removes this app's
+      // own records, which matches what the contract says.
+      val existing = client!!.readRecords(
+        ReadRecordsRequest(recordType = klass, timeRangeFilter = TimeRangeFilter.between(from, to))
+      ).records.size
+      client!!.deleteRecords(klass, TimeRangeFilter.between(from, to))
+      withContext(Dispatchers.Main) { result.success(existing) }
     }
   }
 
