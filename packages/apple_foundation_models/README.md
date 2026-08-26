@@ -12,6 +12,8 @@ print(await session.respond(article));
 await session.dispose();
 ```
 
+![The model calls a Dart function and uses the result](https://raw.githubusercontent.com/devShakib015/flutter_packages/HEAD/packages/apple_foundation_models/doc/tool.gif)
+
 ## Read this before you install
 
 The model is not available to most users, and the package cannot change that.
@@ -76,6 +78,8 @@ final result = await session.respondAs(
 // {priority: high, summary: ..., tags: [...], hours: 2}
 ```
 
+![Fields filling in one at a time under a schema](https://raw.githubusercontent.com/devShakib015/flutter_packages/HEAD/packages/apple_foundation_models/doc/structured.gif)
+
 `Schema.oneOf` is the one to reach for most: the model cannot invent a value
 outside the list, which makes classification reliable rather than hopeful.
 
@@ -86,6 +90,8 @@ await for (final text in session.stream('Write a haiku about rain.')) {
   setState(() => _draft = text);
 }
 ```
+
+![Streaming a response on device](https://raw.githubusercontent.com/devShakib015/flutter_packages/HEAD/packages/apple_foundation_models/doc/stream.gif)
 
 **Each event is the whole response so far, not a delta.** Assign it; do not
 append. Concatenating produces text that repeats itself — it is the one easy
@@ -183,3 +189,15 @@ cd example && flutter test integration_test/plugin_test.dart -d macos
 ## License
 
 MIT © K M Shahriar Hossain
+
+
+## About the demos
+
+The GIFs above are not mockups. `tool/record_frames.dart` replays snapshots and
+millisecond timings captured from a real run of the on-device model, so the
+text is what the model actually produced and the clock is the speed it actually
+produced it at — first-token latency included, because that is worth seeing
+rather than hiding.
+
+    flutter test tool/record_frames.dart
+    ./tool/build_gifs.sh

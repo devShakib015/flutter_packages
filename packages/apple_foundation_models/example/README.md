@@ -1,17 +1,19 @@
-# apple_foundation_models_example
+# apple_foundation_models example
 
-Demonstrates how to use the apple_foundation_models plugin.
+Exercises every capability against the real on-device model: availability
+reporting, plain and streaming responses, schema-constrained structured output,
+and tool calling back into Dart.
 
-## Getting Started
+```bash
+flutter run -d macos
+```
 
-This project is a starting point for a Flutter application.
+Needs macOS 26 (or iOS 26) on Apple Intelligence hardware with the feature
+enabled. Without it the app still runs and shows why the model is unavailable —
+which is the state most users will be in, and worth seeing.
 
-A few resources to get you started if this is your first Flutter project:
+The integration tests in `integration_test/` run the same paths headlessly:
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```bash
+flutter test integration_test/plugin_test.dart -d macos
+```

@@ -18,9 +18,33 @@ jobs:
         run: dart format --set-exit-if-changed .
       - name: Analyze
         run: dart analyze --fatal-infos
-      - name: Test
+      - name: Test loading_kit
         run: flutter test
         working-directory: packages/loading_kit
-      - name: Publish dry run
+      - name: Test apple_foundation_models
+        run: flutter test
+        working-directory: packages/apple_foundation_models
+      - name: Publish dry run (loading_kit)
         run: flutter pub publish --dry-run
         working-directory: packages/loading_kit
+      - name: Publish dry run (apple_foundation_models)
+        run: flutter pub publish --dry-run
+        working-directory: packages/apple_foundation_models
+
+  # The on-device model needs real Apple Intelligence hardware, which hosted
+  # runners do not have. This builds the plugin for both Apple platforms so
+  # the Swift is still covered; the model tests stay a local step.
+  darwin:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - name: Build example (macOS)
+        run: flutter build macos --debug
+        working-directory: packages/apple_foundation_models/example
+      - name: Build example (iOS)
+        run: flutter build ios --debug --no-codesign
+        working-directory: packages/apple_foundation_models/example

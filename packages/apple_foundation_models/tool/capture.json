@@ -1,0 +1,56 @@
+{
+  "structured" : {
+    "frames" : [
+      {
+        "s" : "{\"priority\": \"high\", \"summary\": \"\"}",
+        "t" : 368
+      },
+      {
+        "t" : 531,
+        "s" : "{\"priority\": \"high\", \"summary\": \"Login button does not work on iPad\", \"tags\": [\"\"]}"
+      },
+      {
+        "t" : 565,
+        "s" : "{\"priority\": \"high\", \"tags\": [\"UI\", \"iPad\"], \"summary\": \"Login button does not work on iPad\"}"
+      }
+    ],
+    "prompt" : "Triage this: the login button does nothing on iPad."
+  },
+  "tool" : {
+    "toolResult" : "18 degrees Celsius, light rain",
+    "frames" : [
+      {
+        "t" : 607,
+        "s" : "Yes, you should take an umbrella in Dhaka right"
+      },
+      {
+        "t" : 706,
+        "s" : "Yes, you should take an umbrella in Dhaka right now. It's 18 degrees Celsius"
+      },
+      {
+        "t" : 776,
+        "s" : "Yes, you should take an umbrella in Dhaka right now. It's 18 degrees Celsius and there is light rain."
+      }
+    ],
+    "prompt" : "Should I take an umbrella in Dhaka right now?",
+    "toolName" : "getWeather",
+    "toolArgs" : "{\"city\": \"Dhaka\"}"
+  },
+  "text" : {
+    "frames" : [
+      {
+        "t" : 2213,
+        "s" : "Rain smells good because it cleans the air by removing"
+      },
+      {
+        "t" : 2342,
+        "s" : "Rain smells good because it cleans the air by removing pollutants and dust. It also smells like fresh,"
+      },
+      {
+        "t" : 2445,
+        "s" : "Rain smells good because it cleans the air by removing pollutants and dust. It also smells like fresh, wet earth and grass."
+      }
+    ],
+    "prompt" : "Write two sentences about why rain smells good."
+  }
+}
