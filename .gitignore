@@ -1,0 +1,25 @@
+# Dart / Flutter
+.dart_tool/
+.packages
+build/
+pubspec.lock
+.flutter-plugins
+.flutter-plugins-dependencies
+doc/api/
+
+# Generated platform scaffolding for the example app
+packages/*/example/android/
+packages/*/example/ios/
+packages/*/example/linux/
+packages/*/example/macos/
+packages/*/example/windows/
+packages/*/example/web/
+
+# Tooling
+.idea/
+.vscode/
+*.iml
+*.log
+
+# macOS
+.DS_Store
