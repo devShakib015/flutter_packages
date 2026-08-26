@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:apple_foundation_models/apple_foundation_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -153,6 +155,55 @@ void main() {
       tooled.respond('What time is it in Dhaka?'),
       throwsA(isA<FoundationModelsException>()),
     );
+  });
+
+  testWidgets('prewarm and transcript work on a live session', (_) async {
+    await session.prewarm();
+    expect(await session.isResponding, isFalse);
+
+    await session.respond('Say hello.');
+    final List<TranscriptEntry> entries = await session.transcript();
+
+    expect(entries, isNotEmpty);
+    expect(
+      entries.map((TranscriptEntry e) => e.role),
+      contains(TranscriptRole.response),
+    );
+    expect(
+      entries.every((TranscriptEntry e) => e.role != TranscriptRole.unknown),
+      isTrue,
+      reason: 'every transcript entry kind should be mapped',
+    );
+  });
+
+  testWidgets('a second request while responding is rejected', (_) async {
+    final Future<String> first = session.respond(
+      'Write a detailed paragraph about the sea.',
+    );
+    await expectLater(
+      session.respond('Hi'),
+      throwsA(isA<ConcurrentRequestException>()),
+      reason: 'a session handles one request at a time',
+    );
+    await first;
+  });
+
+  testWidgets('cancelling a stream frees the session', (_) async {
+    final StreamSubscription<String> sub = session
+        .stream('Write a very long essay about the ocean, in many paragraphs.')
+        .listen((String _) {});
+
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    await sub.cancel();
+    await Future<void>.delayed(const Duration(milliseconds: 1500));
+
+    expect(
+      await session.isResponding,
+      isFalse,
+      reason: 'cancelling must release the session, not leave it wedged',
+    );
+    // The proof it is genuinely free: another request succeeds.
+    expect((await session.respond('Say one word.')).trim(), isNotEmpty);
   });
 
   testWidgets('a disposed session refuses further work', (_) async {

@@ -39,8 +39,12 @@ itself, `deviceNotEligible` never will. Prompting a user to fix hardware they
 cannot fix is worse than not offering the feature.
 
 Adding this package to an Android or web build is safe — those platforms report
-`unsupportedPlatform` rather than failing to compile. Building with an Xcode
-older than 26 is also fine; it reports `osTooOld`.
+`unsupportedPlatform` rather than failing to compile.
+
+The Swift is also guarded with `#if canImport(FoundationModels)` so a toolchain
+without the iOS 26 SDK should compile and report `osTooOld`. That path is not
+covered by CI and I have only tested it on Xcode 26, so please file an issue if
+your setup trips on it.
 
 ## Install
 
