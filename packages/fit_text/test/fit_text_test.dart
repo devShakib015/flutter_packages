@@ -343,6 +343,8 @@ void main() {
 
   group('groups', groupTests);
 
+  parityTests();
+
   group('api', () {
     testWidgets('inherits DefaultTextStyle as the ceiling', (
       WidgetTester tester,
@@ -499,5 +501,156 @@ void groupTests() {
   testWidgets('no group means no coordination', (WidgetTester tester) async {
     await tester.pumpWidget(row(labels));
     expect(sizes(tester).toSet(), hasLength(2));
+  });
+}
+
+/// The two options that were missing for a clean migration.
+void parityTests() {
+  Widget box(Widget child, {double width = 200}) => MaterialApp(
+    home: Scaffold(
+      body: Center(
+        child: DefaultTextStyle(
+          style: const TextStyle(fontSize: 14),
+          child: SizedBox(width: width, child: child),
+        ),
+      ),
+    ),
+  );
+
+  RenderFitText render(WidgetTester tester) =>
+      tester.renderObject<RenderFitText>(find.byType(FitText));
+
+  group('overflowReplacement', () {
+    testWidgets('is shown when nothing fits', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        box(
+          const FitText(
+            'a very long unbreakable headline that cannot possibly fit',
+            maxLines: 1,
+            minFontSize: 20,
+            overflowReplacement: Icon(Icons.more_horiz),
+          ),
+          width: 60,
+        ),
+      );
+
+      expect(find.byIcon(Icons.more_horiz), findsOneWidget);
+      expect(render(tester).showingReplacement, isTrue);
+      expect(render(tester).didOverflow, isTrue);
+    });
+
+    testWidgets('is not shown when the text fits', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        box(
+          const FitText(
+            'ok',
+            maxLines: 1,
+            minFontSize: 6,
+            overflowReplacement: Icon(Icons.more_horiz),
+          ),
+        ),
+      );
+
+      // It stays mounted, like IndexedStack, but collapses to nothing.
+      expect(render(tester).showingReplacement, isFalse);
+      expect(tester.getSize(find.byIcon(Icons.more_horiz)), Size.zero);
+    });
+
+    testWidgets('swaps in the same frame, never showing overflow', (
+      WidgetTester tester,
+    ) async {
+      // Width shrinks below what any size can satisfy. A LayoutBuilder-based
+      // swap would need a second frame; this must be right immediately.
+      await tester.pumpWidget(
+        box(
+          const FitText(
+            'a long headline',
+            maxLines: 1,
+            minFontSize: 20,
+            overflowReplacement: Icon(Icons.more_horiz),
+          ),
+          width: 300,
+        ),
+      );
+      expect(render(tester).showingReplacement, isFalse);
+
+      await tester.pumpWidget(
+        box(
+          const FitText(
+            'a long headline',
+            maxLines: 1,
+            minFontSize: 20,
+            overflowReplacement: Icon(Icons.more_horiz),
+          ),
+          width: 40,
+        ),
+      );
+      expect(
+        render(tester).showingReplacement,
+        isTrue,
+        reason: 'no intermediate frame with overflowing text',
+      );
+    });
+
+    testWidgets('the replacement is hit-testable', (WidgetTester tester) async {
+      var taps = 0;
+      await tester.pumpWidget(
+        box(
+          FitText(
+            'a very long unbreakable headline that cannot fit',
+            maxLines: 1,
+            minFontSize: 20,
+            overflowReplacement: GestureDetector(
+              key: const ValueKey<String>('replacement'),
+              behavior: HitTestBehavior.opaque,
+              onTap: () => taps++,
+              child: const SizedBox(width: 40, height: 40),
+            ),
+          ),
+          width: 60,
+        ),
+      );
+
+      await tester.tap(find.byKey(const ValueKey<String>('replacement')));
+      expect(taps, 1, reason: 'the swapped-in widget must receive input');
+    });
+  });
+
+  group('wrapWords', () {
+    testWidgets('false shrinks until the longest word fits', (
+      WidgetTester tester,
+    ) async {
+      const String text = 'short Supercalifragilistic';
+
+      await tester.pumpWidget(
+        box(const FitText(text, minFontSize: 4, maxFontSize: 40)),
+      );
+      final double wrapped = render(tester).fittedFontSize;
+
+      await tester.pumpWidget(
+        box(
+          const FitText(
+            text,
+            minFontSize: 4,
+            maxFontSize: 40,
+            wrapWords: false,
+          ),
+        ),
+      );
+      final double whole = render(tester).fittedFontSize;
+
+      expect(
+        whole,
+        lessThan(wrapped),
+        reason: 'keeping the long word whole forces a smaller size',
+      );
+    });
+
+    testWidgets('true is the default and matches Text', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(box(const FitText('x', maxLines: 1)));
+      expect(tester.widget<FitText>(find.byType(FitText)).wrapWords, isTrue);
+    });
   });
 }

@@ -106,12 +106,16 @@ The API is deliberately close, so most call sites change only the widget name.
 | `AutoSizeGroup()` | `FitTextGroup()` |
 | `group: myGroup` | `group: myGroup` |
 
-Two things it does **not** carry over yet: `overflowReplacement`, which swaps in
-a different widget when nothing fits, and `wrapWords: false`, which allows
-breaking inside a word. If you rely on either, open an issue — they are
-straightforward to add, they just are not in 0.1.0.
+| `overflowReplacement:` | `overflowReplacement:` |
+| `wrapWords: false` | `wrapWords: false` |
 
 Neither package supports text selection.
+
+One difference worth knowing: `overflowReplacement` stays mounted whether or not
+it is used, collapsed to zero size — the same trade `IndexedStack` makes. That
+is what lets the swap happen inside a single layout pass with no frame of
+overflowing text, but it means an expensive replacement widget is built even
+when it never shows. Keep it cheap.
 
 ## License
 

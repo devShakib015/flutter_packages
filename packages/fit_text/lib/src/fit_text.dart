@@ -37,7 +37,7 @@ import 'render_fit_text.dart';
 /// `log2((max - min) / stepGranularity)` text layouts — six or so for the
 /// defaults, not the dozens a linear scan needs. It re-runs only when the
 /// text, style, or constraints change.
-class FitText extends LeafRenderObjectWidget {
+class FitText extends SingleChildRenderObjectWidget {
   /// Creates auto-fitting text from a plain [String].
   const FitText(
     String data, {
@@ -59,6 +59,8 @@ class FitText extends LeafRenderObjectWidget {
     this.textWidthBasis = TextWidthBasis.parent,
     this.textHeightBehavior,
     this.group,
+    this.wrapWords = true,
+    Widget? overflowReplacement,
   }) : _data = data,
        _style = style,
        _span = null,
@@ -68,7 +70,8 @@ class FitText extends LeafRenderObjectWidget {
          'minFontSize must not exceed maxFontSize',
        ),
        assert(stepGranularity > 0, 'stepGranularity must be positive'),
-       assert(maxLines == null || maxLines > 0, 'maxLines must be positive');
+       assert(maxLines == null || maxLines > 0, 'maxLines must be positive'),
+       super(child: overflowReplacement);
 
   /// Creates auto-fitting text from an [InlineSpan].
   ///
@@ -94,6 +97,8 @@ class FitText extends LeafRenderObjectWidget {
     this.textWidthBasis = TextWidthBasis.parent,
     this.textHeightBehavior,
     this.group,
+    this.wrapWords = true,
+    Widget? overflowReplacement,
   }) : _span = span,
        _data = null,
        _style = null,
@@ -103,7 +108,8 @@ class FitText extends LeafRenderObjectWidget {
          'minFontSize must not exceed maxFontSize',
        ),
        assert(stepGranularity > 0, 'stepGranularity must be positive'),
-       assert(maxLines == null || maxLines > 0, 'maxLines must be positive');
+       assert(maxLines == null || maxLines > 0, 'maxLines must be positive'),
+       super(child: overflowReplacement);
 
   // Stored unassembled so both constructors can be const, which matters for a
   // widget destined to appear in a lot of build methods.
@@ -169,6 +175,28 @@ class FitText extends LeafRenderObjectWidget {
   /// Hold the group in state rather than creating one per build.
   final FitTextGroup? group;
 
+  /// Whether a word too long for its line may be broken across lines.
+  ///
+  /// True matches [Text]. False keeps words whole and shrinks until the
+  /// longest one fits, which suits a single unbreakable token such as a
+  /// reference number or a URL.
+  final bool wrapWords;
+
+  /// Shown instead of the text when nothing fits, even at [minFontSize].
+  ///
+  /// Swapped in during the same layout pass, so there is no frame where the
+  /// overflowing text is visible:
+  ///
+  /// ```dart
+  /// FitText(
+  ///   longTitle,
+  ///   maxLines: 1,
+  ///   minFontSize: 14,
+  ///   overflowReplacement: const Icon(Icons.more_horiz),
+  /// )
+  /// ```
+  Widget? get overflowReplacement => child;
+
   TextStyle _effectiveStyle(BuildContext context) {
     final DefaultTextStyle inherited = DefaultTextStyle.of(context);
     final TextStyle base = inherited.style;
@@ -212,6 +240,7 @@ class FitText extends LeafRenderObjectWidget {
       textWidthBasis: textWidthBasis,
       textHeightBehavior: textHeightBehavior,
       group: group,
+      wrapWords: wrapWords,
     );
   }
 
@@ -234,7 +263,8 @@ class FitText extends LeafRenderObjectWidget {
       ..strutStyle = strutStyle
       ..textWidthBasis = textWidthBasis
       ..textHeightBehavior = textHeightBehavior
-      ..group = group;
+      ..group = group
+      ..wrapWords = wrapWords;
   }
 
   /// An unbounded ceiling is unusable as a search bound, so it resolves to the

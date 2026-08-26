@@ -17,7 +17,8 @@ import 'fit_text_group.dart';
 /// [IntrinsicHeight], [IntrinsicWidth], and [Table] cells — all of which
 /// measure their children before laying them out. Doing the fit during layout
 /// means intrinsics can be answered honestly.
-class RenderFitText extends RenderBox {
+class RenderFitText extends RenderBox
+    with RenderObjectWithChildMixin<RenderBox> {
   /// Creates the render box.
   RenderFitText({
     required InlineSpan text,
@@ -36,8 +37,10 @@ class RenderFitText extends RenderBox {
     TextWidthBasis textWidthBasis = TextWidthBasis.parent,
     TextHeightBehavior? textHeightBehavior,
     FitTextGroup? group,
+    bool wrapWords = true,
   }) : _text = text,
        _group = group,
+       _wrapWords = wrapWords,
        _minFontSize = minFontSize,
        _maxFontSize = maxFontSize,
        _stepGranularity = stepGranularity,
@@ -66,16 +69,30 @@ class RenderFitText extends RenderBox {
   bool _softWrap;
   TextOverflow _overflow;
   FitTextGroup? _group;
+  bool _wrapWords;
+  bool _showingReplacement = false;
 
   /// The font size chosen at the last layout.
   double get fittedFontSize => _fittedFontSize;
   double _fittedFontSize = 0;
 
-  /// Whether the text still overflowed at [minFontSize].
+  /// Whether the text still overflowed at the smallest permitted size.
   bool get didOverflow => _didOverflow;
   bool _didOverflow = false;
 
+  /// Whether the overflow replacement is being shown instead of the text.
+  bool get showingReplacement => _showingReplacement;
+
   // ---------------------------------------------------------------- setters
+
+  /// Whether a word too long for its line may be broken across lines.
+  ///
+  /// False keeps words whole and shrinks until the longest one fits.
+  set wrapWords(bool value) {
+    if (_wrapWords == value) return;
+    _wrapWords = value;
+    markNeedsLayout();
+  }
 
   /// The group this text agrees a size with, if any.
   set group(FitTextGroup? value) {
@@ -264,6 +281,13 @@ class RenderFitText extends RenderBox {
     if (_painter.width > constraints.maxWidth + precisionErrorTolerance) {
       return false;
     }
+    // minIntrinsicWidth is the widest run that cannot be broken — the longest
+    // word. Requiring it to fit is what keeps words whole.
+    if (!_wrapWords &&
+        _painter.minIntrinsicWidth >
+            constraints.maxWidth + precisionErrorTolerance) {
+      return false;
+    }
     return true;
   }
 
@@ -271,9 +295,9 @@ class RenderFitText extends RenderBox {
   ///
   /// Text metrics grow monotonically with font size, so a bisection is sound
   /// and costs ~log2(n) layouts rather than the n a linear scan would.
-  double _bestFit(BoxConstraints constraints) {
+  (double, bool) _bestFit(BoxConstraints constraints) {
     final List<double> sizes = _candidates;
-    if (sizes.isEmpty) return _minFontSize;
+    if (sizes.isEmpty) return (_minFontSize, true);
 
     var low = 0;
     var high = sizes.length - 1;
@@ -287,13 +311,9 @@ class RenderFitText extends RenderBox {
         high = mid - 1;
       }
     }
-    if (best >= 0) {
-      _didOverflow = false;
-      return sizes[best];
-    }
-    // Nothing fits; use the smallest and let `overflow` deal with it.
-    _didOverflow = true;
-    return sizes.first;
+    if (best >= 0) return (sizes[best], false);
+    // Nothing fits; use the smallest and let the caller decide what to do.
+    return (sizes.first, true);
   }
 
   void _layoutAt(double fontSize, BoxConstraints constraints) {
@@ -333,7 +353,7 @@ class RenderFitText extends RenderBox {
   @override
   double computeMaxIntrinsicHeight(double width) {
     final BoxConstraints constraints = BoxConstraints(maxWidth: width);
-    _layoutAt(_bestFit(constraints), constraints);
+    _layoutAt(_bestFit(constraints).$1, constraints);
     return _painter.height;
   }
 
@@ -345,15 +365,28 @@ class RenderFitText extends RenderBox {
 
   @override
   Size computeDryLayout(BoxConstraints constraints) {
-    _layoutAt(_bestFit(constraints), constraints);
+    final (double fontSize, bool overflowed) = _bestFit(constraints);
+    if (overflowed && child != null) return child!.getDryLayout(constraints);
+    _layoutAt(fontSize, constraints);
     return constraints.constrain(_painter.size);
   }
 
   @override
   void performLayout() {
-    final double natural = _bestFit(constraints);
-    double chosen = natural;
+    final (double natural, bool overflowed) = _bestFit(constraints);
+    _didOverflow = overflowed;
 
+    // Nothing fit and a replacement was supplied: swap to it in this same
+    // layout pass rather than a frame later.
+    if (overflowed && child != null) {
+      _showingReplacement = true;
+      child!.layout(constraints, parentUsesSize: true);
+      size = child!.size;
+      return;
+    }
+    _showingReplacement = false;
+
+    double chosen = natural;
     final FitTextGroup? group = _group;
     if (group != null) {
       group.report(this, natural);
@@ -365,12 +398,21 @@ class RenderFitText extends RenderBox {
 
     _layoutAt(chosen, constraints);
     size = constraints.constrain(_painter.size);
+
+    // The replacement stays mounted whether or not it is used, so it must
+    // still be laid out — collapsed to nothing — or the framework complains
+    // about a child that was never measured.
+    child?.layout(const BoxConstraints.tightFor(width: 0, height: 0));
   }
 
   // ------------------------------------------------------------------ paint
 
   @override
   void paint(PaintingContext context, Offset offset) {
+    if (_showingReplacement) {
+      context.paintChild(child!, offset);
+      return;
+    }
     if (_overflow == TextOverflow.clip || _overflow == TextOverflow.ellipsis) {
       if (_didOverflow) {
         context.pushClipRect(
@@ -384,6 +426,14 @@ class RenderFitText extends RenderBox {
       }
     }
     _painter.paint(context.canvas, offset);
+  }
+
+  @override
+  bool hitTestChildren(BoxHitTestResult result, {required Offset position}) {
+    if (!_showingReplacement || child == null) return false;
+    // The replacement sits at the origin and takes this box's whole size, so
+    // the position needs no transforming.
+    return child!.hitTest(result, position: position);
   }
 
   @override
@@ -414,6 +464,20 @@ class RenderFitText extends RenderBox {
           'didOverflow',
           value: _didOverflow,
           ifTrue: 'overflowed at minFontSize',
+        ),
+      )
+      ..add(
+        FlagProperty(
+          'showingReplacement',
+          value: _showingReplacement,
+          ifTrue: 'showing overflowReplacement',
+        ),
+      )
+      ..add(
+        FlagProperty(
+          'wrapWords',
+          value: _wrapWords,
+          ifFalse: 'words kept whole',
         ),
       );
   }

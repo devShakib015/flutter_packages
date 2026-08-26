@@ -11,5 +11,8 @@ Initial release.
 - `minFontSize`, `maxFontSize`, `stepGranularity`, and `presetFontSizes` for
   staying on a type scale.
 - Both constructors are `const`, like `Text`.
+- `overflowReplacement` swaps in another widget when nothing fits, inside the
+  same layout pass rather than a frame later.
+- `wrapWords: false` keeps long words whole and shrinks until the longest fits.
 - Bisection over the candidate range: roughly six text layouts for the
   defaults rather than dozens.
