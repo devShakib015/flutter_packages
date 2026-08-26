@@ -9,6 +9,7 @@ import 'loading_state.dart';
 import 'loading_status.dart';
 import 'loading_task.dart';
 import 'loading_timing.dart';
+import 'loading_toast.dart';
 
 /// Owns every in-flight blocking operation and derives the single
 /// [LoadingState] the overlay renders.
@@ -40,7 +41,23 @@ class LoadingController extends ValueNotifier<LoadingState> {
   final LoadingTiming timing;
 
   final List<LoadingOperation> _operations = <LoadingOperation>[];
+  final ValueNotifier<List<LoadingToast>> _toasts =
+      ValueNotifier<List<LoadingToast>>(const <LoadingToast>[]);
+  final Map<Object, Timer> _toastTimers = <Object, Timer>{};
+  int _toastSequence = 0;
   bool _disposed = false;
+
+  /// How long a toast takes to animate out once dismissed.
+  static const Duration toastExitDuration = Duration(milliseconds: 220);
+
+  /// The default time a toast stays on screen.
+  static const Duration defaultToastDuration = Duration(seconds: 3);
+
+  /// The most toasts shown at once. Older ones are retired to make room.
+  static const int maxVisibleToasts = 3;
+
+  /// The transient messages currently on screen.
+  ValueListenable<List<LoadingToast>> get toasts => _toasts;
 
   /// Whether any operation is tracked, painted or still inside its delay.
   bool get isBusy => _operations.isNotEmpty;
@@ -313,6 +330,69 @@ class LoadingController extends ValueNotifier<LoadingState> {
     );
   }
 
+  /// Shows a transient, non-blocking message and returns its id.
+  ///
+  /// Unlike [show], this neither blocks input nor draws a scrim, and it
+  /// dismisses itself after [duration]:
+  ///
+  /// ```dart
+  /// Loading.toast('Draft saved');
+  /// Loading.toast('Could not sync', status: LoadingStatus.error);
+  /// ```
+  Object toast(
+    String message, {
+    String? detail,
+    LoadingStatus? status,
+    Duration duration = defaultToastDuration,
+  }) {
+    final Object id = ++_toastSequence;
+    final List<LoadingToast> next = <LoadingToast>[
+      ..._toasts.value,
+      LoadingToast(id: id, message: message, detail: detail, status: status),
+    ];
+    // Retire the oldest rather than letting a burst of toasts fill the screen.
+    while (next.where((LoadingToast t) => !t.dismissing).length >
+        maxVisibleToasts) {
+      final LoadingToast oldest = next.firstWhere(
+        (LoadingToast t) => !t.dismissing,
+      );
+      dismissToast(oldest.id);
+      next.removeWhere((LoadingToast t) => t.id == oldest.id);
+    }
+    _toasts.value = next;
+    _toastTimers[id] = Timer(duration, () => dismissToast(id));
+    return id;
+  }
+
+  /// Starts the exit transition for the toast with [id].
+  void dismissToast(Object id) {
+    if (_disposed) return;
+    _toastTimers.remove(id)?.cancel();
+    final int index = _toasts.value.indexWhere((LoadingToast t) => t.id == id);
+    if (index < 0 || _toasts.value[index].dismissing) return;
+
+    final List<LoadingToast> next = <LoadingToast>[..._toasts.value];
+    next[index] = next[index].copyWith(dismissing: true);
+    _toasts.value = next;
+
+    _toastTimers[id] = Timer(toastExitDuration, () {
+      _toastTimers.remove(id);
+      if (_disposed) return;
+      _toasts.value = _toasts.value
+          .where((LoadingToast t) => t.id != id)
+          .toList(growable: false);
+    });
+  }
+
+  /// Removes every toast immediately, with no exit transition.
+  void clearToasts() {
+    for (final Timer timer in _toastTimers.values) {
+      timer.cancel();
+    }
+    _toastTimers.clear();
+    _toasts.value = const <LoadingToast>[];
+  }
+
   /// Invokes the cancel callback of the topmost cancellable operation.
   ///
   /// Wired to the cancel button and, when enabled, to the scrim and the
@@ -409,6 +489,11 @@ class LoadingController extends ValueNotifier<LoadingState> {
       if (!operation.closed.isCompleted) operation.closed.complete();
     }
     _operations.clear();
+    for (final Timer timer in _toastTimers.values) {
+      timer.cancel();
+    }
+    _toastTimers.clear();
+    _toasts.dispose();
     super.dispose();
   }
 }

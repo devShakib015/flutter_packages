@@ -2,22 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:loading_kit/loading_kit.dart';
 // Reaching into src is deliberate: the painter is the thing under test.
-import 'package:loading_kit/src/painting/morph_indicator_painter.dart';
+import 'package:loading_kit/src/painting/loading_indicator_painter.dart';
 
 void main() {
-  MorphIndicatorPainter painterOf(WidgetTester tester) {
+  LoadingIndicatorPainter painterOf(WidgetTester tester) {
     return tester
-        .widget<CustomPaint>(
-          find.descendant(
-            of: find.byType(LoadingIndicator),
-            matching: find.byType(CustomPaint),
-          ),
-        )
-        .painter! as MorphIndicatorPainter;
+            .widget<CustomPaint>(
+              find.descendant(
+                of: find.byType(LoadingIndicator),
+                matching: find.byType(CustomPaint),
+              ),
+            )
+            .painter!
+        as LoadingIndicatorPainter;
   }
 
-  Widget host(Widget child) =>
-      MaterialApp(home: Material(child: Center(child: child)));
+  Widget host(Widget child) => MaterialApp(
+    home: Material(child: Center(child: child)),
+  );
 
   testWidgets('the indeterminate arc advances between frames', (
     WidgetTester tester,
@@ -53,8 +55,11 @@ void main() {
 
     final double settled = painterOf(tester).spin;
     await tester.pump(const Duration(milliseconds: 300));
-    expect(painterOf(tester).spin, settled,
-        reason: 'a settled indicator should not burn frames');
+    expect(
+      painterOf(tester).spin,
+      settled,
+      reason: 'a settled indicator should not burn frames',
+    );
     expect(painterOf(tester).morph, 1.0);
 
     await tester.pumpWidget(const SizedBox.shrink());

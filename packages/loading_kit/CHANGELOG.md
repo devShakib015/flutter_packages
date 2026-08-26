@@ -2,6 +2,19 @@
 
 Initial release.
 
+### Indicators
+- Six indeterminate forms — `arc`, `dots`, `bars`, `orbit`, `pulse`, `ripple` —
+  all settling into the same check or cross.
+- `indicatorBuilder` replaces the built-in indicator with any widget, so Lottie,
+  Rive, or another spinner package can be dropped straight in.
+- `LoadingProgressStyle.bar` draws determinate progress as a linear bar.
+
+### Beyond the full-screen overlay
+- `Loading.toast` / `toastSuccess` / `toastError` for transient, non-blocking
+  messages that never intercept input.
+- `LoadingBarrier` scopes the overlay to a single subtree while still applying
+  the timing policy.
+
 - `Loading.run` / `runTask` wrap a future behind the overlay in one call.
 - Timing policy with a reveal delay and a minimum-visible window, so fast
   operations paint nothing and slow ones do not blink out.

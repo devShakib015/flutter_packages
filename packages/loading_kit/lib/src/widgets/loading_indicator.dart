@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../core/loading_status.dart';
-import '../painting/morph_indicator_painter.dart';
+import '../painting/loading_indicator_painter.dart';
+import '../theme/loading_indicator_style.dart';
 import '../theme/loading_style.dart';
 import '../theme/resolved_loading_style.dart';
 
@@ -39,6 +40,7 @@ class LoadingIndicator extends StatefulWidget {
     this.errorColor,
     this.glow,
     this.style,
+    this.indicatorStyle,
   });
 
   /// Whether the indicator spins, or has settled into a check or a cross.
@@ -73,6 +75,12 @@ class LoadingIndicator extends StatefulWidget {
 
   /// Supplies any visual token not passed explicitly.
   final LoadingStyle? style;
+
+  /// The indeterminate form to draw. Falls back to the resolved style.
+  ///
+  /// Ignored while [progress] is set: determinate work is always an arc,
+  /// because no pulsing or bouncing form can express a proportion.
+  final LoadingIndicatorStyle? indicatorStyle;
 
   @override
   State<LoadingIndicator> createState() => _LoadingIndicatorState();
@@ -173,7 +181,8 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
         child: AnimatedBuilder(
           animation: _repaint,
           builder: (BuildContext context, Widget? _) => CustomPaint(
-            painter: MorphIndicatorPainter(
+            painter: LoadingIndicatorPainter(
+              style: widget.indicatorStyle ?? resolved.indicatorStyle,
               spin: _spin.value,
               morph: _morph.value,
               status: widget.status,

@@ -1,7 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import 'loading_indicator_builder.dart';
+import 'loading_indicator_style.dart';
 import 'loading_preset.dart';
+import 'loading_progress_style.dart';
 import 'resolved_loading_style.dart';
 
 /// A premium easing curve with a long, decelerating tail.
@@ -55,6 +58,9 @@ class LoadingStyle {
     this.enterCurve,
     this.exitCurve,
     this.enterScale,
+    this.indicatorStyle,
+    this.progressStyle,
+    this.indicatorBuilder,
   });
 
   /// Cupertino on Apple platforms, Material elsewhere. The default.
@@ -159,6 +165,15 @@ class LoadingStyle {
   /// Overrides [ResolvedLoadingStyle.enterScale].
   final double? enterScale;
 
+  /// Overrides [ResolvedLoadingStyle.indicatorStyle].
+  final LoadingIndicatorStyle? indicatorStyle;
+
+  /// Overrides [ResolvedLoadingStyle.progressStyle].
+  final LoadingProgressStyle? progressStyle;
+
+  /// Replaces the built-in indicator with a widget of your own.
+  final LoadingIndicatorBuilder? indicatorBuilder;
+
   /// Returns a copy with the given fields replaced.
   LoadingStyle copyWith({
     LoadingPreset? preset,
@@ -187,6 +202,9 @@ class LoadingStyle {
     Curve? enterCurve,
     Curve? exitCurve,
     double? enterScale,
+    LoadingIndicatorStyle? indicatorStyle,
+    LoadingProgressStyle? progressStyle,
+    LoadingIndicatorBuilder? indicatorBuilder,
   }) {
     return LoadingStyle(
       preset: preset ?? this.preset,
@@ -215,6 +233,9 @@ class LoadingStyle {
       enterCurve: enterCurve ?? this.enterCurve,
       exitCurve: exitCurve ?? this.exitCurve,
       enterScale: enterScale ?? this.enterScale,
+      indicatorStyle: indicatorStyle ?? this.indicatorStyle,
+      progressStyle: progressStyle ?? this.progressStyle,
+      indicatorBuilder: indicatorBuilder ?? this.indicatorBuilder,
     );
   }
 
@@ -273,6 +294,9 @@ class LoadingStyle {
       enterCurve: enterCurve,
       exitCurve: exitCurve,
       enterScale: enterScale,
+      indicatorStyle: indicatorStyle,
+      progressStyle: progressStyle,
+      indicatorBuilder: indicatorBuilder,
     );
   }
 
@@ -294,7 +318,8 @@ class LoadingStyle {
       LoadingPreset.glass => _glass(scheme, dark),
       LoadingPreset.minimal => _minimal(scheme, dark),
       LoadingPreset.neon => _neon(scheme, dark),
-      LoadingPreset.material || LoadingPreset.adaptive => _material(scheme, dark),
+      LoadingPreset.material ||
+      LoadingPreset.adaptive => _material(scheme, dark),
     };
   }
 

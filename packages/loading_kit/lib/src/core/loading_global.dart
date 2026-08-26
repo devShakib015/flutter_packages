@@ -4,6 +4,7 @@ import 'loading_controller.dart';
 import 'loading_exceptions.dart';
 import 'loading_handle.dart';
 import 'loading_state.dart';
+import 'loading_status.dart';
 import 'loading_task.dart';
 import 'loading_timing.dart';
 
@@ -122,6 +123,53 @@ abstract final class Loading {
     dismissible: dismissible,
     awaitFeedback: awaitFeedback,
   );
+
+  /// Shows a transient, non-blocking message.
+  ///
+  /// ```dart
+  /// Loading.toast('Draft saved');
+  /// ```
+  static Object toast(
+    String message, {
+    String? detail,
+    LoadingStatus? status,
+    Duration duration = LoadingController.defaultToastDuration,
+  }) => instance.toast(
+    message,
+    detail: detail,
+    status: status,
+    duration: duration,
+  );
+
+  /// A toast carrying a check mark.
+  static Object toastSuccess(
+    String message, {
+    String? detail,
+    Duration duration = LoadingController.defaultToastDuration,
+  }) => instance.toast(
+    message,
+    detail: detail,
+    status: LoadingStatus.success,
+    duration: duration,
+  );
+
+  /// A toast carrying a cross.
+  static Object toastError(
+    String message, {
+    String? detail,
+    Duration duration = LoadingController.defaultToastDuration,
+  }) => instance.toast(
+    message,
+    detail: detail,
+    status: LoadingStatus.error,
+    duration: duration,
+  );
+
+  /// Starts the exit transition for one toast.
+  static void dismissToast(Object id) => _instance?.dismissToast(id);
+
+  /// Removes every toast immediately.
+  static void clearToasts() => _instance?.clearToasts();
 
   /// Retires every operation. See [LoadingController.dismissAll].
   static Future<void> dismissAll({bool immediate = false}) =>

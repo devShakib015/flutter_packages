@@ -5,7 +5,7 @@ import 'package:loading_kit/loading_kit.dart';
 
 void main() => runApp(const GalleryApp());
 
-/// Demo app cycling every preset through every behaviour the package has.
+/// Demo app exercising every preset, style and behaviour in the package.
 class GalleryApp extends StatefulWidget {
   /// Creates the gallery.
   const GalleryApp({super.key});
@@ -16,7 +16,23 @@ class GalleryApp extends StatefulWidget {
 
 class _GalleryAppState extends State<GalleryApp> {
   LoadingPreset _preset = LoadingPreset.adaptive;
+  LoadingIndicatorStyle _indicator = LoadingIndicatorStyle.arc;
+  LoadingProgressStyle _progress = LoadingProgressStyle.ring;
+  bool _custom = false;
   ThemeMode _mode = ThemeMode.light;
+
+  LoadingStyle get _style {
+    final LoadingStyle base = LoadingStyle(
+      preset: _preset,
+      indicatorStyle: _indicator,
+      progressStyle: _progress,
+    );
+    if (!_custom) return base;
+    return base.copyWith(
+      indicatorBuilder: (BuildContext context, LoadingIndicatorSpec spec) =>
+          _SquareIndicator(spec: spec),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,39 +49,119 @@ class _GalleryAppState extends State<GalleryApp> {
         brightness: Brightness.dark,
       ),
       navigatorObservers: <NavigatorObserver>[LoadingNavigatorObserver()],
-      builder: LoadingKit.builder(style: LoadingStyle(preset: _preset)),
+      builder: LoadingKit.builder(style: _style),
       home: GalleryPage(
         preset: _preset,
+        indicator: _indicator,
+        progress: _progress,
+        custom: _custom,
         mode: _mode,
-        onPreset: (LoadingPreset p) => setState(() => _preset = p),
-        onMode: (ThemeMode m) => setState(() => _mode = m),
+        onPreset: (LoadingPreset v) => setState(() => _preset = v),
+        onIndicator: (LoadingIndicatorStyle v) =>
+            setState(() => _indicator = v),
+        onProgress: (LoadingProgressStyle v) => setState(() => _progress = v),
+        onCustom: (bool v) => setState(() => _custom = v),
+        onMode: (ThemeMode v) => setState(() => _mode = v),
+      ),
+    );
+  }
+}
+
+/// A deliberately un-circular custom indicator, to prove the slot is open.
+class _SquareIndicator extends StatefulWidget {
+  const _SquareIndicator({required this.spec});
+
+  final LoadingIndicatorSpec spec;
+
+  @override
+  State<_SquareIndicator> createState() => _SquareIndicatorState();
+}
+
+class _SquareIndicatorState extends State<_SquareIndicator>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _spin = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1100),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _spin.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RotationTransition(
+      turns: _spin,
+      child: Container(
+        width: widget.spec.size,
+        height: widget.spec.size,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: widget.spec.statusColor,
+            width: widget.spec.strokeWidth,
+          ),
+        ),
       ),
     );
   }
 }
 
 /// The gallery's single screen.
-class GalleryPage extends StatelessWidget {
+class GalleryPage extends StatefulWidget {
   /// Creates the gallery page.
   const GalleryPage({
     super.key,
     required this.preset,
+    required this.indicator,
+    required this.progress,
+    required this.custom,
     required this.mode,
     required this.onPreset,
+    required this.onIndicator,
+    required this.onProgress,
+    required this.onCustom,
     required this.onMode,
   });
 
-  /// Currently selected preset.
+  /// Selected preset.
   final LoadingPreset preset;
 
-  /// Currently selected theme mode.
+  /// Selected indeterminate form.
+  final LoadingIndicatorStyle indicator;
+
+  /// Selected determinate form.
+  final LoadingProgressStyle progress;
+
+  /// Whether the custom indicator slot is in use.
+  final bool custom;
+
+  /// Selected theme mode.
   final ThemeMode mode;
 
   /// Called when the preset changes.
   final ValueChanged<LoadingPreset> onPreset;
 
+  /// Called when the indeterminate form changes.
+  final ValueChanged<LoadingIndicatorStyle> onIndicator;
+
+  /// Called when the determinate form changes.
+  final ValueChanged<LoadingProgressStyle> onProgress;
+
+  /// Called when the custom indicator is toggled.
+  final ValueChanged<bool> onCustom;
+
   /// Called when the theme mode changes.
   final ValueChanged<ThemeMode> onMode;
+
+  @override
+  State<GalleryPage> createState() => _GalleryPageState();
+}
+
+class _GalleryPageState extends State<GalleryPage> {
+  bool _barrierBusy = false;
 
   static Future<void> _wait(int ms) =>
       Future<void>.delayed(Duration(milliseconds: ms));
@@ -80,7 +176,8 @@ class GalleryPage extends StatelessWidget {
           IconButton(
             tooltip: dark ? 'Light theme' : 'Dark theme',
             icon: Icon(dark ? Icons.light_mode : Icons.dark_mode),
-            onPressed: () => onMode(dark ? ThemeMode.light : ThemeMode.dark),
+            onPressed: () =>
+                widget.onMode(dark ? ThemeMode.light : ThemeMode.dark),
           ),
         ],
       ),
@@ -88,18 +185,36 @@ class GalleryPage extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 40),
         children: <Widget>[
           const _SectionTitle('Preset'),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: LoadingPreset.values.map((LoadingPreset p) {
-              return ChoiceChip(
-                label: Text(p.name),
-                selected: p == preset,
-                onSelected: (_) => onPreset(p),
-              );
-            }).toList(),
+          _Chips<LoadingPreset>(
+            values: LoadingPreset.values,
+            selected: widget.preset,
+            label: (LoadingPreset v) => v.name,
+            onChanged: widget.onPreset,
           ),
-          const SizedBox(height: 8),
+          const _SectionTitle('Indeterminate form'),
+          _Chips<LoadingIndicatorStyle>(
+            values: LoadingIndicatorStyle.values,
+            selected: widget.indicator,
+            label: (LoadingIndicatorStyle v) => v.name,
+            onChanged: widget.onIndicator,
+          ),
+          const _SectionTitle('Determinate form'),
+          _Chips<LoadingProgressStyle>(
+            values: LoadingProgressStyle.values,
+            selected: widget.progress,
+            label: (LoadingProgressStyle v) => v.name,
+            onChanged: widget.onProgress,
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Custom indicator slot'),
+            subtitle: const Text(
+              'Replaces every built-in form with a widget of your own.',
+            ),
+            value: widget.custom,
+            onChanged: widget.onCustom,
+          ),
+
           const _SectionTitle('The anti-flicker guarantee'),
           _Tile(
             title: 'Fast operation — 80ms',
@@ -111,10 +226,11 @@ class GalleryPage extends StatelessWidget {
           _Tile(
             title: 'Borderline operation — 200ms',
             subtitle:
-                'Crosses the delay, so it paints — and is then held for '
-                'the minimum window instead of blinking out.',
+                'Crosses the delay, so it paints — then is held for the '
+                'minimum window instead of blinking out.',
             onTap: () => Loading.run(() => _wait(200)),
           ),
+
           const _SectionTitle('Everyday'),
           _Tile(
             title: 'Plain load',
@@ -133,8 +249,8 @@ class GalleryPage extends StatelessWidget {
           _Tile(
             title: 'Error feedback',
             subtitle:
-                'Same arc, settling into a cross. The throw still '
-                'propagates to your catch block.',
+                'Same form, settling into a cross. The throw still '
+                'reaches your catch block.',
             onTap: () async {
               try {
                 await Loading.run<void>(
@@ -146,16 +262,36 @@ class GalleryPage extends StatelessWidget {
                   errorMessage: 'Could not reach the server',
                 );
               } on StateError {
-                // Swallowed: the overlay already reported it.
+                // Already reported by the overlay.
               }
             },
           ),
+
+          const _SectionTitle('Toasts — nothing is blocked'),
+          _Tile(
+            title: 'Plain toast',
+            subtitle: 'No scrim, no blocked input, dismisses itself.',
+            onTap: () async => Loading.toast('Draft saved'),
+          ),
+          _Tile(
+            title: 'Success and error toasts',
+            subtitle: 'Fired together, so they stack.',
+            onTap: () async {
+              Loading.toastSuccess('Order placed');
+              await _wait(400);
+              Loading.toastError(
+                'Could not sync',
+                detail: 'Retrying in the background',
+              );
+            },
+          ),
+
           const _SectionTitle('Progress and cancellation'),
           _Tile(
             title: 'Determinate upload',
             subtitle:
-                'Coarse progress jumps are interpolated into continuous '
-                'motion.',
+                'Coarse jumps are interpolated into continuous motion. '
+                'Switch the determinate form above to see it as a bar.',
             onTap: () => Loading.runTask<void>(
               (LoadingTask task) async {
                 for (var i = 1; i <= 5; i++) {
@@ -171,8 +307,8 @@ class GalleryPage extends StatelessWidget {
           _Tile(
             title: 'Cancellable job',
             subtitle:
-                'The cancel affordance appears after 1.5s, so quick runs '
-                'never offer one.',
+                'Cancel appears after 1.5s, so quick runs never offer '
+                'one.',
             onTap: () async {
               final ScaffoldMessengerState messenger = ScaffoldMessenger.of(
                 context,
@@ -208,48 +344,33 @@ class GalleryPage extends StatelessWidget {
                   errorMessage: 'Timed out',
                 );
               } on TimeoutException {
-                // Reported by the overlay.
+                // Already reported by the overlay.
               }
             },
           ),
+
+          const _SectionTitle('Scoped to one widget'),
+          _BarrierDemo(
+            busy: _barrierBusy,
+            onRun: () async {
+              setState(() => _barrierBusy = true);
+              await _wait(2200);
+              if (mounted) setState(() => _barrierBusy = false);
+            },
+          ),
+
           const _SectionTitle('Correctness'),
           _Tile(
             title: 'Three concurrent requests',
             subtitle:
-                'Reference counted — the overlay stays until the last '
-                'one finishes, not the first.',
+                'Reference counted — the overlay waits for the last one, '
+                'not the first.',
             onTap: () async {
               await Future.wait<void>(<Future<void>>[
                 Loading.run(() => _wait(900), message: 'Request A'),
                 Loading.run(() => _wait(1800), message: 'Request B'),
                 Loading.run(() => _wait(2700), message: 'Request C'),
               ]);
-            },
-          ),
-          _Tile(
-            title: 'Overlay survives a dialog',
-            subtitle: 'Opens a dialog, then loads on top of it.',
-            onTap: () async {
-              unawaited(
-                showDialog<void>(
-                  context: context,
-                  builder: (BuildContext c) => AlertDialog(
-                    title: const Text('A dialog'),
-                    content: const Text(
-                      'The overlay paints above this, because the host sits '
-                      'above the navigator.',
-                    ),
-                    actions: <Widget>[
-                      TextButton(
-                        onPressed: () => Navigator.pop(c),
-                        child: const Text('Close'),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-              await _wait(400);
-              await Loading.run(() => _wait(1800), message: 'Loading…');
             },
           ),
           _Tile(
@@ -265,9 +386,51 @@ class GalleryPage extends StatelessWidget {
               await handle.success('Done');
             },
           ),
+
           const _SectionTitle('The indicator on its own'),
           const _IndicatorRow(),
         ],
+      ),
+    );
+  }
+}
+
+class _BarrierDemo extends StatelessWidget {
+  const _BarrierDemo({required this.busy, required this.onRun});
+
+  final bool busy;
+  final Future<void> Function() onRun;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: LoadingBarrier(
+        loading: busy,
+        message: 'Saving…',
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                'LoadingBarrier',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Only this card is blocked. The rest of the screen stays live '
+                '— scroll it while this runs.',
+              ),
+              const SizedBox(height: 14),
+              FilledButton(
+                onPressed: () => unawaited(onRun()),
+                child: const Text('Save for 2.2s'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -285,28 +448,43 @@ class _IndicatorRowState extends State<_IndicatorRow> {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: <Widget>[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            Wrap(
+              spacing: 22,
+              runSpacing: 18,
+              alignment: WrapAlignment.center,
               children: <Widget>[
-                const _Labelled('busy', LoadingIndicator(size: 44)),
+                for (final LoadingIndicatorStyle style
+                    in LoadingIndicatorStyle.values)
+                  _Labelled(
+                    style.name,
+                    LoadingIndicator(indicatorStyle: style, size: 40),
+                  ),
                 _Labelled(
                   'progress',
-                  LoadingIndicator(size: 44, progress: _progress),
+                  LoadingIndicator(size: 40, progress: _progress),
                 ),
                 const _Labelled(
                   'success',
-                  LoadingIndicator(size: 44, status: LoadingStatus.success),
+                  LoadingIndicator(size: 40, status: LoadingStatus.success),
                 ),
                 const _Labelled(
                   'error',
-                  LoadingIndicator(size: 44, status: LoadingStatus.error),
+                  LoadingIndicator(size: 40, status: LoadingStatus.error),
                 ),
               ],
+            ),
+            const SizedBox(height: 20),
+            LoadingProgressBar(
+              progress: _progress,
+              color: scheme.primary,
+              trackColor: scheme.primary.withValues(alpha: 0.16),
+              width: 240,
             ),
             Slider(
               value: _progress,
@@ -323,6 +501,35 @@ class _IndicatorRowState extends State<_IndicatorRow> {
   }
 }
 
+class _Chips<T> extends StatelessWidget {
+  const _Chips({
+    required this.values,
+    required this.selected,
+    required this.label,
+    required this.onChanged,
+  });
+
+  final List<T> values;
+  final T selected;
+  final String Function(T) label;
+  final ValueChanged<T> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: values.map((T value) {
+        return ChoiceChip(
+          label: Text(label(value)),
+          selected: value == selected,
+          onSelected: (_) => onChanged(value),
+        );
+      }).toList(),
+    );
+  }
+}
+
 class _Labelled extends StatelessWidget {
   const _Labelled(this.label, this.child);
 
@@ -331,12 +538,19 @@ class _Labelled extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        child,
-        const SizedBox(height: 8),
-        Text(label, style: Theme.of(context).textTheme.labelSmall),
-      ],
+    return SizedBox(
+      width: 68,
+      child: Column(
+        children: <Widget>[
+          SizedBox.square(dimension: 44, child: Center(child: child)),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.labelSmall,
+          ),
+        ],
+      ),
     );
   }
 }

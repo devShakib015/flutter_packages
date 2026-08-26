@@ -104,6 +104,19 @@ void main() {
     await tester.binding.setSurfaceSize(null);
   });
 
+  testWidgets('scene: indicator styles', (WidgetTester tester) async {
+    final _Recorder rec = _Recorder('styles');
+
+    await tester.binding.setSurfaceSize(const Size(560, 300));
+    await tester.pumpWidget(const _StylesStage(status: LoadingStatus.busy));
+    await rec.hold(tester, const Duration(milliseconds: 1700));
+    await tester.pumpWidget(const _StylesStage(status: LoadingStatus.success));
+    await rec.hold(tester, const Duration(milliseconds: 1100));
+
+    rec.report();
+    await tester.binding.setSurfaceSize(null);
+  });
+
   testWidgets('scene: the morph', (WidgetTester tester) async {
     final _Recorder rec = _Recorder('morph');
 
@@ -452,6 +465,87 @@ class _PresetStage extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _StylesStage extends StatelessWidget {
+  const _StylesStage({required this.status});
+
+  final LoadingStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    const List<LoadingIndicatorStyle> styles = LoadingIndicatorStyle.values;
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: _theme(false),
+      home: Material(
+        type: MaterialType.transparency,
+        child: RepaintBoundary(
+          key: _stageKey,
+          child: ColoredBox(
+            color: const Color(0xFFF4F6FB),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 26),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: <Widget>[
+                  for (int row = 0; row < 2; row++)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: <Widget>[
+                        for (int col = 0; col < 3; col++)
+                          _StyleCell(
+                            style: styles[row * 3 + col],
+                            status: status,
+                          ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StyleCell extends StatelessWidget {
+  const _StyleCell({required this.style, required this.status});
+
+  final LoadingIndicatorStyle style;
+  final LoadingStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        SizedBox.square(
+          dimension: 56,
+          child: Center(
+            child: LoadingIndicator(
+              indicatorStyle: style,
+              status: status,
+              size: 46,
+              strokeWidth: 4,
+              style: LoadingStyle.material,
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          style.name,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.8,
+            color: Color(0xFF6B7280),
+          ),
+        ),
+      ],
     );
   }
 }

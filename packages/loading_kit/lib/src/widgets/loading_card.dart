@@ -3,8 +3,11 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import '../core/loading_state.dart';
+import '../theme/loading_indicator_builder.dart';
+import '../theme/loading_progress_style.dart';
 import '../theme/resolved_loading_style.dart';
 import 'loading_indicator.dart';
+import 'loading_progress_bar.dart';
 
 /// The panel holding the indicator, the text, and the cancel affordance.
 ///
@@ -32,22 +35,67 @@ class LoadingCard extends StatelessWidget {
   /// Label of the cancel affordance.
   final String cancelLabel;
 
+  /// Chooses between a custom indicator, a progress bar, and the built-in
+  /// circular form.
+  Widget _buildIndicator(BuildContext context) {
+    final LoadingIndicatorBuilder? builder = style.indicatorBuilder;
+    if (builder != null) {
+      return builder(
+        context,
+        LoadingIndicatorSpec(
+          status: state.status,
+          progress: state.progress,
+          size: style.indicatorSize,
+          color: style.indicatorColor,
+          trackColor: style.trackColor,
+          successColor: style.successColor,
+          errorColor: style.errorColor,
+          strokeWidth: style.indicatorStroke,
+        ),
+      );
+    }
+
+    final Widget circular = LoadingIndicator(
+      status: state.status,
+      progress: state.progress,
+      size: style.indicatorSize,
+      strokeWidth: style.indicatorStroke,
+      color: style.indicatorColor,
+      trackColor: style.trackColor,
+      successColor: style.successColor,
+      errorColor: style.errorColor,
+      glow: style.indicatorGlow,
+      indicatorStyle: style.indicatorStyle,
+    );
+
+    if (style.progressStyle != LoadingProgressStyle.bar) return circular;
+
+    // A bar cannot express success or failure, so the outcome still arrives as
+    // the glyph. Cross-fade rather than swap so the change reads as one move.
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 260),
+      child: state.status.isTerminal
+          ? circular
+          : LoadingProgressBar(
+              key: const ValueKey<String>('bar'),
+              progress: state.progress,
+              status: state.status,
+              color: style.indicatorColor,
+              trackColor: style.trackColor,
+              successColor: style.successColor,
+              errorColor: style.errorColor,
+              width: style.maxCardWidth - style.cardPadding.horizontal,
+              thickness: style.indicatorStroke * 1.6,
+            ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final Widget content = Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        LoadingIndicator(
-          status: state.status,
-          progress: state.progress,
-          size: style.indicatorSize,
-          strokeWidth: style.indicatorStroke,
-          color: style.indicatorColor,
-          trackColor: style.trackColor,
-          successColor: style.successColor,
-          errorColor: style.errorColor,
-          glow: style.indicatorGlow,
-        ),
+        _buildIndicator(context),
         if (state.message != null) ...<Widget>[
           SizedBox(height: style.spacing),
           Text(

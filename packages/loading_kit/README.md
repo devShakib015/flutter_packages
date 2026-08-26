@@ -118,7 +118,49 @@ await Loading.run(
 const LoadingIndicator(size: 48)
 LoadingIndicator(progress: 0.6)
 LoadingIndicator(status: LoadingStatus.success)
+LoadingIndicator(indicatorStyle: LoadingIndicatorStyle.ripple)
 ```
+
+### Toasts, for things that already happened
+
+Not everything deserves a scrim. A toast reports an outcome without blocking
+anything, and dismisses itself:
+
+```dart
+Loading.toast('Draft saved');
+Loading.toastSuccess('Order placed');
+Loading.toastError('Could not sync', detail: 'Retrying in the background');
+```
+
+Toasts never intercept input, stack up to three at a time, and reuse the
+resolved theme so they match the overlay.
+
+### Block one part of the screen, not all of it
+
+Blacking out the whole app for a form that saves in place is heavy-handed.
+`LoadingBarrier` scopes the overlay to a subtree — and still applies the
+timing policy, so a fast save flashes nothing:
+
+```dart
+LoadingBarrier(
+  loading: _saving,
+  message: 'Saving…',
+  borderRadius: BorderRadius.circular(16),
+  child: const ProfileForm(),
+)
+```
+
+### A bar instead of a ring
+
+For long operations a bar is easier to read at a glance — the difference
+between 60% and 70% is obvious in a line and subtle in a circle:
+
+```dart
+LoadingStyle.material.copyWith(progressStyle: LoadingProgressStyle.bar)
+```
+
+The outcome still arrives as the glyph, so a finished bar cross-fades to a
+check or a cross.
 
 ## Presets
 
@@ -135,6 +177,42 @@ light and dark both work with no configuration.
 | `neon` | Dark panel with a saturated, glowing indicator |
 
 ![The five presets](https://raw.githubusercontent.com/devShakib015/flutter_packages/HEAD/packages/loading_kit/doc/presets.gif)
+
+## Indicator styles
+
+Six indeterminate forms. Every one settles into the same check or cross, so
+the outcome reads identically no matter which spinner preceded it.
+
+![The six indicator styles](https://raw.githubusercontent.com/devShakib015/flutter_packages/HEAD/packages/loading_kit/doc/styles.gif)
+
+```dart
+LoadingStyle.material.copyWith(indicatorStyle: LoadingIndicatorStyle.bars)
+```
+
+`arc` · `dots` · `bars` · `orbit` · `pulse` · `ripple`
+
+Determinate work always draws as an arc or a bar regardless of this setting —
+no pulsing or bouncing form can express "62%".
+
+### Or bring your own
+
+The built-in shapes are optional. `indicatorBuilder` hands the whole slot to a
+widget of yours — a Lottie file, a Rive animation, your brand mark, or anything
+from another spinner package:
+
+```dart
+LoadingKit.builder(
+  style: LoadingStyle.material.copyWith(
+    indicatorBuilder: (context, spec) => SpinKitCubeGrid(
+      color: spec.statusColor,
+      size: spec.size,
+    ),
+  ),
+)
+```
+
+`spec` carries the resolved status, progress, size, colours and stroke width,
+so a custom indicator still tracks your theme.
 
 Override any token without leaving the preset:
 

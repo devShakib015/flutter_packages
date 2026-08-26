@@ -1,5 +1,9 @@
 import 'package:flutter/widgets.dart';
 
+import 'loading_indicator_builder.dart';
+import 'loading_indicator_style.dart';
+import 'loading_progress_style.dart';
+
 /// A fully-specified set of visual tokens, with no nulls left to resolve.
 ///
 /// Produced by `LoadingStyle.resolve` and consumed by the overlay widgets.
@@ -33,6 +37,9 @@ class ResolvedLoadingStyle {
     required this.enterCurve,
     required this.exitCurve,
     required this.enterScale,
+    this.indicatorStyle = LoadingIndicatorStyle.arc,
+    this.progressStyle = LoadingProgressStyle.ring,
+    this.indicatorBuilder,
   });
 
   /// Colour painted over the app behind the card.
@@ -115,6 +122,15 @@ class ResolvedLoadingStyle {
   /// Scale the card starts at when entering. 1.0 disables the scale.
   final double enterScale;
 
+  /// The indeterminate form the indicator takes.
+  final LoadingIndicatorStyle indicatorStyle;
+
+  /// How determinate progress is drawn.
+  final LoadingProgressStyle progressStyle;
+
+  /// Replaces the built-in indicator entirely, when set.
+  final LoadingIndicatorBuilder? indicatorBuilder;
+
   /// Returns a copy with the given tokens replaced.
   ResolvedLoadingStyle copyWith({
     Color? scrimColor,
@@ -142,6 +158,9 @@ class ResolvedLoadingStyle {
     Curve? enterCurve,
     Curve? exitCurve,
     double? enterScale,
+    LoadingIndicatorStyle? indicatorStyle,
+    LoadingProgressStyle? progressStyle,
+    LoadingIndicatorBuilder? indicatorBuilder,
   }) {
     return ResolvedLoadingStyle(
       scrimColor: scrimColor ?? this.scrimColor,
@@ -169,6 +188,9 @@ class ResolvedLoadingStyle {
       enterCurve: enterCurve ?? this.enterCurve,
       exitCurve: exitCurve ?? this.exitCurve,
       enterScale: enterScale ?? this.enterScale,
+      indicatorStyle: indicatorStyle ?? this.indicatorStyle,
+      progressStyle: progressStyle ?? this.progressStyle,
+      indicatorBuilder: indicatorBuilder ?? this.indicatorBuilder,
     );
   }
 }

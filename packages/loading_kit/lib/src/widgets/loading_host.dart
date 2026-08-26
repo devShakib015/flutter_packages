@@ -7,6 +7,7 @@ import '../core/loading_timing.dart';
 import '../theme/loading_style.dart';
 import 'loading_overlay.dart';
 import 'loading_scope.dart';
+import 'loading_toast_layer.dart';
 
 /// Installs a [LoadingController] and paints its overlay above [child].
 ///
@@ -24,6 +25,7 @@ class LoadingHost extends StatefulWidget {
     this.busySemanticsLabel = 'Busy',
     this.registerGlobal = true,
     this.trapFocus = true,
+    this.toastAlignment = Alignment.bottomCenter,
   });
 
   /// The app, or the subtree this overlay covers.
@@ -59,6 +61,9 @@ class LoadingHost extends StatefulWidget {
   /// reach buttons underneath the scrim — the overlay would look blocking
   /// without being blocking.
   final bool trapFocus;
+
+  /// Where transient messages stack.
+  final Alignment toastAlignment;
 
   @override
   State<LoadingHost> createState() => _LoadingHostState();
@@ -133,6 +138,14 @@ class _LoadingHostState extends State<LoadingHost> {
             cancelLabel: widget.cancelLabel,
             busySemanticsLabel: widget.busySemanticsLabel,
           ),
+          // Above the overlay: a toast reports something that already
+          // happened, and stays readable even while the app is blocked. It
+          // never intercepts input.
+          LoadingToastLayer(
+            controller: _controller,
+            style: widget.style,
+            alignment: widget.toastAlignment,
+          ),
         ],
       ),
     );
@@ -163,6 +176,7 @@ abstract final class LoadingKit {
     String busySemanticsLabel = 'Busy',
     bool registerGlobal = true,
     bool trapFocus = true,
+    Alignment toastAlignment = Alignment.bottomCenter,
   }) {
     return (BuildContext context, Widget? child) => LoadingHost(
       controller: controller,

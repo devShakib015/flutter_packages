@@ -22,6 +22,7 @@ build() {
 }
 
 build antiflicker 760 128
+build styles      560 128
 build presets     420 128
 build morph       360 64
 
