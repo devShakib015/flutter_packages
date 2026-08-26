@@ -24,6 +24,12 @@ jobs:
       - name: Test apple_foundation_models
         run: flutter test
         working-directory: packages/apple_foundation_models
+      - name: Test fit_text
+        run: flutter test
+        working-directory: packages/fit_text
+      - name: Publish dry run (fit_text)
+        run: flutter pub publish --dry-run
+        working-directory: packages/fit_text
       - name: Publish dry run (loading_kit)
         run: flutter pub publish --dry-run
         working-directory: packages/loading_kit

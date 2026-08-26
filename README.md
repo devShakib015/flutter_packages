@@ -7,6 +7,7 @@ lockfile, one `.dart_tool`, members resolved by path.
 | --- | --- |
 | [loading_kit](packages/loading_kit) | A blocking-async overlay that never flickers |
 | [apple_foundation_models](packages/apple_foundation_models) | Run Apple's on-device language model from Flutter |
+| [fit_text](packages/fit_text) | Text that shrinks to fit, including inside `IntrinsicHeight` and `Table` |
 
 ```bash
 flutter pub get

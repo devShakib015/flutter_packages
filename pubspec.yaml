@@ -13,6 +13,8 @@ workspace:
   - packages/loading_kit/example
   - packages/apple_foundation_models
   - packages/apple_foundation_models/example
+  - packages/fit_text
+  - packages/fit_text/example
 
 dev_dependencies:
   flutter_lints: ^6.0.0

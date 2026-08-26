@@ -1,0 +1,15 @@
+## 0.1.0
+
+Initial release.
+
+- `FitText` and `FitText.rich` shrink text to the largest size that fits,
+  fitting inside a render object rather than a `LayoutBuilder`.
+- Works inside `IntrinsicHeight`, `IntrinsicWidth`, `Table` cells and baseline
+  alignment, all of which measure children before laying them out and so throw
+  for `LayoutBuilder`-based auto-sizing.
+- `FitTextGroup` makes several labels settle on one shared size.
+- `minFontSize`, `maxFontSize`, `stepGranularity`, and `presetFontSizes` for
+  staying on a type scale.
+- Both constructors are `const`, like `Text`.
+- Bisection over the candidate range: roughly six text layouts for the
+  defaults rather than dozens.
