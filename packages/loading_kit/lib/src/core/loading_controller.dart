@@ -34,11 +34,27 @@ import 'loading_toast.dart';
 /// cannot strand another mid-flight.
 class LoadingController extends ValueNotifier<LoadingState> {
   /// Creates a controller with a default [timing] policy for its operations.
-  LoadingController({this.timing = const LoadingTiming()})
-    : super(LoadingState.idle);
+  LoadingController({
+    this.timing = const LoadingTiming(),
+    this.toastExitDuration = const Duration(milliseconds: 220),
+    this.defaultToastDuration = const Duration(seconds: 3),
+    this.maxVisibleToasts = 3,
+  }) : super(LoadingState.idle);
 
   /// The timing policy applied to operations that do not override it.
   final LoadingTiming timing;
+
+  /// How long a toast takes to animate out once dismissed.
+  ///
+  /// The toast stays in the list for this long so its exit can play; keep it
+  /// in step with `LoadingToastStyle.enterDuration`.
+  final Duration toastExitDuration;
+
+  /// How long a toast stays on screen when [toast] is called without one.
+  final Duration defaultToastDuration;
+
+  /// The most toasts shown at once. Older ones are retired to make room.
+  final int maxVisibleToasts;
 
   final List<LoadingOperation> _operations = <LoadingOperation>[];
   final ValueNotifier<List<LoadingToast>> _toasts =
@@ -46,15 +62,6 @@ class LoadingController extends ValueNotifier<LoadingState> {
   final Map<Object, Timer> _toastTimers = <Object, Timer>{};
   int _toastSequence = 0;
   bool _disposed = false;
-
-  /// How long a toast takes to animate out once dismissed.
-  static const Duration toastExitDuration = Duration(milliseconds: 220);
-
-  /// The default time a toast stays on screen.
-  static const Duration defaultToastDuration = Duration(seconds: 3);
-
-  /// The most toasts shown at once. Older ones are retired to make room.
-  static const int maxVisibleToasts = 3;
 
   /// The transient messages currently on screen.
   ValueListenable<List<LoadingToast>> get toasts => _toasts;
@@ -343,7 +350,7 @@ class LoadingController extends ValueNotifier<LoadingState> {
     String message, {
     String? detail,
     LoadingStatus? status,
-    Duration duration = defaultToastDuration,
+    Duration? duration,
   }) {
     final Object id = ++_toastSequence;
     final List<LoadingToast> next = <LoadingToast>[
@@ -360,7 +367,10 @@ class LoadingController extends ValueNotifier<LoadingState> {
       next.removeWhere((LoadingToast t) => t.id == oldest.id);
     }
     _toasts.value = next;
-    _toastTimers[id] = Timer(duration, () => dismissToast(id));
+    _toastTimers[id] = Timer(
+      duration ?? defaultToastDuration,
+      () => dismissToast(id),
+    );
     return id;
   }
 

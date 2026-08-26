@@ -2,7 +2,9 @@ import 'package:flutter/widgets.dart';
 
 import 'loading_indicator_builder.dart';
 import 'loading_indicator_style.dart';
+import 'loading_motion.dart';
 import 'loading_progress_style.dart';
+import 'loading_toast_style.dart';
 
 /// A fully-specified set of visual tokens, with no nulls left to resolve.
 ///
@@ -40,6 +42,15 @@ class ResolvedLoadingStyle {
     this.indicatorStyle = LoadingIndicatorStyle.arc,
     this.progressStyle = LoadingProgressStyle.ring,
     this.indicatorBuilder,
+    this.motion = LoadingMotion.standard,
+    this.toast = const LoadingToastStyle(),
+    this.cardMinWidth = 132,
+    this.textGap = 4,
+    this.cancelMinimumSize = const Size(64, 40),
+    this.cancelPadding = const EdgeInsets.symmetric(
+      horizontal: 16,
+      vertical: 8,
+    ),
   });
 
   /// Colour painted over the app behind the card.
@@ -131,6 +142,24 @@ class ResolvedLoadingStyle {
   /// Replaces the built-in indicator entirely, when set.
   final LoadingIndicatorBuilder? indicatorBuilder;
 
+  /// How fast the indicator animates.
+  final LoadingMotion motion;
+
+  /// Appearance of transient messages.
+  final LoadingToastStyle toast;
+
+  /// Minimum card width once there is text to show.
+  final double cardMinWidth;
+
+  /// Gap between the message and the detail line.
+  final double textGap;
+
+  /// Minimum tap target of the cancel affordance.
+  final Size cancelMinimumSize;
+
+  /// Padding of the cancel affordance.
+  final EdgeInsets cancelPadding;
+
   /// Returns a copy with the given tokens replaced.
   ResolvedLoadingStyle copyWith({
     Color? scrimColor,
@@ -161,6 +190,12 @@ class ResolvedLoadingStyle {
     LoadingIndicatorStyle? indicatorStyle,
     LoadingProgressStyle? progressStyle,
     LoadingIndicatorBuilder? indicatorBuilder,
+    LoadingMotion? motion,
+    LoadingToastStyle? toast,
+    double? cardMinWidth,
+    double? textGap,
+    Size? cancelMinimumSize,
+    EdgeInsets? cancelPadding,
   }) {
     return ResolvedLoadingStyle(
       scrimColor: scrimColor ?? this.scrimColor,
@@ -191,6 +226,12 @@ class ResolvedLoadingStyle {
       indicatorStyle: indicatorStyle ?? this.indicatorStyle,
       progressStyle: progressStyle ?? this.progressStyle,
       indicatorBuilder: indicatorBuilder ?? this.indicatorBuilder,
+      motion: motion ?? this.motion,
+      toast: toast ?? this.toast,
+      cardMinWidth: cardMinWidth ?? this.cardMinWidth,
+      textGap: textGap ?? this.textGap,
+      cancelMinimumSize: cancelMinimumSize ?? this.cancelMinimumSize,
+      cancelPadding: cancelPadding ?? this.cancelPadding,
     );
   }
 }

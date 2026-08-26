@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 
 import 'loading_indicator_builder.dart';
 import 'loading_indicator_style.dart';
+import 'loading_motion.dart';
 import 'loading_preset.dart';
 import 'loading_progress_style.dart';
+import 'loading_toast_style.dart';
 import 'resolved_loading_style.dart';
 
 /// A premium easing curve with a long, decelerating tail.
@@ -61,6 +63,12 @@ class LoadingStyle {
     this.indicatorStyle,
     this.progressStyle,
     this.indicatorBuilder,
+    this.motion,
+    this.toast,
+    this.cardMinWidth,
+    this.textGap,
+    this.cancelMinimumSize,
+    this.cancelPadding,
   });
 
   /// Cupertino on Apple platforms, Material elsewhere. The default.
@@ -174,6 +182,24 @@ class LoadingStyle {
   /// Replaces the built-in indicator with a widget of your own.
   final LoadingIndicatorBuilder? indicatorBuilder;
 
+  /// Overrides [ResolvedLoadingStyle.motion].
+  final LoadingMotion? motion;
+
+  /// Overrides [ResolvedLoadingStyle.toast].
+  final LoadingToastStyle? toast;
+
+  /// Overrides [ResolvedLoadingStyle.cardMinWidth].
+  final double? cardMinWidth;
+
+  /// Overrides [ResolvedLoadingStyle.textGap].
+  final double? textGap;
+
+  /// Overrides [ResolvedLoadingStyle.cancelMinimumSize].
+  final Size? cancelMinimumSize;
+
+  /// Overrides [ResolvedLoadingStyle.cancelPadding].
+  final EdgeInsets? cancelPadding;
+
   /// Returns a copy with the given fields replaced.
   LoadingStyle copyWith({
     LoadingPreset? preset,
@@ -205,6 +231,12 @@ class LoadingStyle {
     LoadingIndicatorStyle? indicatorStyle,
     LoadingProgressStyle? progressStyle,
     LoadingIndicatorBuilder? indicatorBuilder,
+    LoadingMotion? motion,
+    LoadingToastStyle? toast,
+    double? cardMinWidth,
+    double? textGap,
+    Size? cancelMinimumSize,
+    EdgeInsets? cancelPadding,
   }) {
     return LoadingStyle(
       preset: preset ?? this.preset,
@@ -236,6 +268,12 @@ class LoadingStyle {
       indicatorStyle: indicatorStyle ?? this.indicatorStyle,
       progressStyle: progressStyle ?? this.progressStyle,
       indicatorBuilder: indicatorBuilder ?? this.indicatorBuilder,
+      motion: motion ?? this.motion,
+      toast: toast ?? this.toast,
+      cardMinWidth: cardMinWidth ?? this.cardMinWidth,
+      textGap: textGap ?? this.textGap,
+      cancelMinimumSize: cancelMinimumSize ?? this.cancelMinimumSize,
+      cancelPadding: cancelPadding ?? this.cancelPadding,
     );
   }
 
@@ -297,6 +335,12 @@ class LoadingStyle {
       indicatorStyle: indicatorStyle,
       progressStyle: progressStyle,
       indicatorBuilder: indicatorBuilder,
+      motion: motion,
+      toast: toast,
+      cardMinWidth: cardMinWidth,
+      textGap: textGap,
+      cancelMinimumSize: cancelMinimumSize,
+      cancelPadding: cancelPadding,
     );
   }
 

@@ -4,12 +4,6 @@ import 'package:flutter/material.dart';
 
 import '../core/loading_status.dart';
 
-/// One sweep of the indeterminate bar.
-const Duration _kSweepPeriod = Duration(milliseconds: 1400);
-
-/// How long the bar takes to catch up to a new progress value.
-const Duration _kFillDuration = Duration(milliseconds: 340);
-
 /// A horizontal progress bar, determinate or indeterminate.
 ///
 /// Used by the overlay when the resolved style asks for
@@ -29,6 +23,8 @@ class LoadingProgressBar extends StatefulWidget {
     this.errorColor,
     this.width = 200,
     this.thickness = 6,
+    this.sweepPeriod = const Duration(milliseconds: 1400),
+    this.fillDuration = const Duration(milliseconds: 340),
   });
 
   /// Determinate progress from 0.0 to 1.0, or null to sweep indeterminately.
@@ -55,6 +51,12 @@ class LoadingProgressBar extends StatefulWidget {
   /// Height of the bar.
   final double thickness;
 
+  /// One full sweep of the indeterminate bar.
+  final Duration sweepPeriod;
+
+  /// How long the bar takes to catch up to a new progress value.
+  final Duration fillDuration;
+
   @override
   State<LoadingProgressBar> createState() => _LoadingProgressBarState();
 }
@@ -63,11 +65,11 @@ class _LoadingProgressBarState extends State<LoadingProgressBar>
     with TickerProviderStateMixin {
   late final AnimationController _sweep = AnimationController(
     vsync: this,
-    duration: _kSweepPeriod,
+    duration: widget.sweepPeriod,
   );
   late final AnimationController _fill = AnimationController(
     vsync: this,
-    duration: _kFillDuration,
+    duration: widget.fillDuration,
   );
   Animation<double>? _fillAnimation;
   late final Listenable _repaint = Listenable.merge(<Listenable>[
@@ -87,6 +89,11 @@ class _LoadingProgressBarState extends State<LoadingProgressBar>
   @override
   void didUpdateWidget(LoadingProgressBar old) {
     super.didUpdateWidget(old);
+    _sweep.duration = widget.sweepPeriod;
+    _fill.duration = widget.fillDuration;
+    if (widget.sweepPeriod != old.sweepPeriod && _sweep.isAnimating) {
+      _sweep.repeat();
+    }
     final bool shouldSweep =
         widget.progress == null && !widget.status.isTerminal;
     if (shouldSweep && !_sweep.isAnimating) {

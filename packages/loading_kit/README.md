@@ -240,6 +240,40 @@ LoadingKit.builder(
 `LoadingTiming.instant` disables both rules, and `LoadingTiming.relaxed` waits
 longer before committing for operations you expect to be slow.
 
+### Animation speed
+
+`LoadingTiming` decides *when* the overlay appears and leaves. `LoadingMotion`
+decides how fast the thing on screen moves once it is there:
+
+```dart
+LoadingStyle.material.copyWith(motion: LoadingMotion.calm)
+
+LoadingStyle.material.copyWith(
+  motion: const LoadingMotion(spinPeriod: Duration(seconds: 2)),
+)
+```
+
+`standard`, `brisk` and `calm` are built in. Changing motion is purely
+cosmetic — it cannot affect the anti-flicker guarantees, which live in
+`LoadingTiming`.
+
+### Nothing is hardcoded
+
+Every constant is a token, and all of them layer on top of any preset:
+
+| Group | Tokens |
+| --- | --- |
+| Scrim | `scrimColor`, `backdropBlur` |
+| Card | `showCard`, `cardColor`, `cardBorderColor`, `cardBorderWidth`, `cardRadius`, `cardShadow`, `cardPadding`, `cardMinWidth`, `maxCardWidth` |
+| Indicator | `indicatorStyle`, `indicatorSize`, `indicatorStroke`, `indicatorColor`, `trackColor`, `successColor`, `errorColor`, `indicatorGlow`, `indicatorBuilder` |
+| Progress | `progressStyle` |
+| Text | `messageStyle`, `detailStyle`, `cancelStyle`, `textGap` |
+| Cancel | `cancelMinimumSize`, `cancelPadding` |
+| Layout | `spacing`, `alignment` |
+| Transition | `enterCurve`, `exitCurve`, `enterScale` |
+| Motion | `motion` — 5 durations |
+| Toasts | `toast` — 7 metrics, plus `toastExitDuration`, `defaultToastDuration` and `maxVisibleToasts` on the controller |
+
 ## What it handles that a `bool` does not
 
 - **Reference counting.** Two concurrent calls stack. The overlay leaves when

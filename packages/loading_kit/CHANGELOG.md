@@ -1,3 +1,30 @@
+## 0.2.0
+
+Everything is now a token. Nothing about the indicator, the card, or the
+toasts is hardcoded any more.
+
+### Added
+- `LoadingMotion` controls animation speed: `spinPeriod`, `morphDuration`,
+  `progressDuration`, `barSweepPeriod`, `crossFadeDuration`. Ships with
+  `standard`, `brisk` and `calm` profiles.
+- `LoadingToastStyle` controls toast chrome: padding, radius, icon size and
+  stroke, gaps, enter duration.
+- Card metrics as tokens: `cardMinWidth`, `textGap`, `cancelMinimumSize`,
+  `cancelPadding`.
+- `LoadingProgressBar` takes `sweepPeriod` and `fillDuration` directly.
+- `LoadingController` takes `toastExitDuration`, `defaultToastDuration` and
+  `maxVisibleToasts`.
+
+### Fixed
+- A `cardMinWidth` above `maxCardWidth` produced non-normalized constraints and
+  threw. The pair is now clamped, since both come from the caller.
+
+### Breaking
+- `LoadingController.toastExitDuration`, `defaultToastDuration` and
+  `maxVisibleToasts` moved from statics to instance fields set on the
+  constructor. The `duration` argument to `toast` is now nullable and falls
+  back to the controller's own default.
+
 ## 0.1.0
 
 Initial release.

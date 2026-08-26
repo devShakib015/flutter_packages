@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -73,7 +74,7 @@ class LoadingCard extends StatelessWidget {
     // A bar cannot express success or failure, so the outcome still arrives as
     // the glyph. Cross-fade rather than swap so the change reads as one move.
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 260),
+      duration: style.motion.crossFadeDuration,
       child: state.status.isTerminal
           ? circular
           : LoadingProgressBar(
@@ -86,6 +87,8 @@ class LoadingCard extends StatelessWidget {
               errorColor: style.errorColor,
               width: style.maxCardWidth - style.cardPadding.horizontal,
               thickness: style.indicatorStroke * 1.6,
+              sweepPeriod: style.motion.barSweepPeriod,
+              fillDuration: style.motion.progressDuration,
             ),
     );
   }
@@ -105,7 +108,7 @@ class LoadingCard extends StatelessWidget {
           ),
         ],
         if (state.detail != null) ...<Widget>[
-          const SizedBox(height: 4),
+          SizedBox(height: style.textGap),
           Text(
             state.detail!,
             textAlign: TextAlign.center,
@@ -117,6 +120,8 @@ class LoadingCard extends StatelessWidget {
           _CancelButton(
             label: cancelLabel,
             style: style.cancelStyle,
+            minimumSize: style.cancelMinimumSize,
+            padding: style.cancelPadding,
             onPressed: onCancel!,
           ),
         ],
@@ -133,7 +138,12 @@ class LoadingCard extends StatelessWidget {
     final Widget card = Container(
       constraints: BoxConstraints(
         maxWidth: style.maxCardWidth,
-        minWidth: state.hasText ? 132 : 0,
+        // Clamped: cardMinWidth and maxCardWidth are both caller-supplied, and
+        // a minimum above the maximum is non-normalized constraints, which
+        // throws rather than degrading.
+        minWidth: state.hasText
+            ? math.min(style.cardMinWidth, style.maxCardWidth)
+            : 0,
       ),
       padding: style.cardPadding,
       decoration: BoxDecoration(
@@ -171,11 +181,15 @@ class _CancelButton extends StatelessWidget {
   const _CancelButton({
     required this.label,
     required this.style,
+    required this.minimumSize,
+    required this.padding,
     required this.onPressed,
   });
 
   final String label;
   final TextStyle style;
+  final Size minimumSize;
+  final EdgeInsets padding;
   final VoidCallback onPressed;
 
   @override
@@ -185,8 +199,8 @@ class _CancelButton extends StatelessWidget {
       child: TextButton(
         onPressed: onPressed,
         style: TextButton.styleFrom(
-          minimumSize: const Size(64, 40),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          minimumSize: minimumSize,
+          padding: padding,
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           foregroundColor: style.color,
         ),

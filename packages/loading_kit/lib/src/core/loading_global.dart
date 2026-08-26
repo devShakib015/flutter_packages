@@ -133,7 +133,7 @@ abstract final class Loading {
     String message, {
     String? detail,
     LoadingStatus? status,
-    Duration duration = LoadingController.defaultToastDuration,
+    Duration? duration,
   }) => instance.toast(
     message,
     detail: detail,
@@ -145,7 +145,7 @@ abstract final class Loading {
   static Object toastSuccess(
     String message, {
     String? detail,
-    Duration duration = LoadingController.defaultToastDuration,
+    Duration? duration,
   }) => instance.toast(
     message,
     detail: detail,
@@ -157,7 +157,7 @@ abstract final class Loading {
   static Object toastError(
     String message, {
     String? detail,
-    Duration duration = LoadingController.defaultToastDuration,
+    Duration? duration,
   }) => instance.toast(
     message,
     detail: detail,

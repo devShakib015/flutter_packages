@@ -245,6 +245,8 @@ void main() {
     });
   });
 
+  group('configurability', _configurability);
+
   group('indicator styles', () {
     testWidgets('every style renders and animates', (
       WidgetTester tester,
@@ -267,5 +269,118 @@ void main() {
         await tester.pumpWidget(const SizedBox.shrink());
       }
     });
+  });
+}
+
+/// Configurability: every hardcoded constant that used to be baked in.
+void _configurability() {
+  testWidgets('spinPeriod actually retimes the indicator', (
+    WidgetTester tester,
+  ) async {
+    Future<double> advanceBy(LoadingMotion motion, Duration step) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Material(
+            child: Center(
+              child: LoadingIndicator(
+                style: LoadingStyle.material.copyWith(motion: motion),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump(step);
+      final CustomPaint paint = tester.widget<CustomPaint>(
+        find.descendant(
+          of: find.byType(LoadingIndicator),
+          matching: find.byType(CustomPaint),
+        ),
+      );
+      final double spin = (paint.painter! as dynamic).spin as double;
+      await tester.pumpWidget(const SizedBox.shrink());
+      return spin;
+    }
+
+    const Duration step = Duration(milliseconds: 300);
+    final double fast = await advanceBy(LoadingMotion.brisk, step);
+    final double slow = await advanceBy(LoadingMotion.calm, step);
+
+    // Same elapsed time, different cycle lengths, so a brisk profile must be
+    // further round its cycle than a calm one.
+    expect(
+      fast,
+      greaterThan(slow),
+      reason: 'spinPeriod must actually change the cadence',
+    );
+  });
+
+  testWidgets('toast lifecycle constants are per-controller', (
+    WidgetTester tester,
+  ) async {
+    final LoadingController controller = LoadingController(
+      maxVisibleToasts: 1,
+      defaultToastDuration: const Duration(milliseconds: 400),
+      toastExitDuration: const Duration(milliseconds: 50),
+    );
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: LoadingKit.builder(
+          controller: controller,
+          registerGlobal: false,
+        ),
+        home: const Scaffold(body: SizedBox()),
+      ),
+    );
+
+    controller.toast('first');
+    controller.toast('second');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('first'), findsNothing, reason: 'maxVisibleToasts: 1');
+    expect(find.text('second'), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(
+      find.text('second'),
+      findsNothing,
+      reason: 'defaultToastDuration is honoured',
+    );
+  });
+
+  testWidgets('card metrics come from tokens', (WidgetTester tester) async {
+    final LoadingController controller = LoadingController(
+      timing: LoadingTiming.instant,
+    );
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: LoadingKit.builder(
+          controller: controller,
+          registerGlobal: false,
+          style: LoadingStyle.material.copyWith(
+            cardMinWidth: 300,
+            maxCardWidth: 340,
+          ),
+        ),
+        home: const Scaffold(body: SizedBox()),
+      ),
+    );
+
+    controller.show(message: 'x');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(
+      tester.getSize(find.byType(LoadingCard)).width,
+      greaterThanOrEqualTo(300.0),
+    );
+
+    await controller.dismissAll(immediate: true);
+    await tester.pump(const Duration(milliseconds: 400));
   });
 }

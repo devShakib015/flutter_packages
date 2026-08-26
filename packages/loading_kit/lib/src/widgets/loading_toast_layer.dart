@@ -55,6 +55,7 @@ class LoadingToastLayer extends StatelessWidget {
                         key: ValueKey<Object>(toast.id),
                         toast: toast,
                         style: resolved,
+                        exitDuration: controller.toastExitDuration,
                       ),
                   ],
                 ),
@@ -68,10 +69,16 @@ class LoadingToastLayer extends StatelessWidget {
 }
 
 class _ToastChip extends StatefulWidget {
-  const _ToastChip({super.key, required this.toast, required this.style});
+  const _ToastChip({
+    super.key,
+    required this.toast,
+    required this.style,
+    required this.exitDuration,
+  });
 
   final LoadingToast toast;
   final ResolvedLoadingStyle style;
+  final Duration exitDuration;
 
   @override
   State<_ToastChip> createState() => _ToastChipState();
@@ -81,8 +88,8 @@ class _ToastChipState extends State<_ToastChip>
     with SingleTickerProviderStateMixin {
   late final AnimationController _reveal = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 260),
-    reverseDuration: LoadingController.toastExitDuration,
+    duration: widget.style.toast.enterDuration,
+    reverseDuration: widget.exitDuration,
   );
 
   @override
@@ -121,15 +128,19 @@ class _ToastChipState extends State<_ToastChip>
         );
       },
       child: Padding(
-        padding: const EdgeInsets.only(top: 8),
+        padding: EdgeInsets.only(top: style.toast.gap),
         child: Container(
           constraints: BoxConstraints(maxWidth: style.maxCardWidth),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: style.toast.padding,
           decoration: BoxDecoration(
             color: style.cardColor,
-            borderRadius: BorderRadius.circular(
-              style.cardRadius.topLeft.x.clamp(12.0, 22.0),
-            ),
+            // Falls back to a toned-down card radius: a chip wants a tighter
+            // corner than a full card, but should still feel related to it.
+            borderRadius:
+                style.toast.radius ??
+                BorderRadius.circular(
+                  style.cardRadius.topLeft.x.clamp(12.0, 22.0),
+                ),
             border: style.cardBorderColor == null
                 ? null
                 : Border.all(
@@ -144,14 +155,14 @@ class _ToastChipState extends State<_ToastChip>
               if (status != null) ...<Widget>[
                 LoadingIndicator(
                   status: status,
-                  size: 20,
-                  strokeWidth: 2.2,
+                  size: style.toast.iconSize,
+                  strokeWidth: style.toast.iconStroke,
                   color: style.indicatorColor,
                   trackColor: const Color(0x00000000),
                   successColor: style.successColor,
                   errorColor: style.errorColor,
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: style.toast.iconGap),
               ],
               Flexible(
                 child: Column(

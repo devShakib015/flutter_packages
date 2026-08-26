@@ -3,17 +3,9 @@ import 'package:flutter/material.dart';
 import '../core/loading_status.dart';
 import '../painting/loading_indicator_painter.dart';
 import '../theme/loading_indicator_style.dart';
+import '../theme/loading_motion.dart';
 import '../theme/loading_style.dart';
 import '../theme/resolved_loading_style.dart';
-
-/// One rotation cycle of the indeterminate spinner.
-const Duration _kSpinPeriod = Duration(milliseconds: 1333);
-
-/// How long the spinner takes to settle into a check or cross.
-const Duration _kMorphDuration = Duration(milliseconds: 620);
-
-/// How long a change in determinate progress takes to catch up.
-const Duration _kProgressDuration = Duration(milliseconds: 340);
 
 /// The spinner, progress arc, and success and error glyphs, as one widget.
 ///
@@ -88,40 +80,53 @@ class LoadingIndicator extends StatefulWidget {
 
 class _LoadingIndicatorState extends State<LoadingIndicator>
     with TickerProviderStateMixin {
-  late final AnimationController _spin = AnimationController(
-    vsync: this,
-    duration: _kSpinPeriod,
-  );
-  late final AnimationController _morph = AnimationController(
-    vsync: this,
-    duration: _kMorphDuration,
-  );
-  late final AnimationController _progress = AnimationController(
-    vsync: this,
-    duration: _kProgressDuration,
-  );
+  late final AnimationController _spin = AnimationController(vsync: this);
+  late final AnimationController _morph = AnimationController(vsync: this);
+  late final AnimationController _progress = AnimationController(vsync: this);
 
   Animation<double>? _progressAnimation;
   late Listenable _repaint;
   ResolvedLoadingStyle? _resolved;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _resolved = (widget.style ?? LoadingStyle.adaptive).resolve(context);
-  }
+  LoadingMotion? _appliedMotion;
 
   @override
   void initState() {
     super.initState();
     _repaint = Listenable.merge(<Listenable>[_spin, _morph, _progress]);
-    if (widget.status.isTerminal) {
-      _morph.value = 1;
-    } else {
-      _spin.repeat();
-    }
     if (widget.progress != null) {
       _progressAnimation = AlwaysStoppedAnimation<double>(widget.progress!);
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _resolve();
+  }
+
+  void _resolve() {
+    _resolved = (widget.style ?? LoadingStyle.adaptive).resolve(context);
+    _applyMotion();
+  }
+
+  /// Pushes the resolved motion profile onto the controllers.
+  ///
+  /// Changing an [AnimationController]'s duration mid-cycle does not retime a
+  /// repeat already in flight, so a changed profile restarts the spin.
+  void _applyMotion() {
+    final LoadingMotion motion = _resolved!.motion;
+    final bool changed = _appliedMotion != null && _appliedMotion != motion;
+    _appliedMotion = motion;
+
+    _spin.duration = motion.spinPeriod;
+    _morph.duration = motion.morphDuration;
+    _progress.duration = motion.progressDuration;
+
+    if (widget.status.isTerminal) {
+      if (_morph.isDismissed) _morph.value = 1;
+      _spin.stop();
+    } else if (!_spin.isAnimating || changed) {
+      _spin.repeat();
     }
   }
 
@@ -142,9 +147,7 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
     }
 
     if (widget.progress != old.progress) _retargetProgress(old.progress);
-    if (widget.style != old.style) {
-      _resolved = (widget.style ?? LoadingStyle.adaptive).resolve(context);
-    }
+    if (widget.style != old.style) _resolve();
   }
 
   void _retargetProgress(double? previous) {
