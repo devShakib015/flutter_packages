@@ -32,6 +32,11 @@ final Animatable<int> _kStepTween = StepTween(begin: 0, end: _kPathCount);
 /// Paints the spinner, the determinate arc, and the success and error glyphs
 /// as one continuous form.
 ///
+/// The painter snapshots its animation values, so a fresh instance is built
+/// per frame by an [AnimatedBuilder]. It deliberately does not take a
+/// `repaint` listenable: that would re-run [paint] against stale fields and
+/// freeze the arc.
+///
 /// The whole indicator is a single painter on purpose. Swapping a spinner
 /// widget for a check-mark widget is what makes most loading packages feel
 /// disjointed: the arc vanishes and an unrelated icon pops in. Here the arc
@@ -52,7 +57,6 @@ class MorphIndicatorPainter extends CustomPainter {
     required this.errorColor,
     required this.strokeWidth,
     required this.glow,
-    super.repaint,
   });
 
   /// The indeterminate cycle position, 0.0 to 1.0, wrapping continuously.

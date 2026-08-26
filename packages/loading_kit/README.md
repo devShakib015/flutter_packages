@@ -14,7 +14,7 @@ final user = await Loading.run(
 );
 ```
 
-![The same 80ms request, then the same 1.2s request, with and without loading_kit](https://raw.githubusercontent.com/devShakib015/flutter_packages/main/packages/loading_kit/doc/antiflicker.gif)
+![The same 80ms request, then the same 1.2s request, with and without loading_kit](https://raw.githubusercontent.com/devShakib015/flutter_packages/HEAD/packages/loading_kit/doc/antiflicker.gif)
 
 *Left: a bool and a Stack. Right: loading_kit. Same requests, fired at the same moment.*
 
@@ -134,7 +134,7 @@ light and dark both work with no configuration.
 | `minimal` | Indicator only on a soft scrim — cheapest to paint |
 | `neon` | Dark panel with a saturated, glowing indicator |
 
-![The five presets](https://raw.githubusercontent.com/devShakib015/flutter_packages/main/packages/loading_kit/doc/presets.gif)
+![The five presets](https://raw.githubusercontent.com/devShakib015/flutter_packages/HEAD/packages/loading_kit/doc/presets.gif)
 
 Override any token without leaving the preset:
 
@@ -184,7 +184,7 @@ longer before committing for operations you expect to be slow.
   and strokes the glyph on inside it — rather than swapping one widget for an
   unrelated one.
 
-  ![The arc closing into a check, then a cross](https://raw.githubusercontent.com/devShakib015/flutter_packages/main/packages/loading_kit/doc/morph.gif)
+  ![The arc closing into a check, then a cross](https://raw.githubusercontent.com/devShakib015/flutter_packages/HEAD/packages/loading_kit/doc/morph.gif)
 
 ## Performance
 

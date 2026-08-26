@@ -95,6 +95,13 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
 
   Animation<double>? _progressAnimation;
   late Listenable _repaint;
+  ResolvedLoadingStyle? _resolved;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _resolved = (widget.style ?? LoadingStyle.adaptive).resolve(context);
+  }
 
   @override
   void initState() {
@@ -127,6 +134,9 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
     }
 
     if (widget.progress != old.progress) _retargetProgress(old.progress);
+    if (widget.style != old.style) {
+      _resolved = (widget.style ?? LoadingStyle.adaptive).resolve(context);
+    }
   }
 
   void _retargetProgress(double? previous) {
@@ -154,26 +164,27 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
 
   @override
   Widget build(BuildContext context) {
-    final ResolvedLoadingStyle resolved =
-        (widget.style ?? LoadingStyle.adaptive).resolve(context);
+    final ResolvedLoadingStyle resolved = _resolved!;
     final double size = widget.size ?? resolved.indicatorSize;
 
     return RepaintBoundary(
       child: SizedBox.square(
         dimension: size,
-        child: CustomPaint(
-          painter: MorphIndicatorPainter(
-            spin: _spin.value,
-            morph: _morph.value,
-            status: widget.status,
-            progress: _progressAnimation?.value,
-            color: widget.color ?? resolved.indicatorColor,
-            trackColor: widget.trackColor ?? resolved.trackColor,
-            successColor: widget.successColor ?? resolved.successColor,
-            errorColor: widget.errorColor ?? resolved.errorColor,
-            strokeWidth: widget.strokeWidth ?? resolved.indicatorStroke,
-            glow: widget.glow ?? resolved.indicatorGlow,
-            repaint: _repaint,
+        child: AnimatedBuilder(
+          animation: _repaint,
+          builder: (BuildContext context, Widget? _) => CustomPaint(
+            painter: MorphIndicatorPainter(
+              spin: _spin.value,
+              morph: _morph.value,
+              status: widget.status,
+              progress: _progressAnimation?.value,
+              color: widget.color ?? resolved.indicatorColor,
+              trackColor: widget.trackColor ?? resolved.trackColor,
+              successColor: widget.successColor ?? resolved.successColor,
+              errorColor: widget.errorColor ?? resolved.errorColor,
+              strokeWidth: widget.strokeWidth ?? resolved.indicatorStroke,
+              glow: widget.glow ?? resolved.indicatorGlow,
+            ),
           ),
         ),
       ),

@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'loading_preset.dart';
@@ -218,9 +219,34 @@ class LoadingStyle {
   }
 
   /// Resolves every token against [context], applying overrides last.
+  ///
+  /// Resolution is not free — prefer caching the result across frames rather
+  /// than calling this from a build method that runs per frame.
   ResolvedLoadingStyle resolve(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final ResolvedLoadingStyle base = _baseFor(_effectivePreset(theme), theme);
+
+    // A CupertinoApp has no Material Theme ancestor, so Theme.of hands back a
+    // fallback that is always light — a dark Cupertino app would otherwise get
+    // a light overlay. CupertinoTheme reads correctly in both app types:
+    // Material's Theme installs one whose brightness tracks it.
+    final Brightness brightness =
+        CupertinoTheme.maybeBrightnessOf(context) ?? theme.brightness;
+
+    // Same story for the colour scheme: derive one at the right brightness
+    // when the ambient scheme disagrees, so seeded colours stay usable.
+    ColorScheme scheme = theme.colorScheme;
+    if (scheme.brightness != brightness) {
+      scheme = ColorScheme.fromSeed(
+        seedColor: scheme.primary,
+        brightness: brightness,
+      );
+    }
+
+    final ResolvedLoadingStyle base = _baseFor(
+      _effectivePreset(theme),
+      scheme,
+      brightness == Brightness.dark,
+    );
     return base.copyWith(
       scrimColor: scrimColor,
       backdropBlur: backdropBlur,
@@ -258,18 +284,21 @@ class LoadingStyle {
     };
   }
 
-  static ResolvedLoadingStyle _baseFor(LoadingPreset preset, ThemeData theme) {
+  static ResolvedLoadingStyle _baseFor(
+    LoadingPreset preset,
+    ColorScheme scheme,
+    bool dark,
+  ) {
     return switch (preset) {
-      LoadingPreset.cupertino => _cupertino(theme),
-      LoadingPreset.glass => _glass(theme),
-      LoadingPreset.minimal => _minimal(theme),
-      LoadingPreset.neon => _neon(theme),
-      LoadingPreset.material || LoadingPreset.adaptive => _material(theme),
+      LoadingPreset.cupertino => _cupertino(scheme, dark),
+      LoadingPreset.glass => _glass(scheme, dark),
+      LoadingPreset.minimal => _minimal(scheme, dark),
+      LoadingPreset.neon => _neon(scheme, dark),
+      LoadingPreset.material || LoadingPreset.adaptive => _material(scheme, dark),
     };
   }
 
-  static ResolvedLoadingStyle _cupertino(ThemeData theme) {
-    final bool dark = theme.brightness == Brightness.dark;
+  static ResolvedLoadingStyle _cupertino(ColorScheme scheme, bool dark) {
     final Color onCard = dark
         ? const Color(0xFFF2F2F7)
         : const Color(0xFF1C1C1E);
@@ -326,9 +355,7 @@ class LoadingStyle {
     );
   }
 
-  static ResolvedLoadingStyle _material(ThemeData theme) {
-    final ColorScheme scheme = theme.colorScheme;
-    final bool dark = theme.brightness == Brightness.dark;
+  static ResolvedLoadingStyle _material(ColorScheme scheme, bool dark) {
     return ResolvedLoadingStyle(
       scrimColor: scheme.scrim.withValues(alpha: dark ? 0.50 : 0.32),
       backdropBlur: 0,
@@ -378,9 +405,7 @@ class LoadingStyle {
     );
   }
 
-  static ResolvedLoadingStyle _glass(ThemeData theme) {
-    final ColorScheme scheme = theme.colorScheme;
-    final bool dark = theme.brightness == Brightness.dark;
+  static ResolvedLoadingStyle _glass(ColorScheme scheme, bool dark) {
     final Color onCard = dark ? Colors.white : const Color(0xFF11151C);
     return ResolvedLoadingStyle(
       scrimColor: const Color(0xFF000000).withValues(alpha: dark ? 0.42 : 0.32),
@@ -433,9 +458,7 @@ class LoadingStyle {
     );
   }
 
-  static ResolvedLoadingStyle _minimal(ThemeData theme) {
-    final ColorScheme scheme = theme.colorScheme;
-    final bool dark = theme.brightness == Brightness.dark;
+  static ResolvedLoadingStyle _minimal(ColorScheme scheme, bool dark) {
     final Color ink = dark ? Colors.white : const Color(0xFF11151C);
     return ResolvedLoadingStyle(
       scrimColor: (dark ? Colors.black : Colors.white).withValues(
@@ -481,7 +504,7 @@ class LoadingStyle {
     );
   }
 
-  static ResolvedLoadingStyle _neon(ThemeData theme) {
+  static ResolvedLoadingStyle _neon(ColorScheme scheme, bool dark) {
     const Color accent = Color(0xFF22E3FF);
     return ResolvedLoadingStyle(
       scrimColor: const Color(0xFF04060C).withValues(alpha: 0.74),
