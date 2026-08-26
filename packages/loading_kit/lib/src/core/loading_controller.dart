@@ -34,7 +34,7 @@ import 'loading_timing.dart';
 class LoadingController extends ValueNotifier<LoadingState> {
   /// Creates a controller with a default [timing] policy for its operations.
   LoadingController({this.timing = const LoadingTiming()})
-      : super(LoadingState.idle);
+    : super(LoadingState.idle);
 
   /// The timing policy applied to operations that do not override it.
   final LoadingTiming timing;
@@ -81,8 +81,10 @@ class LoadingController extends ValueNotifier<LoadingState> {
     if (effective.delay <= Duration.zero) {
       _markShown(operation);
     } else {
-      operation.revealTimer =
-          Timer(effective.delay, () => _markShown(operation));
+      operation.revealTimer = Timer(
+        effective.delay,
+        () => _markShown(operation),
+      );
     }
     return LoadingHandle(this, operation);
   }
@@ -200,7 +202,9 @@ class LoadingController extends ValueNotifier<LoadingState> {
       if (task.isCancelled) throw const LoadingCancelled();
 
       await settle(
-        successMessage != null ? handle.success(successMessage) : handle.dismiss(),
+        successMessage != null
+            ? handle.success(successMessage)
+            : handle.dismiss(),
       );
       return result;
     } catch (_) {
@@ -299,7 +303,10 @@ class LoadingController extends ValueNotifier<LoadingState> {
     bool onlyNavigationScoped = false,
   }) {
     final List<LoadingOperation> targets = _operations
-        .where((LoadingOperation o) => !onlyNavigationScoped || o.dismissOnNavigation)
+        .where(
+          (LoadingOperation o) =>
+              !onlyNavigationScoped || o.dismissOnNavigation,
+        )
         .toList(growable: false);
     return Future.wait<void>(
       targets.map((LoadingOperation o) => retire(o, immediate: immediate)),
@@ -394,7 +401,9 @@ class LoadingController extends ValueNotifier<LoadingState> {
   void dispose() {
     if (_disposed) return;
     _disposed = true;
-    for (final LoadingOperation operation in List<LoadingOperation>.of(_operations)) {
+    for (final LoadingOperation operation in List<LoadingOperation>.of(
+      _operations,
+    )) {
       operation.cancelTimers();
       operation.removed = true;
       if (!operation.closed.isCompleted) operation.closed.complete();

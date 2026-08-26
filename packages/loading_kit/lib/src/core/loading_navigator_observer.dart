@@ -31,9 +31,7 @@ class LoadingNavigatorObserver extends NavigatorObserver {
       controller ?? (Loading.isInstalled ? Loading.instance : null);
 
   void _clear() {
-    unawaited(
-      _target?.dismissAll(immediate: true, onlyNavigationScoped: true),
-    );
+    unawaited(_target?.dismissAll(immediate: true, onlyNavigationScoped: true));
   }
 
   @override

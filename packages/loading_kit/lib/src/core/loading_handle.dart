@@ -3,6 +3,7 @@ import 'dart:async';
 import 'loading_controller.dart';
 import 'loading_operation.dart';
 import 'loading_status.dart';
+import 'loading_timing.dart';
 
 /// A live reference to one operation shown by a [LoadingController].
 ///
@@ -44,8 +45,11 @@ class LoadingHandle {
   Future<void> get closed => _operation.closed.future;
 
   /// Sets determinate progress, or null to return to an indeterminate spin.
-  set progress(double? value) =>
-      _controller.updateOperation(_operation, progress: value, setProgress: true);
+  set progress(double? value) => _controller.updateOperation(
+    _operation,
+    progress: value,
+    setProgress: true,
+  );
 
   /// Replaces the primary message.
   set message(String? value) =>
@@ -79,17 +83,17 @@ class LoadingHandle {
   /// If the operation never became visible, no check mark is shown — a fast
   /// success stays silent rather than flashing.
   Future<void> success([String? message]) => _controller.retire(
-        _operation,
-        status: LoadingStatus.success,
-        message: message,
-      );
+    _operation,
+    status: LoadingStatus.success,
+    message: message,
+  );
 
   /// Settles into a cross, holds, then dismisses.
   Future<void> error([String? message]) => _controller.retire(
-        _operation,
-        status: LoadingStatus.error,
-        message: message,
-      );
+    _operation,
+    status: LoadingStatus.error,
+    message: message,
+  );
 
   /// Dismisses with no terminal feedback, respecting the minimum-visible rule.
   Future<void> dismiss() => _controller.retire(_operation);
@@ -98,6 +102,5 @@ class LoadingHandle {
   ///
   /// Reserved for teardown such as route changes, where a graceful exit would
   /// animate over a screen that no longer exists.
-  Future<void> dismissNow() =>
-      _controller.retire(_operation, immediate: true);
+  Future<void> dismissNow() => _controller.retire(_operation, immediate: true);
 }

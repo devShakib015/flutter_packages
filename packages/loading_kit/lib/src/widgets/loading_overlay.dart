@@ -114,8 +114,10 @@ class _LoadingOverlayState extends State<LoadingOverlay>
         final double t = curve.transform(_reveal.value.clamp(0.0, 1.0));
 
         final LoadingState painted = entering ? _state : _painted;
+        // On the way out the card is a ghost of the last state; it must not
+        // still accept taps.
         final bool canCancel =
-            painted.cancellable || (painted.dismissible && painted.visible);
+            entering && (painted.cancellable || painted.dismissible);
 
         return Semantics(
           container: true,
@@ -136,7 +138,7 @@ class _LoadingOverlayState extends State<LoadingOverlay>
                 // behind it, which is the whole point of a blocking overlay.
                 GestureDetector(
                   behavior: HitTestBehavior.opaque,
-                  onTap: painted.dismissible ? _handleCancel : null,
+                  onTap: entering && painted.dismissible ? _handleCancel : null,
                   child: ColoredBox(
                     color: style.scrimColor.withValues(
                       alpha: style.scrimColor.a * t,

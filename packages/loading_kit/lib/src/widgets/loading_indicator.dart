@@ -137,9 +137,10 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
       return;
     }
     final double begin = _progressAnimation?.value ?? previous ?? target;
-    _progressAnimation = Tween<double>(begin: begin, end: target).animate(
-      CurvedAnimation(parent: _progress, curve: Curves.easeOutCubic),
-    );
+    _progressAnimation = Tween<double>(
+      begin: begin,
+      end: target,
+    ).animate(CurvedAnimation(parent: _progress, curve: Curves.easeOutCubic));
     _progress.forward(from: 0);
   }
 

@@ -9,7 +9,7 @@ class ResolvedLoadingStyle {
   /// Creates a resolved style. Every token is required.
   const ResolvedLoadingStyle({
     required this.scrimColor,
-    required this.scrimBlur,
+    required this.backdropBlur,
     required this.showCard,
     required this.cardColor,
     required this.cardBorderColor,
@@ -38,12 +38,13 @@ class ResolvedLoadingStyle {
   /// Colour painted over the app behind the card.
   final Color scrimColor;
 
-  /// Gaussian blur sigma applied to the scrim.
+  /// Gaussian blur sigma applied to whatever shows through the card.
   ///
-  /// Zero takes a fast path that skips [BackdropFilter] entirely — worth
-  /// keeping at zero on low-end devices, where a full-screen blur is the most
-  /// expensive thing this package can do.
-  final double scrimBlur;
+  /// The filter is clipped to the card rather than run over the whole screen,
+  /// so it samples only the area it actually tints. Zero skips
+  /// [BackdropFilter] entirely — worth keeping at zero on low-end devices,
+  /// where blur is the most expensive thing this package can do.
+  final double backdropBlur;
 
   /// Whether to paint a card behind the indicator and text.
   final bool showCard;
@@ -117,7 +118,7 @@ class ResolvedLoadingStyle {
   /// Returns a copy with the given tokens replaced.
   ResolvedLoadingStyle copyWith({
     Color? scrimColor,
-    double? scrimBlur,
+    double? backdropBlur,
     bool? showCard,
     Color? cardColor,
     Color? cardBorderColor,
@@ -144,7 +145,7 @@ class ResolvedLoadingStyle {
   }) {
     return ResolvedLoadingStyle(
       scrimColor: scrimColor ?? this.scrimColor,
-      scrimBlur: scrimBlur ?? this.scrimBlur,
+      backdropBlur: backdropBlur ?? this.backdropBlur,
       showCard: showCard ?? this.showCard,
       cardColor: cardColor ?? this.cardColor,
       cardBorderColor: cardBorderColor ?? this.cardBorderColor,

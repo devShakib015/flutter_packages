@@ -98,19 +98,19 @@ class LoadingState {
 
   @override
   int get hashCode => Object.hash(
-        visible,
-        status,
-        message,
-        detail,
-        progress,
-        cancellable,
-        dismissible,
-        depth,
-      );
+    visible,
+    status,
+    message,
+    detail,
+    progress,
+    cancellable,
+    dismissible,
+    depth,
+  );
 
   @override
   String toString() => visible
       ? 'LoadingState(${status.name}, message: $message, '
-          'progress: $progress, depth: $depth)'
+            'progress: $progress, depth: $depth)'
       : 'LoadingState.idle';
 }

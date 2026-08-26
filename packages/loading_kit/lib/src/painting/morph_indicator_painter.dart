@@ -23,8 +23,9 @@ final Animatable<double> _kTailTween = CurveTween(
   curve: const Interval(0.5, 1.0, curve: Curves.fastOutSlowIn),
 ).chain(CurveTween(curve: const SawTooth(_kPathCount)));
 
-final Animatable<double> _kRotationTween =
-    CurveTween(curve: const SawTooth(_kPathCount));
+final Animatable<double> _kRotationTween = CurveTween(
+  curve: const SawTooth(_kPathCount),
+);
 
 final Animatable<int> _kStepTween = StepTween(begin: 0, end: _kPathCount);
 
@@ -84,12 +85,6 @@ class MorphIndicatorPainter extends CustomPainter {
   /// Blur radius of the glow drawn beneath the arc. Zero skips the glow pass.
   final double glow;
 
-  // Glyph paths depend only on the box, so they survive across frames and are
-  // rebuilt only when the indicator is resized.
-  static Size? _cachedSize;
-  static Path? _cachedCheck;
-  static Path? _cachedCross;
-
   @override
   void paint(Canvas canvas, Size size) {
     final double radius = (math.min(size.width, size.height) - strokeWidth) / 2;
@@ -106,8 +101,9 @@ class MorphIndicatorPainter extends CustomPainter {
       ((morph - 0.38) / 0.62).clamp(0.0, 1.0),
     );
 
-    final Color terminal =
-        status == LoadingStatus.error ? errorColor : successColor;
+    final Color terminal = status == LoadingStatus.error
+        ? errorColor
+        : successColor;
     final Color active = morph == 0
         ? color
         : Color.lerp(color, terminal, Curves.easeOut.transform(closing))!;
@@ -179,23 +175,19 @@ class MorphIndicatorPainter extends CustomPainter {
     final double rotation = _kRotationTween.transform(spin);
     final double step = _kStepTween.transform(spin).toDouble();
 
-    final double start = _kStartAngle +
+    final double start =
+        _kStartAngle +
         tail * 3 / 2 * math.pi +
         rotation * 2 * math.pi +
         step * 0.5 * math.pi;
-    final double sweep =
-        math.max((head - tail) * 3 / 2 * math.pi, _kMinSweep);
+    final double sweep = math.max((head - tail) * 3 / 2 * math.pi, _kMinSweep);
     return (start, sweep);
   }
 
   void _paintGlyph(Canvas canvas, Size size, double phase, Color color) {
-    if (_cachedSize != size || _cachedCheck == null || _cachedCross == null) {
-      _cachedSize = size;
-      _cachedCheck = _buildCheck(size);
-      _cachedCross = _buildCross(size);
-    }
-    final Path path =
-        status == LoadingStatus.error ? _cachedCross! : _cachedCheck!;
+    final Path path = status == LoadingStatus.error
+        ? _buildCross(size)
+        : _buildCheck(size);
 
     final Paint paint = Paint()
       ..style = PaintingStyle.stroke

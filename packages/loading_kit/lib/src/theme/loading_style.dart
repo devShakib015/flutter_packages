@@ -30,7 +30,7 @@ class LoadingStyle {
   const LoadingStyle({
     this.preset = LoadingPreset.adaptive,
     this.scrimColor,
-    this.scrimBlur,
+    this.backdropBlur,
     this.showCard,
     this.cardColor,
     this.cardBorderColor,
@@ -60,19 +60,22 @@ class LoadingStyle {
   static const LoadingStyle adaptive = LoadingStyle();
 
   /// A compact, low-contrast card in the iOS idiom.
-  static const LoadingStyle cupertino =
-      LoadingStyle(preset: LoadingPreset.cupertino);
+  static const LoadingStyle cupertino = LoadingStyle(
+    preset: LoadingPreset.cupertino,
+  );
 
   /// A tonal Material 3 surface using the theme's primary colour.
-  static const LoadingStyle material =
-      LoadingStyle(preset: LoadingPreset.material);
+  static const LoadingStyle material = LoadingStyle(
+    preset: LoadingPreset.material,
+  );
 
   /// A frosted translucent panel with a luminous edge.
   static const LoadingStyle glass = LoadingStyle(preset: LoadingPreset.glass);
 
   /// Indicator only, on a soft scrim. The cheapest preset to paint.
-  static const LoadingStyle minimal =
-      LoadingStyle(preset: LoadingPreset.minimal);
+  static const LoadingStyle minimal = LoadingStyle(
+    preset: LoadingPreset.minimal,
+  );
 
   /// A dark panel with a saturated, glowing indicator.
   static const LoadingStyle neon = LoadingStyle(preset: LoadingPreset.neon);
@@ -83,8 +86,8 @@ class LoadingStyle {
   /// Overrides [ResolvedLoadingStyle.scrimColor].
   final Color? scrimColor;
 
-  /// Overrides [ResolvedLoadingStyle.scrimBlur].
-  final double? scrimBlur;
+  /// Overrides [ResolvedLoadingStyle.backdropBlur].
+  final double? backdropBlur;
 
   /// Overrides [ResolvedLoadingStyle.showCard].
   final bool? showCard;
@@ -159,7 +162,7 @@ class LoadingStyle {
   LoadingStyle copyWith({
     LoadingPreset? preset,
     Color? scrimColor,
-    double? scrimBlur,
+    double? backdropBlur,
     bool? showCard,
     Color? cardColor,
     Color? cardBorderColor,
@@ -187,7 +190,7 @@ class LoadingStyle {
     return LoadingStyle(
       preset: preset ?? this.preset,
       scrimColor: scrimColor ?? this.scrimColor,
-      scrimBlur: scrimBlur ?? this.scrimBlur,
+      backdropBlur: backdropBlur ?? this.backdropBlur,
       showCard: showCard ?? this.showCard,
       cardColor: cardColor ?? this.cardColor,
       cardBorderColor: cardBorderColor ?? this.cardBorderColor,
@@ -220,7 +223,7 @@ class LoadingStyle {
     final ResolvedLoadingStyle base = _baseFor(_effectivePreset(theme), theme);
     return base.copyWith(
       scrimColor: scrimColor,
-      scrimBlur: scrimBlur,
+      backdropBlur: backdropBlur,
       showCard: showCard,
       cardColor: cardColor,
       cardBorderColor: cardBorderColor,
@@ -267,16 +270,19 @@ class LoadingStyle {
 
   static ResolvedLoadingStyle _cupertino(ThemeData theme) {
     final bool dark = theme.brightness == Brightness.dark;
-    final Color onCard = dark ? const Color(0xFFF2F2F7) : const Color(0xFF1C1C1E);
+    final Color onCard = dark
+        ? const Color(0xFFF2F2F7)
+        : const Color(0xFF1C1C1E);
     return ResolvedLoadingStyle(
       scrimColor: const Color(0xFF000000).withValues(alpha: dark ? 0.38 : 0.20),
-      scrimBlur: 0,
+      backdropBlur: 0,
       showCard: true,
       cardColor: dark
           ? const Color(0xFF1C1C1E).withValues(alpha: 0.96)
           : const Color(0xFFF7F7FA).withValues(alpha: 0.98),
-      cardBorderColor:
-          dark ? const Color(0xFFFFFFFF).withValues(alpha: 0.08) : null,
+      cardBorderColor: dark
+          ? const Color(0xFFFFFFFF).withValues(alpha: 0.08)
+          : null,
       cardBorderWidth: 1,
       cardRadius: const BorderRadius.all(Radius.circular(16)),
       cardShadow: <BoxShadow>[
@@ -325,7 +331,7 @@ class LoadingStyle {
     final bool dark = theme.brightness == Brightness.dark;
     return ResolvedLoadingStyle(
       scrimColor: scheme.scrim.withValues(alpha: dark ? 0.50 : 0.32),
-      scrimBlur: 0,
+      backdropBlur: 0,
       showCard: true,
       cardColor: scheme.surfaceContainerHigh,
       cardBorderColor: scheme.outlineVariant.withValues(alpha: 0.5),
@@ -377,13 +383,13 @@ class LoadingStyle {
     final bool dark = theme.brightness == Brightness.dark;
     final Color onCard = dark ? Colors.white : const Color(0xFF11151C);
     return ResolvedLoadingStyle(
-      scrimColor: const Color(0xFF000000).withValues(alpha: dark ? 0.34 : 0.18),
-      scrimBlur: 18,
+      scrimColor: const Color(0xFF000000).withValues(alpha: dark ? 0.42 : 0.32),
+      backdropBlur: 18,
       showCard: true,
       cardColor: dark
-          ? Colors.white.withValues(alpha: 0.10)
-          : Colors.white.withValues(alpha: 0.58),
-      cardBorderColor: Colors.white.withValues(alpha: dark ? 0.20 : 0.70),
+          ? Colors.white.withValues(alpha: 0.12)
+          : Colors.white.withValues(alpha: 0.74),
+      cardBorderColor: Colors.white.withValues(alpha: dark ? 0.22 : 0.85),
       cardBorderWidth: 1,
       cardRadius: const BorderRadius.all(Radius.circular(26)),
       cardShadow: <BoxShadow>[
@@ -432,9 +438,10 @@ class LoadingStyle {
     final bool dark = theme.brightness == Brightness.dark;
     final Color ink = dark ? Colors.white : const Color(0xFF11151C);
     return ResolvedLoadingStyle(
-      scrimColor: (dark ? Colors.black : Colors.white)
-          .withValues(alpha: dark ? 0.52 : 0.66),
-      scrimBlur: 0,
+      scrimColor: (dark ? Colors.black : Colors.white).withValues(
+        alpha: dark ? 0.62 : 0.80,
+      ),
+      backdropBlur: 0,
       showCard: false,
       cardColor: const Color(0x00000000),
       cardBorderColor: null,
@@ -478,7 +485,7 @@ class LoadingStyle {
     const Color accent = Color(0xFF22E3FF);
     return ResolvedLoadingStyle(
       scrimColor: const Color(0xFF04060C).withValues(alpha: 0.74),
-      scrimBlur: 6,
+      backdropBlur: 6,
       showCard: true,
       cardColor: const Color(0xFF0A0F1B).withValues(alpha: 0.94),
       cardBorderColor: accent.withValues(alpha: 0.42),

@@ -103,13 +103,15 @@ class GalleryPage extends StatelessWidget {
           const _SectionTitle('The anti-flicker guarantee'),
           _Tile(
             title: 'Fast operation — 80ms',
-            subtitle: 'Resolves inside the reveal delay, so nothing paints at '
+            subtitle:
+                'Resolves inside the reveal delay, so nothing paints at '
                 'all. This is the whole point.',
             onTap: () => Loading.run(() => _wait(80)),
           ),
           _Tile(
             title: 'Borderline operation — 200ms',
-            subtitle: 'Crosses the delay, so it paints — and is then held for '
+            subtitle:
+                'Crosses the delay, so it paints — and is then held for '
                 'the minimum window instead of blinking out.',
             onTap: () => Loading.run(() => _wait(200)),
           ),
@@ -117,10 +119,7 @@ class GalleryPage extends StatelessWidget {
           _Tile(
             title: 'Plain load',
             subtitle: 'Message only, dismissed silently.',
-            onTap: () => Loading.run(
-              () => _wait(1600),
-              message: 'Loading…',
-            ),
+            onTap: () => Loading.run(() => _wait(1600), message: 'Loading…'),
           ),
           _Tile(
             title: 'Success feedback',
@@ -133,7 +132,8 @@ class GalleryPage extends StatelessWidget {
           ),
           _Tile(
             title: 'Error feedback',
-            subtitle: 'Same arc, settling into a cross. The throw still '
+            subtitle:
+                'Same arc, settling into a cross. The throw still '
                 'propagates to your catch block.',
             onTap: () async {
               try {
@@ -153,7 +153,8 @@ class GalleryPage extends StatelessWidget {
           const _SectionTitle('Progress and cancellation'),
           _Tile(
             title: 'Determinate upload',
-            subtitle: 'Coarse progress jumps are interpolated into continuous '
+            subtitle:
+                'Coarse progress jumps are interpolated into continuous '
                 'motion.',
             onTap: () => Loading.runTask<void>(
               (LoadingTask task) async {
@@ -169,11 +170,13 @@ class GalleryPage extends StatelessWidget {
           ),
           _Tile(
             title: 'Cancellable job',
-            subtitle: 'The cancel affordance appears after 1.5s, so quick runs '
+            subtitle:
+                'The cancel affordance appears after 1.5s, so quick runs '
                 'never offer one.',
             onTap: () async {
-              final ScaffoldMessengerState messenger =
-                  ScaffoldMessenger.of(context);
+              final ScaffoldMessengerState messenger = ScaffoldMessenger.of(
+                context,
+              );
               try {
                 await Loading.runTask<void>(
                   (LoadingTask task) async {
@@ -212,7 +215,8 @@ class GalleryPage extends StatelessWidget {
           const _SectionTitle('Correctness'),
           _Tile(
             title: 'Three concurrent requests',
-            subtitle: 'Reference counted — the overlay stays until the last '
+            subtitle:
+                'Reference counted — the overlay stays until the last '
                 'one finishes, not the first.',
             onTap: () async {
               await Future.wait<void>(<Future<void>>[
@@ -252,8 +256,7 @@ class GalleryPage extends StatelessWidget {
             title: 'Manual handle',
             subtitle: 'Drive message, detail and progress by hand.',
             onTap: () async {
-              final LoadingHandle handle =
-                  Loading.show(message: 'Preparing…');
+              final LoadingHandle handle = Loading.show(message: 'Preparing…');
               await _wait(700);
               handle.update(message: 'Compressing…', progress: 0.2);
               await _wait(700);
@@ -350,10 +353,10 @@ class _SectionTitle extends StatelessWidget {
       child: Text(
         text.toUpperCase(),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              letterSpacing: 1.4,
-              fontWeight: FontWeight.w700,
-              color: Theme.of(context).colorScheme.primary,
-            ),
+          letterSpacing: 1.4,
+          fontWeight: FontWeight.w700,
+          color: Theme.of(context).colorScheme.primary,
+        ),
       ),
     );
   }
@@ -377,10 +380,7 @@ class _Tile extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-        title: Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4),
           child: Text(subtitle),

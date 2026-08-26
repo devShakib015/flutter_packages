@@ -102,7 +102,7 @@ class LoadingCard extends StatelessWidget {
       child: content,
     );
 
-    if (style.scrimBlur <= 0) return card;
+    if (style.backdropBlur <= 0) return card;
 
     // The blur is clipped to the card so the filter samples only the area it
     // actually tints, rather than compositing the whole screen.
@@ -110,8 +110,8 @@ class LoadingCard extends StatelessWidget {
       borderRadius: style.cardRadius,
       child: BackdropFilter(
         filter: ui.ImageFilter.blur(
-          sigmaX: style.scrimBlur,
-          sigmaY: style.scrimBlur,
+          sigmaX: style.backdropBlur,
+          sigmaY: style.backdropBlur,
         ),
         child: card,
       ),

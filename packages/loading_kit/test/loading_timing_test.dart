@@ -28,8 +28,11 @@ void main() {
     );
 
     await tester.pump(const Duration(milliseconds: 80));
-    expect(controller.value.visible, isFalse,
-        reason: 'resolved inside the reveal delay');
+    expect(
+      controller.value.visible,
+      isFalse,
+      reason: 'resolved inside the reveal delay',
+    );
 
     await tester.pump(const Duration(milliseconds: 400));
     expect(controller.isBusy, isFalse);
@@ -54,8 +57,11 @@ void main() {
 
     // Work finished at 200ms but the overlay must survive to 140 + 520 = 660.
     await tester.pump(const Duration(milliseconds: 300));
-    expect(controller.value.visible, isTrue,
-        reason: 'held by the minimum-visible rule');
+    expect(
+      controller.value.visible,
+      isTrue,
+      reason: 'held by the minimum-visible rule',
+    );
 
     await tester.pump(const Duration(milliseconds: 300));
     expect(controller.value.visible, isFalse);
@@ -72,8 +78,11 @@ void main() {
     final Future<void> closed = handle.success('Saved');
 
     await tester.pump(const Duration(milliseconds: 10));
-    expect(controller.value.visible, isFalse,
-        reason: 'never painted, so it leaves no trace');
+    expect(
+      controller.value.visible,
+      isFalse,
+      reason: 'never painted, so it leaves no trace',
+    );
     expect(handle.isActive, isFalse);
     await closed;
   });
@@ -100,9 +109,7 @@ void main() {
     await closed;
   });
 
-  testWidgets('errors hold longer than successes', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('errors hold longer than successes', (WidgetTester tester) async {
     final LoadingController controller = build();
     final LoadingHandle handle = controller.show(message: 'Syncing…');
     await tester.pump(const Duration(milliseconds: 700));
@@ -122,8 +129,9 @@ void main() {
   testWidgets('LoadingTiming.instant paints and leaves immediately', (
     WidgetTester tester,
   ) async {
-    final LoadingController controller =
-        LoadingController(timing: LoadingTiming.instant);
+    final LoadingController controller = LoadingController(
+      timing: LoadingTiming.instant,
+    );
     addTearDown(controller.dispose);
 
     final LoadingHandle handle = controller.show();

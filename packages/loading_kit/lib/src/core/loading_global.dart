@@ -61,15 +61,14 @@ abstract final class Loading {
     LoadingTiming? timing,
     bool dismissible = false,
     bool dismissOnNavigation = true,
-  }) =>
-      instance.show(
-        message: message,
-        detail: detail,
-        progress: progress,
-        timing: timing,
-        dismissible: dismissible,
-        dismissOnNavigation: dismissOnNavigation,
-      );
+  }) => instance.show(
+    message: message,
+    detail: detail,
+    progress: progress,
+    timing: timing,
+    dismissible: dismissible,
+    dismissOnNavigation: dismissOnNavigation,
+  );
 
   /// Runs [task] behind the overlay. See [LoadingController.run].
   static Future<T> run<T>(
@@ -83,19 +82,18 @@ abstract final class Loading {
     LoadingTiming? timing,
     bool dismissible = false,
     bool awaitFeedback = true,
-  }) =>
-      instance.run<T>(
-        task,
-        message: message,
-        detail: detail,
-        progress: progress,
-        successMessage: successMessage,
-        errorMessage: errorMessage,
-        timeout: timeout,
-        timing: timing,
-        dismissible: dismissible,
-        awaitFeedback: awaitFeedback,
-      );
+  }) => instance.run<T>(
+    task,
+    message: message,
+    detail: detail,
+    progress: progress,
+    successMessage: successMessage,
+    errorMessage: errorMessage,
+    timeout: timeout,
+    timing: timing,
+    dismissible: dismissible,
+    awaitFeedback: awaitFeedback,
+  );
 
   /// Runs [body] with progress and cancellation. See
   /// [LoadingController.runTask].
@@ -111,20 +109,19 @@ abstract final class Loading {
     LoadingTiming? timing,
     bool dismissible = false,
     bool awaitFeedback = true,
-  }) =>
-      instance.runTask<T>(
-        body,
-        message: message,
-        detail: detail,
-        progress: progress,
-        successMessage: successMessage,
-        errorMessage: errorMessage,
-        timeout: timeout,
-        cancelAfter: cancelAfter,
-        timing: timing,
-        dismissible: dismissible,
-        awaitFeedback: awaitFeedback,
-      );
+  }) => instance.runTask<T>(
+    body,
+    message: message,
+    detail: detail,
+    progress: progress,
+    successMessage: successMessage,
+    errorMessage: errorMessage,
+    timeout: timeout,
+    cancelAfter: cancelAfter,
+    timing: timing,
+    dismissible: dismissible,
+    awaitFeedback: awaitFeedback,
+  );
 
   /// Retires every operation. See [LoadingController.dismissAll].
   static Future<void> dismissAll({bool immediate = false}) =>

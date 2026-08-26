@@ -130,9 +130,7 @@ void main() {
           registerGlobal: false,
         ),
         home: Scaffold(
-          body: Center(
-            child: TextField(focusNode: node),
-          ),
+          body: Center(child: TextField(focusNode: node)),
         ),
       ),
     );
@@ -145,8 +143,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 150));
     await tester.pump(const Duration(milliseconds: 300));
 
-    expect(node.hasFocus, isFalse,
-        reason: 'focus must not sit under a blocking scrim');
+    expect(
+      node.hasFocus,
+      isFalse,
+      reason: 'focus must not sit under a blocking scrim',
+    );
 
     await controller.dismissAll(immediate: true);
     await tester.pump(const Duration(milliseconds: 400));
@@ -163,10 +164,12 @@ void main() {
     await tester.pump(const Duration(milliseconds: 150));
     await tester.pump(const Duration(milliseconds: 300));
 
-    final SemanticsNode node =
-        tester.getSemantics(find.byType(LoadingOverlay));
-    expect(node.label, 'Uploading…',
-        reason: 'announced exactly once, not doubled by the container label');
+    final SemanticsNode node = tester.getSemantics(find.byType(LoadingOverlay));
+    expect(
+      node.label,
+      'Uploading…',
+      reason: 'announced exactly once, not doubled by the container label',
+    );
     expect(node.value, '50%', reason: 'progress is announced, not just shown');
     expect(
       find.descendant(
@@ -217,8 +220,11 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.byType(LoadingCard), findsNothing,
-        reason: 'an overlay must not outlive the screen that started it');
+    expect(
+      find.byType(LoadingCard),
+      findsNothing,
+      reason: 'an overlay must not outlive the screen that started it',
+    );
     expect(controller.isBusy, isFalse);
   });
 }

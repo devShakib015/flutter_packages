@@ -32,8 +32,7 @@ void main() {
 
       final Future<void> closedA = a.dismiss();
       await tester.pump(const Duration(milliseconds: 300));
-      expect(controller.value.visible, isTrue,
-          reason: 'B is still in flight');
+      expect(controller.value.visible, isTrue, reason: 'B is still in flight');
       expect(controller.value.depth, 1);
       await closedA;
 
@@ -55,8 +54,11 @@ void main() {
       unawaited(a.success('A done'));
       await tester.pump(Duration.zero);
 
-      expect(controller.value.status, LoadingStatus.busy,
-          reason: 'B is still busy, so no check mark flashes');
+      expect(
+        controller.value.status,
+        LoadingStatus.busy,
+        reason: 'B is still busy, so no check mark flashes',
+      );
       expect(controller.value.message, 'B');
       controller.dispose();
     });
@@ -159,8 +161,11 @@ void main() {
       );
 
       await tester.pump(const Duration(milliseconds: 200));
-      expect(controller.value.cancellable, isFalse,
-          reason: 'too early to offer a way out');
+      expect(
+        controller.value.cancellable,
+        isFalse,
+        reason: 'too early to offer a way out',
+      );
 
       await tester.pump(const Duration(milliseconds: 300));
       expect(controller.value.cancellable, isTrue);
@@ -195,10 +200,7 @@ void main() {
       controller.show(message: 'persistent', dismissOnNavigation: false);
       await tester.pump(const Duration(milliseconds: 150));
 
-      await controller.dismissAll(
-        immediate: true,
-        onlyNavigationScoped: true,
-      );
+      await controller.dismissAll(immediate: true, onlyNavigationScoped: true);
       expect(controller.activeCount, 1);
       expect(controller.value.message, 'persistent');
       controller.dispose();

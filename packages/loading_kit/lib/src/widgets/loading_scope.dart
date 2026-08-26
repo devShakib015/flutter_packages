@@ -19,9 +19,8 @@ class LoadingScope extends InheritedWidget {
   final LoadingController controller;
 
   /// Returns the nearest controller, or null when none is installed.
-  static LoadingController? maybeOf(BuildContext context) => context
-      .dependOnInheritedWidgetOfExactType<LoadingScope>()
-      ?.controller;
+  static LoadingController? maybeOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<LoadingScope>()?.controller;
 
   /// Returns the nearest controller, asserting that one exists.
   static LoadingController of(BuildContext context) {
