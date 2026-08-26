@@ -26,3 +26,6 @@ packages/*/example/web/
 
 # Editor / assistant tooling
 .claude/
+
+# Personal notes, not for the repo
+LAUNCH-DRAFTS.md
