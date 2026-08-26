@@ -1,0 +1,39 @@
+name: apple_foundation_models
+description: >-
+  Run Apple's on-device language model from Flutter. Streaming, tool calling,
+  and schema-constrained structured output — private, offline, and free.
+version: 0.1.0
+repository: https://github.com/devShakib015/flutter_packages
+issue_tracker: https://github.com/devShakib015/flutter_packages/issues
+documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/apple_foundation_models
+resolution: workspace
+
+topics:
+  - ai
+  - llm
+  - on-device
+  - apple-intelligence
+  - ios
+
+environment:
+  sdk: ^3.13.0
+  flutter: '>=3.32.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  plugin:
+    platforms:
+      ios:
+        pluginClass: AppleFoundationModelsPlugin
+        sharedDarwinSource: true
+      macos:
+        pluginClass: AppleFoundationModelsPlugin
+        sharedDarwinSource: true

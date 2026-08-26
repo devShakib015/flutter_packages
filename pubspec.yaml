@@ -11,6 +11,8 @@ environment:
 workspace:
   - packages/loading_kit
   - packages/loading_kit/example
+  - packages/apple_foundation_models
+  - packages/apple_foundation_models/example
 
 dev_dependencies:
   flutter_lints: ^6.0.0
