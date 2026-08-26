@@ -8,6 +8,7 @@ import 'generation_options.dart';
 import 'schema.dart';
 import 'tool.dart';
 import 'transcript.dart';
+import 'use_case.dart';
 
 /// Entry point for the on-device model.
 abstract final class AppleFoundationModels {
@@ -32,6 +33,49 @@ abstract final class AppleFoundationModels {
   /// Whether generation can be attempted right now.
   static Future<bool> get isAvailable async =>
       (await availability()).isAvailable;
+
+  /// Emits whenever availability changes, starting with the current value.
+  ///
+  /// The common case this exists for is `modelNotReady`: the assets finish
+  /// downloading while your app is open, and the feature can quietly become
+  /// usable without the user relaunching.
+  ///
+  /// ```dart
+  /// StreamBuilder<ModelAvailability>(
+  ///   stream: AppleFoundationModels.availabilityChanges,
+  ///   builder: (context, snapshot) => switch (snapshot.data) {
+  ///     ModelAvailable() => const AiFeature(),
+  ///     _ => const SizedBox.shrink(),
+  ///   },
+  /// )
+  /// ```
+  static Stream<ModelAvailability> get availabilityChanges async* {
+    yield await availability();
+    yield* Bridge.events
+        .where((Map<Object?, Object?> e) => e['type'] == 'availability')
+        .map(
+          (Map<Object?, Object?> e) => e['available'] == true
+              ? const ModelAvailable()
+              : ModelUnavailable(Bridge.reasonFrom(e)),
+        )
+        .distinct();
+  }
+
+  /// Languages the on-device model can work in, as BCP-47 tags.
+  ///
+  /// Worth checking before offering the feature in a locale it cannot handle —
+  /// the alternative is a `UnsupportedLanguageException` at the worst moment.
+  /// Returns an empty list where the model is unavailable.
+  static Future<List<String>> supportedLanguages() async {
+    try {
+      final List<Object?> raw = await Bridge.invoke<List<Object?>>(
+        'supportedLanguages',
+      );
+      return <String>[for (final Object? tag in raw) '$tag'];
+    } on ModelUnavailableException {
+      return const <String>[];
+    }
+  }
 }
 
 /// A conversation with the on-device model.
@@ -67,6 +111,7 @@ class LanguageModelSession {
   static Future<LanguageModelSession> create({
     String? instructions,
     List<LanguageModelTool> tools = const <LanguageModelTool>[],
+    ModelUseCase useCase = ModelUseCase.general,
   }) async {
     final Set<String> names = <String>{};
     for (final LanguageModelTool tool in tools) {
@@ -81,6 +126,7 @@ class LanguageModelSession {
 
     final int id = await Bridge.invoke<int>('session.create', <String, Object?>{
       'instructions': instructions,
+      'useCase': useCase.wireName,
       'tools': <Map<String, Object?>>[
         for (final LanguageModelTool t in tools) t.toJson(),
       ],
@@ -134,6 +180,64 @@ class LanguageModelSession {
       },
     );
     return _decode(raw);
+  }
+
+  /// Generates a response and decodes it into your own type.
+  ///
+  /// The same constraint as [respondAs], with the map handed to [decoder] so
+  /// call sites stop casting:
+  ///
+  /// ```dart
+  /// final triage = await session.respondInto(
+  ///   report,
+  ///   schema: triageSchema,
+  ///   decoder: Triage.fromJson,
+  /// );
+  /// ```
+  Future<T> respondInto<T>(
+    String prompt, {
+    required Schema schema,
+    required T Function(Map<String, Object?> json) decoder,
+    GenerationOptions? options,
+    bool includeSchemaInPrompt = true,
+  }) async {
+    final Map<String, Object?> json = await respondAs(
+      prompt,
+      schema: schema,
+      options: options,
+      includeSchemaInPrompt: includeSchemaInPrompt,
+    );
+    return decoder(json);
+  }
+
+  /// Streams a schema-constrained response, decoding each snapshot into [T].
+  ///
+  /// Snapshots are partial, so [decoder] must tolerate missing fields. If it
+  /// throws on an incomplete object that snapshot is skipped rather than
+  /// failing the stream — the next one supersedes it anyway.
+  Stream<T> streamInto<T>(
+    String prompt, {
+    required Schema schema,
+    required T Function(Map<String, Object?> json) decoder,
+    GenerationOptions? options,
+    bool includeSchemaInPrompt = true,
+  }) {
+    return streamAs(
+          prompt,
+          schema: schema,
+          options: options,
+          includeSchemaInPrompt: includeSchemaInPrompt,
+        )
+        .map<T?>((Map<String, Object?> json) {
+          if (json.isEmpty) return null;
+          try {
+            return decoder(json);
+          } catch (_) {
+            return null;
+          }
+        })
+        .where((T? value) => value != null)
+        .cast<T>();
   }
 
   /// Streams the response as it is produced.

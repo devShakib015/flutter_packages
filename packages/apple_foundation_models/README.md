@@ -87,6 +87,32 @@ final result = await session.respondAs(
 `Schema.oneOf` is the one to reach for most: the model cannot invent a value
 outside the list, which makes classification reliable rather than hopeful.
 
+### Constrain the values, not just the shape
+
+Bounds are applied while the model generates, so it is incapable of breaking
+them. This is the difference between asking for a 1-to-5 rating and getting
+one — without a bound, "rate this 1 to 5" cheerfully returns 47.
+
+```dart
+Schema.integer(min: 1, max: 5)          // a real rating
+Schema.number(min: 0, max: 1)           // a real confidence
+Schema.string(pattern: r'^[A-Z]{3}$')   // a real airport code
+Schema.array(Schema.string(), exactItems: 3)
+```
+
+### Decode straight into your own type
+
+```dart
+final triage = await session.respondInto(
+  report,
+  schema: triageSchema,
+  decoder: Triage.fromJson,
+);
+```
+
+`streamInto` does the same progressively. Partial snapshots that your decoder
+rejects are skipped rather than failing the stream.
+
 ## Streaming
 
 ```dart
@@ -103,6 +129,15 @@ mistake here, and it mirrors how the platform actually behaves.
 
 `streamAs` does the same for structured output, so an object fills in field by
 field. Early snapshots are partial, so read defensively until the stream ends.
+
+If you need increments rather than snapshots — writing to a buffer or a socket
+— `deltas()` does the subtraction:
+
+```dart
+await for (final chunk in session.stream(prompt).deltas()) {
+  stdout.write(chunk);
+}
+```
 
 ## Tools
 
@@ -129,6 +164,41 @@ await session.respond('Should I take an umbrella in Dhaka?');
 Write `description` for the model, not for other developers — it is the only
 thing deciding whether the tool fires at the right moment. Saying when *not* to
 call it helps as much as saying when to.
+
+## Pick the right model
+
+Apple ships narrower models alongside the general one. A specialised model
+beats prompting the general one harder:
+
+```dart
+final tagger = await LanguageModelSession.create(
+  useCase: ModelUseCase.contentTagging,
+);
+```
+
+## Languages
+
+```dart
+final tags = await AppleFoundationModels.supportedLanguages(); // BCP-47
+```
+
+Check before offering the feature in a locale the model cannot handle — the
+alternative is an `UnsupportedLanguageException` at the worst moment.
+
+## React when the model becomes ready
+
+`modelNotReady` resolves itself while your app is open. Rather than making the
+user relaunch, listen:
+
+```dart
+StreamBuilder<ModelAvailability>(
+  stream: AppleFoundationModels.availabilityChanges,
+  builder: (context, snapshot) => switch (snapshot.data) {
+    ModelAvailable() => const AiFeature(),
+    _ => const SizedBox.shrink(),
+  },
+)
+```
 
 ## Options
 

@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 
 // @preconcurrency: Flutter's ObjC types predate Sendable annotations, and
 // hopping to the main queue is exactly how they are meant to be used.
@@ -47,7 +48,28 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
     -> FlutterError?
   {
     eventSink = sink
+    observeAvailability()
     return nil
+  }
+
+  /// Re-arms itself after each change, so Dart is told when the model finishes
+  /// downloading without the user relaunching the app.
+  private func observeAvailability() {
+    #if canImport(FoundationModels)
+      if #available(iOS 26.0, macOS 26.0, *) {
+        withObservationTracking {
+          _ = SystemLanguageModel.default.availability
+        } onChange: { [weak self] in
+          DispatchQueue.main.async {
+            guard let self, self.eventSink != nil else { return }
+            var payload = self.availabilityPayload()
+            payload["type"] = "availability"
+            self.emit(payload)
+            self.observeAvailability()
+          }
+        }
+      }
+    #endif
   }
 
   public func onCancel(withArguments _: Any?) -> FlutterError? {
@@ -66,6 +88,19 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
 
     if call.method == "availability" {
       result(availabilityPayload())
+      return
+    }
+
+    if call.method == "supportedLanguages" {
+      #if canImport(FoundationModels)
+        if #available(iOS 26.0, macOS 26.0, *) {
+          result(
+            SystemLanguageModel.default.supportedLanguages
+              .map(\.maximalIdentifier).sorted())
+          return
+        }
+      #endif
+      result([String]())
       return
     }
 
@@ -194,10 +229,16 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
               plugin: self))
         }
 
-        let instructions = args["instructions"] as? String
-        let session: LanguageModelSession =
-          instructions.map { LanguageModelSession(tools: tools, instructions: $0) }
-          ?? LanguageModelSession(tools: tools)
+        // A specialised model beats prompting the general one harder.
+        let model: SystemLanguageModel =
+          (args["useCase"] as? String == "contentTagging")
+          ? SystemLanguageModel(useCase: .contentTagging)
+          : SystemLanguageModel.default
+
+        let session = LanguageModelSession(
+          model: model,
+          tools: tools,
+          instructions: args["instructions"] as? String)
 
         sessions[id] = session
         result(id)
@@ -366,9 +407,49 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
     @available(iOS 26.0, macOS 26.0, *)
     private func dynamicSchema(_ json: [String: Any]) throws -> DynamicGenerationSchema {
       switch json["type"] as? String ?? "" {
-      case "string": return DynamicGenerationSchema(type: String.self)
-      case "integer": return DynamicGenerationSchema(type: Int.self)
-      case "number": return DynamicGenerationSchema(type: Double.self)
+      case "string":
+        // Guides constrain generation itself, so the model cannot produce a
+        // value that violates them — unlike validating afterwards.
+        if let pattern = json["pattern"] as? String {
+          guard let regex = try? Regex(pattern) else {
+            throw SchemaError.invalid("Not a valid regular expression: \(pattern)")
+          }
+          return DynamicGenerationSchema(type: String.self, guides: [.pattern(regex)])
+        }
+        return DynamicGenerationSchema(type: String.self)
+
+      case "integer":
+        var guides: [GenerationGuide<Int>] = []
+        let low = (json["minimum"] as? NSNumber)?.intValue
+        let high = (json["maximum"] as? NSNumber)?.intValue
+        if let low, let high {
+          guard low <= high else {
+            throw SchemaError.invalid("minimum must not exceed maximum.")
+          }
+          guides.append(.range(low...high))
+        } else if let low {
+          guides.append(.minimum(low))
+        } else if let high {
+          guides.append(.maximum(high))
+        }
+        return DynamicGenerationSchema(type: Int.self, guides: guides)
+
+      case "number":
+        var guides: [GenerationGuide<Double>] = []
+        let low = (json["minimum"] as? NSNumber)?.doubleValue
+        let high = (json["maximum"] as? NSNumber)?.doubleValue
+        if let low, let high {
+          guard low <= high else {
+            throw SchemaError.invalid("minimum must not exceed maximum.")
+          }
+          guides.append(.range(low...high))
+        } else if let low {
+          guides.append(.minimum(low))
+        } else if let high {
+          guides.append(.maximum(high))
+        }
+        return DynamicGenerationSchema(type: Double.self, guides: guides)
+
       case "boolean": return DynamicGenerationSchema(type: Bool.self)
 
       case "enum":

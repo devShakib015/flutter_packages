@@ -2,6 +2,15 @@
 
 Initial release.
 
+- Generation guides: `Schema.integer(min:, max:)`, `Schema.number(min:, max:)`,
+  `Schema.string(pattern:)`, `Schema.array(exactItems:)`. Bounds constrain
+  generation itself, so a 1-to-5 rating cannot come back as 47.
+- `respondInto` / `streamInto` decode straight into your own types.
+- `deltas()` turns cumulative snapshots into increments.
+- `ModelUseCase.contentTagging` selects Apple's tagging-tuned model.
+- `AppleFoundationModels.supportedLanguages()` and `availabilityChanges`, the
+  latter firing when the model finishes downloading mid-session.
+
 - `AppleFoundationModels.availability()` with typed reasons — `deviceNotEligible`,
   `appleIntelligenceNotEnabled`, `modelNotReady`, `osTooOld`,
   `unsupportedPlatform` — each carrying an explanation and, where one exists,

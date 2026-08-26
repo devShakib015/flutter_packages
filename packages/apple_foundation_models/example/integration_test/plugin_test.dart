@@ -206,6 +206,109 @@ void main() {
     expect((await session.respond('Say one word.')).trim(), isNotEmpty);
   });
 
+  testWidgets('numeric guides bound what the model can emit', (_) async {
+    // The point of a guide: without one, "rate 1 to 5" happily returns 47.
+    final Schema schema = Schema.object(<String, Schema>{
+      'severity': Schema.integer(min: 1, max: 5, description: 'severity'),
+      'confidence': Schema.number(min: 0, max: 1, description: '0 to 1'),
+    });
+
+    for (final String prompt in <String>[
+      'Rate the severity of: the app deletes user data on launch.',
+      'Rate the severity of: a tooltip has a typo.',
+    ]) {
+      final Map<String, Object?> r = await session.respondAs(
+        prompt,
+        schema: schema,
+        options: GenerationOptions.deterministic,
+      );
+      final num severity = r['severity']! as num;
+      final num confidence = r['confidence']! as num;
+      expect(severity, inInclusiveRange(1, 5), reason: 'for "\$prompt"');
+      expect(confidence, inInclusiveRange(0, 1), reason: 'for "\$prompt"');
+    }
+  });
+
+  testWidgets('an exact array length is honoured', (_) async {
+    final Map<String, Object?> r = await session.respondAs(
+      'Give exactly three colours.',
+      schema: Schema.object(<String, Schema>{
+        'colours': Schema.array(Schema.string(), exactItems: 3),
+      }),
+    );
+    expect(r['colours'], hasLength(3));
+  });
+
+  testWidgets('the contentTagging model produces tags', (_) async {
+    final LanguageModelSession tagger = await LanguageModelSession.create(
+      useCase: ModelUseCase.contentTagging,
+    );
+    addTearDown(tagger.dispose);
+
+    final Map<String, Object?> r = await tagger.respondAs(
+      'A recipe for slow-cooked lamb with rosemary and garlic.',
+      schema: Schema.object(<String, Schema>{
+        'tags': Schema.array(Schema.string(), maxItems: 4),
+      }),
+    );
+    expect(r['tags'], isA<List<Object?>>());
+    expect((r['tags']! as List<Object?>), isNotEmpty);
+  });
+
+  testWidgets('supportedLanguages reports real locales', (_) async {
+    final List<String> languages =
+        await AppleFoundationModels.supportedLanguages();
+    expect(languages, isNotEmpty);
+    expect(languages.any((String l) => l.startsWith('en')), isTrue);
+  });
+
+  testWidgets('availabilityChanges opens with the current value', (_) async {
+    expect(
+      await AppleFoundationModels.availabilityChanges.first,
+      const ModelAvailable(),
+    );
+  });
+
+  testWidgets('deltas() reconstructs the response exactly', (_) async {
+    final List<String> snapshots = <String>[];
+    final StringBuffer joined = StringBuffer();
+
+    final Stream<String> source = session.stream('Name three trees.');
+    await for (final String snapshot in source) {
+      snapshots.add(snapshot);
+    }
+
+    // Same prompt twice would give different text, so diff the captured run.
+    await for (final String delta in Stream<String>.fromIterable(
+      snapshots,
+    ).deltas()) {
+      joined.write(delta);
+    }
+    expect(
+      joined.toString(),
+      snapshots.last,
+      reason: 'concatenated deltas must equal the final snapshot',
+    );
+  });
+
+  testWidgets('respondInto decodes into a Dart type', (_) async {
+    final ({String summary, int severity}) triage = await session.respondInto(
+      'Triage: the login button does nothing on iPad.',
+      schema: Schema.object(<String, Schema>{
+        'summary': Schema.string(description: 'one line'),
+        'severity': Schema.integer(min: 1, max: 5),
+      }),
+      decoder: (Map<String, Object?> json) => (
+        summary: json['summary']! as String,
+        severity: (json['severity']! as num).toInt(),
+      ),
+      options: GenerationOptions.deterministic,
+    );
+
+    expect(triage.summary, isNotEmpty);
+    expect(triage.severity, inInclusiveRange(1, 5));
+  });
+
   testWidgets('a disposed session refuses further work', (_) async {
     final LanguageModelSession temp = await LanguageModelSession.create();
     await temp.dispose();

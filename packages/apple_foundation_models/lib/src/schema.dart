@@ -29,18 +29,45 @@ class Schema {
   const Schema._(this._json);
 
   /// A string value.
-  factory Schema.string({String? description}) =>
-      Schema._(<String, Object?>{'type': 'string', 'description': description});
+  ///
+  /// [pattern] is a regular expression the output must match. It constrains
+  /// generation rather than validating afterwards, so the model cannot produce
+  /// a value that fails it.
+  factory Schema.string({String? description, String? pattern}) =>
+      Schema._(<String, Object?>{
+        'type': 'string',
+        'description': description,
+        'pattern': pattern,
+      });
 
-  /// A whole number.
-  factory Schema.integer({String? description}) => Schema._(<String, Object?>{
-    'type': 'integer',
-    'description': description,
-  });
+  /// A whole number, optionally bounded.
+  ///
+  /// Bounds are enforced during generation, which is the difference between
+  /// asking for a 1-to-5 rating and actually getting one:
+  ///
+  /// ```dart
+  /// Schema.integer(min: 1, max: 5, description: 'severity')
+  /// ```
+  factory Schema.integer({String? description, int? min, int? max}) {
+    assert(min == null || max == null || min <= max, 'min must not exceed max');
+    return Schema._(<String, Object?>{
+      'type': 'integer',
+      'description': description,
+      'minimum': min,
+      'maximum': max,
+    });
+  }
 
-  /// A decimal number.
-  factory Schema.number({String? description}) =>
-      Schema._(<String, Object?>{'type': 'number', 'description': description});
+  /// A decimal number, optionally bounded.
+  factory Schema.number({String? description, double? min, double? max}) {
+    assert(min == null || max == null || min <= max, 'min must not exceed max');
+    return Schema._(<String, Object?>{
+      'type': 'number',
+      'description': description,
+      'minimum': min,
+      'maximum': max,
+    });
+  }
 
   /// A boolean.
   factory Schema.boolean({String? description}) => Schema._(<String, Object?>{
@@ -62,12 +89,24 @@ class Schema {
   }
 
   /// A list of [items].
+  ///
+  /// Pass [exactItems] to demand a precise length, or [minItems] and
+  /// [maxItems] for a range. Bounds are enforced during generation.
   factory Schema.array(
     Schema items, {
     int? minItems,
     int? maxItems,
+    int? exactItems,
     String? description,
   }) {
+    assert(
+      exactItems == null || (minItems == null && maxItems == null),
+      'exactItems cannot be combined with minItems or maxItems',
+    );
+    if (exactItems != null) {
+      minItems = exactItems;
+      maxItems = exactItems;
+    }
     assert(
       minItems == null || maxItems == null || minItems <= maxItems,
       'minItems must not exceed maxItems',

@@ -77,6 +77,81 @@ void main() {
     });
   });
 
+  group('guides', () {
+    test('bounds ride along on the wire', () {
+      expect(Schema.integer(min: 1, max: 5).toJson(), <String, Object?>{
+        'type': 'integer',
+        'minimum': 1,
+        'maximum': 5,
+      });
+      expect(Schema.number(min: 0).toJson()['minimum'], 0.0);
+      expect(Schema.number(max: 1).toJson().containsKey('minimum'), isFalse);
+      expect(
+        Schema.string(pattern: r'^[A-Z]{3}$').toJson()['pattern'],
+        r'^[A-Z]{3}$',
+      );
+    });
+
+    test('exactItems collapses to equal bounds', () {
+      final Map<String, Object?> json = Schema.array(
+        Schema.string(),
+        exactItems: 3,
+      ).toJson();
+      expect(json['minItems'], 3);
+      expect(json['maxItems'], 3);
+    });
+
+    test('rejects contradictory bounds', () {
+      expect(() => Schema.integer(min: 5, max: 1), throwsAssertionError);
+      expect(() => Schema.number(min: 1, max: 0), throwsAssertionError);
+      expect(
+        () => Schema.array(Schema.string(), exactItems: 3, maxItems: 5),
+        throwsAssertionError,
+        reason: 'an exact length and a range together is a contradiction',
+      );
+    });
+  });
+
+  group('deltas', () {
+    test('subtracts each cumulative snapshot from the last', () async {
+      final List<String> out = await Stream<String>.fromIterable(<String>[
+        'He',
+        'Hello',
+        'Hello there',
+      ]).deltas().toList();
+      expect(out, <String>['He', 'llo', ' there']);
+      expect(out.join(), 'Hello there');
+    });
+
+    test('emits a non-extending snapshot whole', () async {
+      // The model occasionally revises rather than extends; concatenation must
+      // still end up correct rather than interleaving two drafts.
+      final List<String> out = await Stream<String>.fromIterable(<String>[
+        'Hello',
+        'Goodbye',
+      ]).deltas().toList();
+      expect(out, <String>['Hello', 'Goodbye']);
+    });
+
+    test('skips repeats and handles an empty stream', () async {
+      expect(
+        await Stream<String>.fromIterable(<String>['Hi', 'Hi'])
+            .deltas()
+            .toList(),
+        <String>['Hi'],
+      );
+      expect(await const Stream<String>.empty().deltas().toList(), isEmpty);
+    });
+  });
+
+  group('use cases', () {
+    test('every case has a wire name', () {
+      for (final ModelUseCase useCase in ModelUseCase.values) {
+        expect(useCase.wireName, isNotEmpty);
+      }
+    });
+  });
+
   group('GenerationOptions', () {
     test('omits unset fields entirely', () {
       expect(const GenerationOptions().toJson(), isEmpty);

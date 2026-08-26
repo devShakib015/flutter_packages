@@ -20,5 +20,7 @@ export 'src/exceptions.dart';
 export 'src/generation_options.dart';
 export 'src/schema.dart';
 export 'src/session.dart';
+export 'src/stream_extensions.dart';
 export 'src/tool.dart';
 export 'src/transcript.dart';
+export 'src/use_case.dart';
