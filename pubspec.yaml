@@ -15,6 +15,8 @@ workspace:
   - packages/apple_foundation_models/example
   - packages/fit_text
   - packages/fit_text/example
+  - packages/vitals
+  - packages/vitals/example
 
 dev_dependencies:
   flutter_lints: ^6.0.0

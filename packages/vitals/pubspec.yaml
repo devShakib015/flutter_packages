@@ -1,0 +1,39 @@
+name: vitals
+description: >-
+  Type-safe access to Apple Health and Health Connect. Bucketed statistics
+  computed on-device, permissions modelled honestly, and an in-memory fake so
+  health flows are testable.
+version: 0.1.0
+repository: https://github.com/devShakib015/flutter_packages
+issue_tracker: https://github.com/devShakib015/flutter_packages/issues
+documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/vitals
+resolution: workspace
+
+topics:
+  - health
+  - healthkit
+  - health-connect
+  - fitness
+  - ios
+
+environment:
+  sdk: ^3.13.0
+  flutter: '>=3.32.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  plugin:
+    platforms:
+      ios:
+        pluginClass: VitalsPlugin
+      android:
+        package: com.devshakib.vitals
+        pluginClass: VitalsPlugin

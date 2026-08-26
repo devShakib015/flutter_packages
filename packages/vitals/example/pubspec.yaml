@@ -1,0 +1,25 @@
+name: vitals_example
+description: Demonstrates vitals against real Apple Health and Health Connect data.
+publish_to: none
+version: 1.0.0
+resolution: workspace
+
+environment:
+  sdk: ^3.13.0
+  flutter: '>=3.32.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  vitals:
+    path: ../
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
