@@ -14,7 +14,9 @@ final user = await Loading.run(
 );
 ```
 
-<!-- Add demo.gif here before publishing — a UI package is judged on its GIF. -->
+![The same 80ms request, then the same 1.2s request, with and without loading_kit](https://raw.githubusercontent.com/devShakib015/flutter_packages/main/packages/loading_kit/doc/antiflicker.gif)
+
+*Left: a bool and a Stack. Right: loading_kit. Same requests, fired at the same moment.*
 
 ## Why another one
 
@@ -26,7 +28,8 @@ Two rules fix that, and they are the reason this package exists.
 
 **Nothing paints before the reveal delay.** An operation that resolves in under
 140ms renders nothing at all — not a spinner, not a success tick. Fast paths
-stay visually silent.
+stay visually silent. In the GIF above the left panel gets a single frame of
+spinner; the right panel never moves.
 
 **Once painted, it holds.** An overlay that appeared at 140ms and tore down at
 170ms reads as a glitch, so it stays for at least half a second. The wait is
@@ -131,6 +134,8 @@ light and dark both work with no configuration.
 | `minimal` | Indicator only on a soft scrim — cheapest to paint |
 | `neon` | Dark panel with a saturated, glowing indicator |
 
+![The five presets](https://raw.githubusercontent.com/devShakib015/flutter_packages/main/packages/loading_kit/doc/presets.gif)
+
 Override any token without leaving the preset:
 
 ```dart
@@ -178,6 +183,8 @@ longer before committing for operations you expect to be slow.
   `CustomPainter`. The arc closes into a ring, crosses to the terminal colour,
   and strokes the glyph on inside it — rather than swapping one widget for an
   unrelated one.
+
+  ![The arc closing into a check, then a cross](https://raw.githubusercontent.com/devShakib015/flutter_packages/main/packages/loading_kit/doc/morph.gif)
 
 ## Performance
 
@@ -239,3 +246,12 @@ LoadingHost(
 ## License
 
 MIT © K M Shahriar Hossain
+
+## Regenerating the demos
+
+The GIFs are produced by driving the package through Flutter's own rasterizer
+on a fake clock, so they show the real timing frame-accurately rather than
+whatever a screen recorder happened to catch.
+
+    flutter test tool/record_frames.dart   # writes doc/frames/<scene>/*.png
+    ./tool/build_gifs.sh                   # writes doc/<scene>.gif

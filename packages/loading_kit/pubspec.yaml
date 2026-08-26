@@ -1,12 +1,12 @@
 name: loading_kit
 description: >-
-  A blocking-async overlay that never flickers. Wrap any Future in one call and
-  loading_kit handles delayed reveal, minimum display time, reference counting,
-  route awareness, cancellation and accessibility — with themed presets.
+  A blocking-async overlay that never flickers. Wrap any Future in one call:
+  delayed reveal, minimum display time, reference counting, cancellation,
+  and themed presets.
 version: 0.1.0
-repository: https://github.com/devshakib/flutter_packages
-issue_tracker: https://github.com/devshakib/flutter_packages/issues
-documentation: https://github.com/devshakib/flutter_packages/tree/main/packages/loading_kit
+repository: https://github.com/devShakib015/flutter_packages
+issue_tracker: https://github.com/devShakib015/flutter_packages/issues
+documentation: https://github.com/devShakib015/flutter_packages/tree/main/packages/loading_kit
 resolution: workspace
 
 topics:
