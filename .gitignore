@@ -23,3 +23,6 @@ packages/*/example/web/
 
 # macOS
 .DS_Store
+
+# Editor / assistant tooling
+.claude/
