@@ -15,6 +15,7 @@
 /// ```
 library;
 
+export 'src/exceptions.dart';
 export 'src/fake_vitals.dart';
 export 'src/method_channel_vitals.dart';
 export 'src/permissions.dart';

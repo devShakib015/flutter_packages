@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 
+import 'exceptions.dart';
 import 'permissions.dart';
 import 'statistics.dart';
 import 'units.dart';
@@ -25,7 +26,30 @@ class MethodChannelVitals implements Vitals {
     } on MissingPluginException {
       // Web, desktop, or a build without the plugin.
       return null;
+    } on PlatformException catch (e) {
+      throw _translate(e);
     }
+  }
+
+  /// Turns a platform error into something a caller can branch on.
+  static VitalsException _translate(PlatformException e) {
+    final String text = e.message ?? e.code;
+    // HealthKit uses one message for a family of situations, and the only one
+    // worth distinguishing is querying before ever asking.
+    if (e.code == 'authorizationNotDetermined' ||
+        text.toLowerCase().contains('authorization') &&
+            text.toLowerCase().contains('not determined')) {
+      return AuthorizationNotDeterminedException(
+        'Call requestPermissions() before reading. $text',
+      );
+    }
+    return switch (e.code) {
+      'unavailable' => HealthDataUnavailableException(text),
+      'unsupportedOnAndroid' || 'unknownType' || 'unwritable' =>
+        UnsupportedVitalTypeException(e.details?.toString() ?? '?', text),
+      'write' => VitalsWriteException(text),
+      _ => VitalsPlatformException(text, code: e.code),
+    };
   }
 
   static int _ms(DateTime t) => t.toUtc().millisecondsSinceEpoch;

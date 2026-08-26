@@ -154,6 +154,22 @@ public class VitalsPlugin: NSObject, FlutterPlugin {
     }
   }
 
+  /// Reports a HealthKit error, singling out the one state iOS *can* tell you
+  /// about: a query made before authorization was ever requested. Everything
+  /// after that point is deliberately indistinguishable.
+  private func failWith(
+    _ result: @escaping FlutterResult, _ fallback: String, _ error: Error
+  ) {
+    let nsError = error as NSError
+    let notDetermined =
+      nsError.domain == HKError.errorDomain
+      && nsError.code == HKError.Code.errorAuthorizationNotDetermined.rawValue
+    fail(
+      result,
+      notDetermined ? "authorizationNotDetermined" : fallback,
+      error.localizedDescription)
+  }
+
   private static func date(_ value: Any?) -> Date {
     Date(timeIntervalSince1970: ((value as? NSNumber)?.doubleValue ?? 0) / 1000)
   }
@@ -221,7 +237,7 @@ public class VitalsPlugin: NSObject, FlutterPlugin {
     ) { [weak self] _, samples, error in
       guard let self else { return }
       if let error {
-        return self.fail(result, "read", error.localizedDescription)
+        return self.failWith(result, "read", error)
       }
       let encoded = (samples ?? []).compactMap { self.encode($0, id: id) }
       DispatchQueue.main.async { result(encoded) }
@@ -320,7 +336,7 @@ public class VitalsPlugin: NSObject, FlutterPlugin {
 
     query.initialResultsHandler = { _, collection, error in
       if let error {
-        return self.fail(result, "statistics", error.localizedDescription)
+        return self.failWith(result, "statistics", error)
       }
       var out: [[String: Any]] = []
       collection?.enumerateStatistics(from: start, to: end) { stat, _ in
@@ -361,7 +377,7 @@ public class VitalsPlugin: NSObject, FlutterPlugin {
       limit: HKObjectQueryNoLimit, sortDescriptors: nil
     ) { _, samples, error in
       if let error {
-        return self.fail(result, "statistics", error.localizedDescription)
+        return self.failWith(result, "statistics", error)
       }
       let calendar = Calendar.current
       let interval = Self.interval(bucket)
@@ -447,7 +463,7 @@ public class VitalsPlugin: NSObject, FlutterPlugin {
     }
     store.save(sample) { _, error in
       if let error {
-        return self.fail(result, "write", error.localizedDescription)
+        return self.failWith(result, "write", error)
       }
       DispatchQueue.main.async { result(nil) }
     }
@@ -465,7 +481,7 @@ public class VitalsPlugin: NSObject, FlutterPlugin {
     // rest, which is why the Dart contract says the same.
     store.deleteObjects(of: type, predicate: predicate) { _, count, error in
       if let error {
-        return self.fail(result, "delete", error.localizedDescription)
+        return self.failWith(result, "delete", error)
       }
       DispatchQueue.main.async { result(count) }
     }

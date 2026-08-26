@@ -63,14 +63,51 @@ class _DemoPageState extends State<DemoPage> {
     );
   }
 
+  /// Writes a sample and reads it straight back — the shortest proof the whole
+  /// round trip works on a device with no existing health data.
+  Future<void> _logWater() async {
+    final DateTime now = DateTime.now();
+    try {
+      await _vitals.writeVolume(
+        VitalType.water,
+        const Volume.millilitres(250),
+        at: now,
+      );
+      final List<VolumeSample> back = await _vitals.read(
+        VitalType.water,
+        from: now.subtract(const Duration(minutes: 5)),
+        to: now.add(const Duration(minutes: 5)),
+      );
+      final double total = back.fold<double>(
+        0,
+        (double sum, VolumeSample s) => sum + s.value.millilitres,
+      );
+      if (!mounted) return;
+      setState(
+        () => _status =
+            'Wrote 250 ml. Read back ${back.length} sample(s), '
+            '${total.round()} ml total.',
+      );
+    } on VitalsException catch (e) {
+      if (!mounted) return;
+      setState(() => _status = '${e.runtimeType}: ${e.message}');
+    }
+  }
+
   Future<void> _loadSteps() async {
     final DateTime now = DateTime.now();
-    final List<VitalStatistic> stats = await _vitals.statistics(
-      VitalType.steps,
-      from: now.subtract(const Duration(days: 7)),
-      to: now,
-      bucket: VitalBucket.daily,
-    );
+    final List<VitalStatistic> stats;
+    try {
+      stats = await _vitals.statistics(
+        VitalType.steps,
+        from: now.subtract(const Duration(days: 7)),
+        to: now,
+        bucket: VitalBucket.daily,
+      );
+    } on VitalsException catch (e) {
+      if (!mounted) return;
+      return setState(() => _status = '${e.runtimeType}: ${e.message}');
+    }
     if (!mounted) return;
     setState(() {
       _steps = stats;
@@ -107,6 +144,11 @@ class _DemoPageState extends State<DemoPage> {
           OutlinedButton(
             onPressed: _loadSteps,
             child: const Text('Steps, last 7 days'),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton(
+            onPressed: _logWater,
+            child: const Text('Write 250 ml water, then read it back'),
           ),
           if (_status.isNotEmpty) ...<Widget>[
             const SizedBox(height: 16),
