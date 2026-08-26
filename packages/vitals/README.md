@@ -11,9 +11,21 @@ final steps = await Vitals.instance.read(
 // List<CountSample> — steps.first.count is an int.
 ```
 
-> **Status.** iOS is complete and verified against a real HealthKit store.
-> Android reads and aggregates but does not yet write or delete. Two types have
-> no Health Connect equivalent and say so rather than approximating.
+> **Status — read this before writing data.**
+>
+> **Reading is verified.** The iOS path is exercised against a real HealthKit
+> store, and the Dart contract has a full unit-test suite behind it.
+>
+> **Writing is not verified on either platform.** The code is complete and
+> compiles, but no write has yet been observed to succeed end to end: on the
+> iOS Simulator `save` returns *Not authorized* even after the permission sheet
+> is granted, and the Android round trip has not been run. It is unclear
+> whether that is a Simulator limitation or a defect here.
+>
+> So: use `0.1.0` for reading and aggregating. If you write, verify the values
+> land correctly in Health or Health Connect before trusting it — a unit-
+> conversion mistake would be silent, and health records are awkward to
+> correct. Reports from real devices are very welcome.
 
 ## Why another one
 

@@ -1,7 +1,12 @@
 ## 0.1.0
 
-Initial release. iOS is complete; Android reads and aggregates but does not
-yet write or delete.
+Initial release.
+
+**Reading is verified; writing is not.** Reads are exercised against a real
+HealthKit store. Writes compile on both platforms but have not been observed to
+succeed end to end — the iOS Simulator rejects `save` as unauthorised even
+after the sheet is granted, and the Android round trip is unrun. Verify written
+values land correctly before relying on them.
 
 ### Typed throughout
 - `VitalType<T>` carries the Dart type it reads back as, so `read(VitalType.steps)`
