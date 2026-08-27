@@ -17,6 +17,8 @@ workspace:
   - packages/fit_text/example
   - packages/vitals
   - packages/vitals/example
+  - packages/anchored_list
+  - packages/anchored_list/example
 
 dev_dependencies:
   flutter_lints: ^6.0.0

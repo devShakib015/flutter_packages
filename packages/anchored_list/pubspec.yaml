@@ -1,0 +1,30 @@
+name: anchored_list
+description: >-
+  Scroll to any index in a lazy list, instantly and without glitches. One
+  viewport anchored at the target rather than two lists cross-fading, so it
+  composes, shrink-wraps, and stays smooth.
+version: 0.1.0
+repository: https://github.com/devShakib015/flutter_packages
+issue_tracker: https://github.com/devShakib015/flutter_packages/issues
+documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/anchored_list
+resolution: workspace
+
+topics:
+  - scroll
+  - list
+  - sliver
+  - scrolling
+  - ui
+
+environment:
+  sdk: ^3.13.0
+  flutter: '>=3.32.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0

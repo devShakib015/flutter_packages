@@ -32,20 +32,23 @@ void main() {
   });
 
   testWidgets('read access is answerable here, unlike iOS', (_) async {
-    final Map<VitalType<VitalSample>, bool>? access =
-        await vitals.readAccessOnAndroid(<VitalType<VitalSample>>{
-      VitalType.steps,
-      VitalType.water,
-    });
-    expect(access, isNotNull,
-        reason: 'Health Connect can report read access; HealthKit cannot');
+    final Map<VitalType<VitalSample>, bool>? access = await vitals
+        .readAccessOnAndroid(<VitalType<VitalSample>>{
+          VitalType.steps,
+          VitalType.water,
+        });
+    expect(
+      access,
+      isNotNull,
+      reason: 'Health Connect can report read access; HealthKit cannot',
+    );
     expect(access![VitalType.steps], isTrue);
     expect(access[VitalType.water], isTrue);
   });
 
   testWidgets('write access is reported per type', (_) async {
-    final Map<VitalType<VitalSample>, WriteAccess> access =
-        await vitals.writeAccess(<VitalType<VitalSample>>{VitalType.water});
+    final Map<VitalType<VitalSample>, WriteAccess> access = await vitals
+        .writeAccess(<VitalType<VitalSample>>{VitalType.water});
     expect(access[VitalType.water], WriteAccess.granted);
   });
 
@@ -56,8 +59,11 @@ void main() {
       at: now,
     );
 
-    final List<VolumeSample> back =
-        await vitals.read(VitalType.water, from: from, to: to);
+    final List<VolumeSample> back = await vitals.read(
+      VitalType.water,
+      from: from,
+      to: to,
+    );
 
     expect(back, hasLength(1));
     expect(back.single.value.millilitres, closeTo(250, 0.001));
@@ -67,14 +73,13 @@ void main() {
   testWidgets('a mass round-trips with its unit intact', (_) async {
     // Written in pounds, stored in kilograms, read back as a Mass. If any of
     // the three conversion sites disagreed, this is where it would show.
-    await vitals.writeMass(
-      VitalType.bodyMass,
-      const Mass.pounds(180),
-      at: now,
-    );
+    await vitals.writeMass(VitalType.bodyMass, const Mass.pounds(180), at: now);
 
-    final List<MassSample> back =
-        await vitals.read(VitalType.bodyMass, from: from, to: to);
+    final List<MassSample> back = await vitals.read(
+      VitalType.bodyMass,
+      from: from,
+      to: to,
+    );
 
     expect(back, hasLength(1));
     expect(back.single.value.kilograms, closeTo(81.6466, 0.01));
@@ -97,7 +102,10 @@ void main() {
       from: base.subtract(const Duration(minutes: 1)),
       to: base.add(const Duration(hours: 1)),
     );
-    expect(samples.map((CountSample s) => s.count), containsAll(<int>[1000, 2500]));
+    expect(
+      samples.map((CountSample s) => s.count),
+      containsAll(<int>[1000, 2500]),
+    );
 
     final List<VitalStatistic> hourly = await vitals.statistics(
       VitalType.steps,
@@ -106,8 +114,11 @@ void main() {
       bucket: VitalBucket.hourly,
     );
     expect(hourly, hasLength(1));
-    expect(hourly.single.value, 3500.0,
-        reason: 'steps sum, and the reduction happens on the platform');
+    expect(
+      hourly.single.value,
+      3500.0,
+      reason: 'steps sum, and the reduction happens on the platform',
+    );
   });
 
   testWidgets('an empty bucket reports null, not zero', (_) async {
@@ -119,8 +130,11 @@ void main() {
       bucket: VitalBucket.daily,
     );
     expect(stats, hasLength(2));
-    expect(stats.every((VitalStatistic s) => s.value == null), isTrue,
-        reason: 'no data and a recorded zero must stay distinguishable');
+    expect(
+      stats.every((VitalStatistic s) => s.value == null),
+      isTrue,
+      reason: 'no data and a recorded zero must stay distinguishable',
+    );
   });
 
   testWidgets('types Health Connect cannot model say so', (_) async {
@@ -136,8 +150,14 @@ void main() {
     }
   });
 
-  testWidgets('delete removes what was written and reports the count', (_) async {
-    final int removed = await vitals.delete(VitalType.water, from: from, to: to);
+  testWidgets('delete removes what was written and reports the count', (
+    _,
+  ) async {
+    final int removed = await vitals.delete(
+      VitalType.water,
+      from: from,
+      to: to,
+    );
     expect(removed, greaterThanOrEqualTo(1));
     expect(await vitals.read(VitalType.water, from: from, to: to), isEmpty);
   });
