@@ -1,3 +1,16 @@
+## 0.1.1
+
+Fixes a macOS build failure under Swift Package Manager.
+
+`Package.swift` declared only `.iOS("15.0")` and no macOS platform. SPM defaults
+an undeclared platform to macOS 10.13, where Swift concurrency's `Task` does not
+exist, so the plugin failed to compile with `'Task' is only available in macOS
+10.15 or newer`. The podspec had always said `osx 10.15`, so CocoaPods builds
+were unaffected and the two paths disagreed — and SPM is on by default on
+current Flutter, so most macOS users would have hit this.
+
+No API changes.
+
 ## 0.1.0
 
 Initial release.
