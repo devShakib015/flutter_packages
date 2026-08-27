@@ -3,7 +3,7 @@ description: >-
   Type-safe access to Apple Health and Health Connect. Bucketed statistics
   computed on-device, permissions modelled honestly, and an in-memory fake so
   health flows are testable.
-version: 0.1.0
+version: 0.1.1
 repository: https://github.com/devShakib015/flutter_packages
 issue_tracker: https://github.com/devShakib015/flutter_packages/issues
 documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/vitals

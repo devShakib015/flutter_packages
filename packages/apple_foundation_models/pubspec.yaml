@@ -2,11 +2,22 @@ name: apple_foundation_models
 description: >-
   Run Apple's on-device language model from Flutter. Streaming, tool calling,
   and schema-constrained structured output — private, offline, and free.
-version: 0.1.1
+version: 0.1.2
 repository: https://github.com/devShakib015/flutter_packages
 issue_tracker: https://github.com/devShakib015/flutter_packages/issues
 documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/apple_foundation_models
 resolution: workspace
+
+screenshots:
+  - description: >-
+      The model calls a Dart function and uses the result
+    path: doc/tool.gif
+  - description: >-
+      Fields filling in one at a time under a schema
+    path: doc/structured.gif
+  - description: >-
+      Streaming a response on device
+    path: doc/stream.gif
 
 topics:
   - ai

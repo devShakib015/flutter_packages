@@ -1,3 +1,12 @@
+## 0.1.2
+
+Packaging only — no API or behaviour changes.
+
+- The demo animations now ship inside the package, so they appear as
+  screenshots on the pub.dev page rather than only in the README on GitHub.
+- `.pubignore` excludes the raw recorder frames, so shipping them costs
+  about 360 KB rather than the 11 MB the frame directory would have added.
+
 ## 0.1.1
 
 Fixes a macOS build failure under Swift Package Manager.

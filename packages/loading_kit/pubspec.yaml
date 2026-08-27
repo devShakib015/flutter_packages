@@ -3,11 +3,25 @@ description: >-
   A blocking-async overlay that never flickers. Wrap any Future in one call:
   delayed reveal, minimum display time, reference counting, cancellation,
   and themed presets.
-version: 0.2.0
+version: 0.2.1
 repository: https://github.com/devShakib015/flutter_packages
 issue_tracker: https://github.com/devShakib015/flutter_packages/issues
 documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/loading_kit
 resolution: workspace
+
+screenshots:
+  - description: >-
+      The same 80ms request, then the same 1.2s request, with and without loading_kit
+    path: doc/antiflicker.gif
+  - description: >-
+      The five presets
+    path: doc/presets.gif
+  - description: >-
+      The six indicator styles
+    path: doc/styles.gif
+  - description: >-
+      The arc closing into a check, then a cross
+    path: doc/morph.gif
 
 topics:
   - loading

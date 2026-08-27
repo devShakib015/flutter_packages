@@ -1,3 +1,10 @@
+## 0.1.1
+
+Packaging only — no API or behaviour changes.
+
+- Added `.pubignore`. Previous versions shipped the package's own `test/`
+  directory to everyone who depended on it.
+
 ## 0.1.0
 
 Initial release.

@@ -1,7 +1,6 @@
 name: apple_intelligence
 description: >-
-  Apple Intelligence from Flutter beyond the language model: streaming
-  on-device image generation, the Image Playground sheet, and Writing Tools.
+  Generate images on device with Apple Intelligence, streamed as they are made, plus the system Image Playground sheet. iOS and macOS.
 
 version: 0.1.0
 repository: https://github.com/devShakib015/flutter_packages

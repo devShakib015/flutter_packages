@@ -1,3 +1,12 @@
+## 0.2.1
+
+Packaging only — no API or behaviour changes.
+
+- The demo animations now ship inside the package, so they appear as
+  screenshots on the pub.dev page rather than only in the README on GitHub.
+- `.pubignore` excludes the raw recorder frames, so shipping them costs
+  about 1.7 MB rather than the 11 MB the frame directory would have added.
+
 ## 0.2.0
 
 Everything is now a token. Nothing about the indicator, the card, or the

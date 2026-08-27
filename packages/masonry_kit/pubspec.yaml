@@ -3,11 +3,19 @@ description: >-
   A masonry grid whose layout is computed once and never revised, so several
   grids can share one CustomScrollView without the view jumping backwards.
 
-version: 0.1.0
+version: 0.1.1
 repository: https://github.com/devShakib015/flutter_packages
 issue_tracker: https://github.com/devShakib015/flutter_packages/issues
 documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/masonry_kit
 resolution: workspace
+
+screenshots:
+  - description: >-
+      A masonry grid scrolling, then reflowing from two columns to four and back
+    path: doc/layout.gif
+  - description: >-
+      The same drag applied to both packages side by side
+    path: doc/jump.gif
 
 topics:
   - masonry
