@@ -12,6 +12,12 @@ await for (final image in ImageCreator.generate(
 }
 ```
 
+![Four images generated on device, each appearing the moment it lands](https://raw.githubusercontent.com/devShakib015/flutter_packages/HEAD/packages/apple_intelligence/doc/streaming.gif)
+
+*A real run, recorded from the app itself — the clock is the actual elapsed
+time. Four images in 28 seconds, each shown as it arrived rather than all at
+the end.*
+
 ## Why this exists
 
 `apple_foundation_models` gave Flutter Apple's on-device *language* model. This

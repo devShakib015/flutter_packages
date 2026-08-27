@@ -1,3 +1,16 @@
+## 0.2.1
+
+Documentation only — no API or behaviour changes.
+
+- Adds a recording of a real generation run to the README and to the pub.dev
+  page. Four images in 28 seconds, each appearing as it arrived; the elapsed
+  clock in the frames is the genuine one.
+- Recording it needed a different approach from the other packages here. The
+  usual `flutter test` frame recorder runs headless, and Apple refuses image
+  creation to an app that is not frontmost, so the app records itself. Capture
+  is driven by images arriving rather than by a timer, because macOS throttles
+  timers and a stalled ticker silently truncates the run.
+
 ## 0.2.0
 
 Writing Tools and Genmoji, via a real system text view.
