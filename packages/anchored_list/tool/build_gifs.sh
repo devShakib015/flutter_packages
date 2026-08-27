@@ -23,6 +23,7 @@ build() {
 
 build jump   460 128
 build scroll 460 128
+build prepend 560 128
 
 echo
 echo "done:"

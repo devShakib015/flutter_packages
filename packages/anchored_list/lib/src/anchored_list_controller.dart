@@ -1,5 +1,5 @@
-import 'package:flutter/animation.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 
 import 'item_position.dart';
 
@@ -25,6 +25,35 @@ class AnchoredListController extends ChangeNotifier {
   ValueListenable<List<ItemPosition>> get itemPositions => _positions;
   final ValueNotifier<List<ItemPosition>> _positions =
       ValueNotifier<List<ItemPosition>>(const <ItemPosition>[]);
+
+  /// The [ScrollController] driving the underlying viewport.
+  ///
+  /// Use it for everything index-based movement does not cover: attaching a
+  /// [Scrollbar], nudging by a screenful for page-up/page-down, reading
+  /// [ScrollController.position], or linking two lists together.
+  ///
+  /// ```dart
+  /// // Page down by one viewport.
+  /// final position = controller.scrollController.position;
+  /// controller.scrollController.animateTo(
+  ///   position.pixels + position.viewportDimension,
+  ///   duration: const Duration(milliseconds: 250),
+  ///   curve: Curves.easeOut,
+  /// );
+  /// ```
+  ///
+  /// **Offsets are measured from the anchor, not from the start of the list.**
+  /// Zero is the anchored item and content above it sits at *negative* offset,
+  /// because that is what makes a jump constant time. So
+  /// `scrollController.offset == 0` means "the anchor is at the leading edge",
+  /// not "the top of the list", and [ScrollPosition.minScrollExtent] is
+  /// negative whenever the anchor is not item 0. Estimated extents for unbuilt
+  /// items behave the same way they do in [ListView.builder].
+  ///
+  /// To supply your own controller instead, pass it to
+  /// `AnchoredList(scrollController: ...)`; this returns whichever one the
+  /// list is actually using.
+  ScrollController get scrollController => _requireBinding().scrollController;
 
   /// Moves to [index] immediately.
   ///
@@ -55,6 +84,40 @@ class AnchoredListController extends ChangeNotifier {
     assert(alignment >= 0 && alignment <= 1, 'alignment must be 0..1');
     assert(duration > Duration.zero, 'duration must be positive');
     return _requireBinding().animateToIndex(index, alignment, duration, curve);
+  }
+
+  /// Tells the list that [count] items were inserted *before* the anchor, so
+  /// the viewport holds still instead of lurching.
+  ///
+  /// This is the older-history problem. Prepend a page of messages to a normal
+  /// list and every index shifts by a page, so what the reader was looking at
+  /// slides down the screen. The usual fixes are to measure the inserted items
+  /// and subtract their height, or to invert the whole list and think upside
+  /// down forever.
+  ///
+  /// Here the anchor is an index, so the correction is arithmetic on one
+  /// integer, and the scroll offset is never touched — the pixels on screen do
+  /// not move at all, even mid-item. Call it in the same frame you grow the
+  /// list:
+  ///
+  /// ```dart
+  /// setState(() => messages.insertAll(0, older));
+  /// controller.itemsInsertedAbove(older.length);
+  /// ```
+  ///
+  /// Items added *after* the anchor need no call: their indices are unchanged.
+  void itemsInsertedAbove(int count) {
+    assert(count >= 0, 'count cannot be negative');
+    if (count != 0) _requireBinding().shiftAnchor(count);
+  }
+
+  /// Tells the list that [count] items were removed from *before* the anchor.
+  ///
+  /// The counterpart to [itemsInsertedAbove] — trimming history off the top,
+  /// or dropping items a filter no longer matches.
+  void itemsRemovedAbove(int count) {
+    assert(count >= 0, 'count cannot be negative');
+    if (count != 0) _requireBinding().shiftAnchor(-count);
   }
 
   /// The index currently anchored at the viewport's zero offset.
@@ -108,6 +171,13 @@ abstract class AnchoredListBinding {
     Curve curve,
   );
 
+  /// Moves the anchor by [delta] indices without moving the scroll offset,
+  /// so the same pixels stay on screen after items shift around it.
+  void shiftAnchor(int delta);
+
   /// The index currently at the viewport's zero scroll offset.
   int get anchorIndex;
+
+  /// The scroll controller driving the viewport.
+  ScrollController get scrollController;
 }

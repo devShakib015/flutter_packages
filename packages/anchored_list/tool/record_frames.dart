@@ -110,6 +110,215 @@ void main() {
     rec.report();
     await tester.binding.setSurfaceSize(null);
   });
+
+  testWidgets('scene: older messages arriving at the top', (
+    WidgetTester tester,
+  ) async {
+    final _Recorder rec = _Recorder('prepend');
+    final AnchoredListController controller = AnchoredListController();
+    addTearDown(controller.dispose);
+    final ScrollController plain = ScrollController();
+    addTearDown(plain.dispose);
+    final _Feed feed = _Feed();
+
+    await tester.binding.setSurfaceSize(const Size(560, 420));
+    _caption.value = 'both scrolled to the same message';
+    await tester.pumpWidget(
+      _PrependStage(controller: controller, plain: plain, feed: feed),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+    // AnchoredList opens on the watched message; scroll the plain list to it.
+    plain.jumpTo(_PrependStage._watch * _PrependStage.bubbleExtent);
+    await tester.pump(const Duration(milliseconds: 16));
+    await rec.hold(tester, const Duration(milliseconds: 900));
+
+    for (int round = 0; round < 3; round++) {
+      _caption.value = 'loading 5 older messages…';
+      await rec.hold(tester, const Duration(milliseconds: 450));
+      feed.prependFive();
+      // Only the right-hand list is told; that is the whole difference.
+      controller.itemsInsertedAbove(5);
+      _caption.value = 'left jumped. right did not move.';
+      await rec.hold(tester, const Duration(milliseconds: 1000));
+    }
+
+    rec.report();
+    await tester.binding.setSurfaceSize(null);
+  });
+}
+
+/// Shared data for the two lists in the prepend scene.
+class _Feed extends ChangeNotifier {
+  int _older = 0;
+  static const int _base = 40;
+
+  int get length => _base + _older;
+
+  /// Index 0 is the oldest message, so prepending renumbers everything.
+  String label(int index) =>
+      index < _older ? 'older ${_older - index}' : 'message ${index - _older}';
+
+  void prependFive() {
+    _older += 5;
+    notifyListeners();
+  }
+}
+
+/// Two lists, same data, same insert — one told about it, one not.
+class _PrependStage extends StatelessWidget {
+  const _PrependStage({
+    required this.controller,
+    required this.plain,
+    required this.feed,
+  });
+
+  final AnchoredListController controller;
+  final ScrollController plain;
+  final _Feed feed;
+
+  static const int _watch = 12;
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(fontFamily: 'Inter', useMaterial3: true),
+      home: RepaintBoundary(
+        key: _stageKey,
+        child: Material(
+          color: _bg,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: AnimatedBuilder(
+              animation: Listenable.merge(<Listenable>[_tick, _caption, feed]),
+              builder: (BuildContext context, _) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    Text(
+                      _caption.value,
+                      style: const TextStyle(color: _muted, fontSize: 12.5),
+                    ),
+                    const SizedBox(height: 10),
+                    Expanded(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: <Widget>[
+                          Expanded(
+                            child: _Panel(
+                              title: 'ListView',
+                              tint: const Color(0xFFF87171),
+                              child: ListView.builder(
+                                controller: plain,
+                                itemCount: feed.length,
+                                itemBuilder: (BuildContext c, int i) =>
+                                    _Bubble(feed.label(i), i == _target(feed)),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _Panel(
+                              title: 'AnchoredList',
+                              tint: const Color(0xFF34D399),
+                              child: AnchoredList.builder(
+                                controller: controller,
+                                initialIndex: _watch,
+                                itemCount: feed.length,
+                                itemBuilder: (BuildContext c, int i) =>
+                                    _Bubble(feed.label(i), i == _target(feed)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// The message the reader is looking at, wherever it has drifted to.
+  static int _target(_Feed feed) => feed.length - _Feed._base + _watch;
+
+  /// Where the plain list has to start so both show the same message.
+  static const double bubbleExtent = 44;
+}
+
+class _Panel extends StatelessWidget {
+  const _Panel({required this.title, required this.tint, required this.child});
+
+  final String title;
+  final Color tint;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.only(left: 2, bottom: 6),
+          child: Text(
+            title,
+            style: TextStyle(
+              color: tint,
+              fontSize: 11.5,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        Expanded(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: _panel,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: child,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// One message. The one being read is highlighted so drift is obvious.
+class _Bubble extends StatelessWidget {
+  const _Bubble(this.text, this.watched);
+
+  final String text;
+  final bool watched;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 38,
+      margin: const EdgeInsets.fromLTRB(7, 3, 7, 3),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      alignment: Alignment.centerLeft,
+      decoration: BoxDecoration(
+        color: watched ? _accent.withValues(alpha: 0.22) : _rowBg,
+        borderRadius: BorderRadius.circular(8),
+        border: watched ? Border.all(color: _accent, width: 1.4) : null,
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: watched ? _text : _muted,
+          fontSize: 12,
+          fontWeight: watched ? FontWeight.w700 : FontWeight.w400,
+        ),
+      ),
+    );
+  }
 }
 
 class _Stage extends StatelessWidget {

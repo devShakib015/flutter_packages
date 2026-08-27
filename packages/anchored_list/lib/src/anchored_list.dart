@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 
@@ -36,6 +37,11 @@ import 'item_position.dart';
 /// three items or three hundred thousand. One viewport, one set of children,
 /// no cross-fade.
 ///
+/// The same split pays off a second time when items arrive at the top of the
+/// list: because the anchor is an index rather than a pixel offset, correcting
+/// for a prepended page is arithmetic on one integer. See
+/// [AnchoredListController.itemsInsertedAbove].
+///
 /// ## The trade
 ///
 /// `shrinkWrap` is **not supported**, and cannot be: Flutter asserts
@@ -48,21 +54,100 @@ import 'item_position.dart';
 /// [CustomScrollView]. It owns its viewport, because owning the viewport is
 /// what makes the centre trick possible.
 class AnchoredList extends StatefulWidget {
-  /// Creates a lazily-built anchored list.
-  const AnchoredList.builder({
+  /// Creates an anchored list from an explicit list of [children].
+  ///
+  /// Every child is built up front, exactly as with [ListView]'s default
+  /// constructor. Prefer [AnchoredList.builder] for anything long.
+  AnchoredList({
     super.key,
-    required this.itemCount,
-    required this.itemBuilder,
+    required List<Widget> children,
     this.controller,
+    this.scrollController,
     this.initialIndex = 0,
     this.initialAlignment = 0,
     this.scrollDirection = Axis.vertical,
     this.reverse = false,
     this.physics,
     this.padding,
+    this.cacheExtent,
+    this.semanticChildCount,
     this.addAutomaticKeepAlives = true,
     this.addRepaintBoundaries = true,
     this.addSemanticIndexes = true,
+    this.dragStartBehavior = DragStartBehavior.start,
+    this.keyboardDismissBehavior = ScrollViewKeyboardDismissBehavior.manual,
+    this.scrollBehavior,
+    this.clipBehavior = Clip.hardEdge,
+    this.restorationId,
+  }) : itemCount = children.length,
+       itemBuilder = ((BuildContext _, int index) => children[index]),
+       separatorBuilder = null,
+       findChildIndexCallback = null,
+       assert(initialIndex >= 0, 'initialIndex cannot be negative'),
+       assert(
+         initialAlignment >= 0 && initialAlignment <= 1,
+         'initialAlignment must be 0..1',
+       );
+
+  /// Creates a lazily-built anchored list.
+  const AnchoredList.builder({
+    super.key,
+    required this.itemCount,
+    required this.itemBuilder,
+    this.controller,
+    this.scrollController,
+    this.initialIndex = 0,
+    this.initialAlignment = 0,
+    this.scrollDirection = Axis.vertical,
+    this.reverse = false,
+    this.physics,
+    this.padding,
+    this.cacheExtent,
+    this.semanticChildCount,
+    this.findChildIndexCallback,
+    this.addAutomaticKeepAlives = true,
+    this.addRepaintBoundaries = true,
+    this.addSemanticIndexes = true,
+    this.dragStartBehavior = DragStartBehavior.start,
+    this.keyboardDismissBehavior = ScrollViewKeyboardDismissBehavior.manual,
+    this.scrollBehavior,
+    this.clipBehavior = Clip.hardEdge,
+    this.restorationId,
+  }) : separatorBuilder = null,
+       assert(itemCount >= 0, 'itemCount cannot be negative'),
+       assert(initialIndex >= 0, 'initialIndex cannot be negative'),
+       assert(
+         initialAlignment >= 0 && initialAlignment <= 1,
+         'initialAlignment must be 0..1',
+       );
+
+  /// Creates a lazily-built anchored list with a separator between items.
+  ///
+  /// [separatorBuilder] is called with the index of the item *above* the
+  /// separator, so it runs `itemCount - 1` times, matching
+  /// [ListView.separated].
+  const AnchoredList.separated({
+    super.key,
+    required this.itemCount,
+    required this.itemBuilder,
+    required IndexedWidgetBuilder this.separatorBuilder,
+    this.controller,
+    this.scrollController,
+    this.initialIndex = 0,
+    this.initialAlignment = 0,
+    this.scrollDirection = Axis.vertical,
+    this.reverse = false,
+    this.physics,
+    this.padding,
+    this.cacheExtent,
+    this.semanticChildCount,
+    this.findChildIndexCallback,
+    this.addAutomaticKeepAlives = true,
+    this.addRepaintBoundaries = true,
+    this.addSemanticIndexes = true,
+    this.dragStartBehavior = DragStartBehavior.start,
+    this.keyboardDismissBehavior = ScrollViewKeyboardDismissBehavior.manual,
+    this.scrollBehavior,
     this.clipBehavior = Clip.hardEdge,
     this.restorationId,
   }) : assert(itemCount >= 0, 'itemCount cannot be negative'),
@@ -78,8 +163,21 @@ class AnchoredList extends StatefulWidget {
   /// Builds the item at an index. Called lazily, as items come into view.
   final IndexedWidgetBuilder itemBuilder;
 
+  /// Builds the separator below item `index`, or null when there is none.
+  final IndexedWidgetBuilder? separatorBuilder;
+
   /// Drives jumps and reports positions.
   final AnchoredListController? controller;
+
+  /// The scroll controller for the underlying viewport.
+  ///
+  /// Supply one to attach a [Scrollbar], link two lists, or drive the list by
+  /// pixel offset. One is created internally when this is null, and either way
+  /// [AnchoredListController.scrollController] hands back the live one.
+  ///
+  /// Remember that offsets are relative to the anchor, not the start of the
+  /// list — see [AnchoredListController.scrollController].
+  final ScrollController? scrollController;
 
   /// The index shown when the list first builds.
   ///
@@ -102,6 +200,19 @@ class AnchoredList extends StatefulWidget {
   /// Space around the list's contents.
   final EdgeInsetsGeometry? padding;
 
+  /// How far beyond the viewport to build, in pixels.
+  final double? cacheExtent;
+
+  /// The number of children the semantics tree reports. Defaults to
+  /// [itemCount].
+  final int? semanticChildCount;
+
+  /// Locates an item by [Key] so its state survives insertions and reordering.
+  ///
+  /// Return the item's **list index**, exactly as you would for
+  /// [ListView.builder]; the split into two slivers is translated for you.
+  final ChildIndexGetter? findChildIndexCallback;
+
   /// Whether to wrap children in automatic keep-alives.
   final bool addAutomaticKeepAlives;
 
@@ -110,6 +221,15 @@ class AnchoredList extends StatefulWidget {
 
   /// Whether to attach semantic indexes to children.
   final bool addSemanticIndexes;
+
+  /// When a drag formally begins.
+  final DragStartBehavior dragStartBehavior;
+
+  /// Whether dragging dismisses the on-screen keyboard.
+  final ScrollViewKeyboardDismissBehavior keyboardDismissBehavior;
+
+  /// Overrides the ambient scroll behaviour, e.g. to hide desktop scrollbars.
+  final ScrollBehavior? scrollBehavior;
 
   /// How to clip contents that overflow.
   final Clip clipBehavior;
@@ -126,7 +246,9 @@ class _AnchoredListState extends State<AnchoredList>
   /// Marks the sliver that owns scroll offset zero.
   final Key _centreKey = UniqueKey();
 
-  final ScrollController _scroll = ScrollController();
+  /// Only set when the caller did not supply one, and only this one is ours
+  /// to dispose.
+  ScrollController? _ownedScroll;
 
   /// Contexts of items currently built, by list index.
   ///
@@ -138,6 +260,10 @@ class _AnchoredListState extends State<AnchoredList>
   late double _alignment = widget.initialAlignment;
   bool _positionsScheduled = false;
 
+  @override
+  ScrollController get scrollController =>
+      widget.scrollController ?? _ownedScroll!;
+
   int _clamp(int index) =>
       widget.itemCount == 0 ? 0 : index.clamp(0, widget.itemCount - 1);
 
@@ -148,7 +274,8 @@ class _AnchoredListState extends State<AnchoredList>
   void initState() {
     super.initState();
     widget.controller?.attach(this);
-    _scroll.addListener(_schedulePositions);
+    if (widget.scrollController == null) _ownedScroll = ScrollController();
+    scrollController.addListener(_schedulePositions);
   }
 
   @override
@@ -158,6 +285,18 @@ class _AnchoredListState extends State<AnchoredList>
       old.controller?.detach(this);
       widget.controller?.attach(this);
     }
+    if (old.scrollController != widget.scrollController) {
+      (old.scrollController ?? _ownedScroll)?.removeListener(
+        _schedulePositions,
+      );
+      if (widget.scrollController == null) {
+        _ownedScroll ??= ScrollController();
+      } else {
+        _ownedScroll?.dispose();
+        _ownedScroll = null;
+      }
+      scrollController.addListener(_schedulePositions);
+    }
     if (widget.itemCount != old.itemCount) {
       _anchorIndex = _clamp(_anchorIndex);
     }
@@ -166,9 +305,8 @@ class _AnchoredListState extends State<AnchoredList>
   @override
   void dispose() {
     widget.controller?.detach(this);
-    _scroll
-      ..removeListener(_schedulePositions)
-      ..dispose();
+    scrollController.removeListener(_schedulePositions);
+    _ownedScroll?.dispose();
     super.dispose();
   }
 
@@ -183,7 +321,20 @@ class _AnchoredListState extends State<AnchoredList>
     });
     // Offset zero means "the anchor", and the anchor just moved, so the
     // position has to return to zero for the new split to be what is shown.
-    if (_scroll.hasClients && _scroll.offset != 0) _scroll.jumpTo(0);
+    final ScrollController scroll = scrollController;
+    if (scroll.hasClients && scroll.offset != 0) scroll.jumpTo(0);
+    _schedulePositions();
+  }
+
+  @override
+  void shiftAnchor(int delta) {
+    if (delta == 0 || widget.itemCount == 0) return;
+    final int next = _clamp(_anchorIndex + delta);
+    if (next == _anchorIndex) return;
+    setState(() => _anchorIndex = next);
+    // Deliberately does not touch the scroll offset. The anchor moved by
+    // exactly the number of items that moved with it, so the same content is
+    // under the same pixels and nothing should shift on screen.
     _schedulePositions();
   }
 
@@ -277,12 +428,59 @@ class _AnchoredListState extends State<AnchoredList>
 
   // ---------------------------------------------------------------- build
 
-  Widget _item(BuildContext _, int index) => _RegisteredItem(
-    index: index,
-    registry: _built,
-    onMounted: _schedulePositions,
-    builder: widget.itemBuilder,
-  );
+  /// One delegate child: the item, registered, plus its separator if any.
+  ///
+  /// The item's key is lifted onto whatever is returned, so
+  /// [AnchoredList.findChildIndexCallback] and Flutter's own key matching see
+  /// the key the caller actually set rather than the wrapper.
+  Widget _item(BuildContext context, int index) {
+    final Widget child = widget.itemBuilder(context, index);
+    final Widget item = _RegisteredItem(
+      index: index,
+      registry: _built,
+      onMounted: _schedulePositions,
+      child: child,
+    );
+
+    final IndexedWidgetBuilder? separator = widget.separatorBuilder;
+    if (separator == null || index >= widget.itemCount - 1) {
+      return KeyedSubtree(key: child.key, child: item);
+    }
+    final List<Widget> pair = <Widget>[item, separator(context, index)];
+    return widget.scrollDirection == Axis.vertical
+        ? Column(
+            key: child.key,
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: pair,
+          )
+        : Row(
+            key: child.key,
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: pair,
+          );
+  }
+
+  /// Translates a caller's list index into an index within one sliver.
+  ///
+  /// The caller thinks in list indices; each delegate counts from its own
+  /// start, and the leading one counts *backwards*.
+  ChildIndexGetter? _findChildIndex({
+    required bool leading,
+    required int childCount,
+  }) {
+    final ChildIndexGetter? find = widget.findChildIndexCallback;
+    if (find == null) return null;
+    return (Key key) {
+      final int? listIndex = find(key);
+      if (listIndex == null) return null;
+      final int local = leading
+          ? _anchorIndex - 1 - listIndex
+          : listIndex - _anchorIndex;
+      return local >= 0 && local < childCount ? local : null;
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -290,13 +488,22 @@ class _AnchoredListState extends State<AnchoredList>
     final int trailing = math.max(0, widget.itemCount - _anchorIndex);
 
     return CustomScrollView(
-      controller: _scroll,
+      controller: scrollController,
       // Offset zero lives here: the sliver that starts at the anchor.
       center: _centreKey,
       anchor: _alignment,
       scrollDirection: widget.scrollDirection,
       reverse: widget.reverse,
       physics: widget.physics,
+      // Renamed to scrollCacheExtent after Flutter 3.41, but our floor is
+      // 3.32 and the old name still works everywhere. Switching would drop
+      // every user below 3.41 to buy nothing.
+      // ignore: deprecated_member_use
+      cacheExtent: widget.cacheExtent,
+      semanticChildCount: widget.semanticChildCount ?? widget.itemCount,
+      dragStartBehavior: widget.dragStartBehavior,
+      keyboardDismissBehavior: widget.keyboardDismissBehavior,
+      scrollBehavior: widget.scrollBehavior,
       clipBehavior: widget.clipBehavior,
       restorationId: widget.restorationId,
       slivers: <Widget>[
@@ -307,6 +514,13 @@ class _AnchoredListState extends State<AnchoredList>
             delegate: SliverChildBuilderDelegate(
               (BuildContext c, int i) => _item(c, _anchorIndex - 1 - i),
               childCount: leading,
+              findChildIndexCallback: _findChildIndex(
+                leading: true,
+                childCount: leading,
+              ),
+              // This sliver counts backwards, so without a translation the
+              // semantics tree would announce its indices in reverse.
+              semanticIndexCallback: (Widget _, int i) => _anchorIndex - 1 - i,
               addAutomaticKeepAlives: widget.addAutomaticKeepAlives,
               addRepaintBoundaries: widget.addRepaintBoundaries,
               addSemanticIndexes: widget.addSemanticIndexes,
@@ -321,6 +535,11 @@ class _AnchoredListState extends State<AnchoredList>
             delegate: SliverChildBuilderDelegate(
               (BuildContext c, int i) => _item(c, _anchorIndex + i),
               childCount: trailing,
+              findChildIndexCallback: _findChildIndex(
+                leading: false,
+                childCount: trailing,
+              ),
+              semanticIndexCallback: (Widget _, int i) => _anchorIndex + i,
               addAutomaticKeepAlives: widget.addAutomaticKeepAlives,
               addRepaintBoundaries: widget.addRepaintBoundaries,
               addSemanticIndexes: widget.addSemanticIndexes,
@@ -352,13 +571,13 @@ class _RegisteredItem extends StatefulWidget {
     required this.index,
     required this.registry,
     required this.onMounted,
-    required this.builder,
+    required this.child,
   });
 
   final int index;
   final Map<int, BuildContext> registry;
   final VoidCallback onMounted;
-  final IndexedWidgetBuilder builder;
+  final Widget child;
 
   @override
   State<_RegisteredItem> createState() => _RegisteredItemState();
@@ -392,5 +611,5 @@ class _RegisteredItemState extends State<_RegisteredItem> {
   }
 
   @override
-  Widget build(BuildContext context) => widget.builder(context, widget.index);
+  Widget build(BuildContext context) => widget.child;
 }
