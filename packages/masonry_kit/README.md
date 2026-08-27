@@ -12,9 +12,10 @@ MasonryGridView.count(
 );
 ```
 
-![Two masonry grids in one CustomScrollView, before and after](https://raw.githubusercontent.com/devShakib015/flutter_packages/HEAD/packages/masonry_kit/doc/jump.gif)
+![A masonry grid scrolling, then reflowing from two columns to four and back](https://raw.githubusercontent.com/devShakib015/flutter_packages/HEAD/packages/masonry_kit/doc/layout.gif)
 
 ## The problem
+
 
 `flutter_staggered_grid_view` does 1.18M downloads a month and has not had a
 commit since July 2023. Its tracker has been carrying the same complaint since
@@ -32,6 +33,11 @@ Running both packages through one harness, dragging forward 45 times:
 | one | no backward jumps | no backward jumps |
 | **two** | **2 jumps, worst 3,400px** | none |
 | **four** | **3 jumps, worst 2,200px** | none |
+
+Both panels below are dragged by the same finger, the same distance, at the
+same moment. The left one gets thrown back into the first grid:
+
+![The same drag applied to both packages side by side](https://raw.githubusercontent.com/devShakib015/flutter_packages/HEAD/packages/masonry_kit/doc/jump.gif)
 
 ## Why it happens
 

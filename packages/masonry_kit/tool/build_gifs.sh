@@ -25,7 +25,8 @@ build() {
   echo "  doc/$scene.gif  $(du -h "doc/$scene.gif" | cut -f1)  (${#picked[@]} frames)"
 }
 
-build jump 460 48 4
+build jump   460 48 4
+build layout 380 48 3
 
 echo
 ls -lh doc/*.gif | awk '{print "  " $9 "  " $5}'

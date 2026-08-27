@@ -103,6 +103,112 @@ void main() {
     );
     await tester.binding.setSurfaceSize(null);
   });
+
+  testWidgets('scene: the layout itself', (WidgetTester tester) async {
+    final _Recorder rec = _Recorder('layout');
+    final ScrollController scroll = ScrollController();
+    addTearDown(scroll.dispose);
+
+    _columns.value = 2;
+    await tester.binding.setSurfaceSize(const Size(400, 440));
+    await tester.pumpWidget(_LayoutStage(controller: scroll));
+    await tester.pump(const Duration(milliseconds: 100));
+    await rec.hold(tester, const Duration(milliseconds: 500));
+
+    // Scroll a little, so it reads as a real lazy grid and not a picture.
+    final TestGesture g = await tester.startGesture(
+      tester.getCenter(find.byType(kit.MasonryGridView)),
+    );
+    for (int i = 0; i < 40; i++) {
+      await g.moveBy(const Offset(0, -22));
+      await tester.pump(kStep);
+      await rec.write(tester);
+    }
+    await g.up();
+    await rec.hold(tester, const Duration(milliseconds: 400));
+
+    // Then reflow. Changing the column count is the one thing that genuinely
+    // invalidates a placement, so the whole layout is recomputed from index 0.
+    for (final int columns in <int>[3, 4, 2]) {
+      _columns.value = columns;
+      await rec.hold(tester, const Duration(milliseconds: 850));
+    }
+
+    rec.report();
+    await tester.binding.setSurfaceSize(null);
+  });
+}
+
+final ValueNotifier<int> _columns = ValueNotifier<int>(2);
+
+class _LayoutStage extends StatelessWidget {
+  const _LayoutStage({required this.controller});
+
+  final ScrollController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(fontFamily: 'Inter', useMaterial3: true),
+      home: RepaintBoundary(
+        key: _stageKey,
+        child: Material(
+          color: _bg,
+          child: AnimatedBuilder(
+            animation: Listenable.merge(<Listenable>[_tick, _columns]),
+            builder: (BuildContext context, _) => Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      const Text(
+                        'masonry_kit',
+                        style: TextStyle(
+                          color: _text,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        'crossAxisCount: ${_columns.value}',
+                        style: const TextStyle(color: _good, fontSize: 11.5),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Expanded(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: _panel,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: kit.MasonryGridView.count(
+                          controller: controller,
+                          crossAxisCount: _columns.value,
+                          mainAxisSpacing: 6,
+                          crossAxisSpacing: 6,
+                          padding: const EdgeInsets.all(8),
+                          itemCount: 200,
+                          itemBuilder: (BuildContext c, int i) =>
+                              _Tile(seed: 0, index: i),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _Stage extends StatelessWidget {
