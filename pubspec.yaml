@@ -21,6 +21,8 @@ workspace:
   - packages/anchored_list/example
   - packages/masonry_kit
   - packages/masonry_kit/example
+  - packages/apple_intelligence
+  - packages/apple_intelligence/example
 
 dev_dependencies:
   flutter_lints: ^6.0.0
