@@ -14,6 +14,8 @@ AnchoredList.builder(
 controller.jumpToIndex(842013);   // same cost as jumping to item 3
 ```
 
+![Jumping across a million rows while the live row count stays flat](https://raw.githubusercontent.com/devShakib015/flutter_packages/HEAD/packages/anchored_list/doc/jump.gif)
+
 ## The problem
 
 A lazy list cannot say where item 842,013 begins, because it has never built
@@ -36,9 +38,27 @@ anchor and everything after in another, marked as the centre. Offset zero *is*
 the anchor.
 
 Jumping is then just re-splitting. Nothing above the anchor is built, nothing is
-measured, and nothing fades. The test suite pins this: starting at index 500,000
-in a million-item list builds fewer than 60 widgets, and jumping 300,000 items
-costs about what jumping 3 does.
+measured, and nothing fades.
+
+The readouts in the GIF above are live, and they are the whole argument. Every
+call to `itemBuilder` is counted:
+
+| | rows mounted | `itemBuilder` calls |
+| --- | --- | --- |
+| opened at row 0 | 12 | 12 |
+| jumped 250,000 rows | 17 | +17 |
+| jumped 367,432 more | 17 | +17 |
+| jumped to the last row | 6 | +6 |
+| back to row 3 | 15 | +15 |
+
+Sixty-seven builder calls to cross a million-row list four times. The cost of a
+jump is the cost of one screenful, whatever the distance — and the test suite
+pins that, so it stays true.
+
+Scrolling backwards past the anchor runs the viewport at a negative offset,
+which is ordinary framework behaviour rather than a special case:
+
+![Scrolling either side of an anchor at row 500,000](https://raw.githubusercontent.com/devShakib015/flutter_packages/HEAD/packages/anchored_list/doc/scroll.gif)
 
 ## Where each item is
 

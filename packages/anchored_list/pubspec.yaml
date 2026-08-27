@@ -1,8 +1,7 @@
 name: anchored_list
 description: >-
-  Scroll to any index in a lazy list, instantly and without glitches. One
-  viewport anchored at the target rather than two lists cross-fading, so it
-  composes, shrink-wraps, and stays smooth.
+  Jump to any index in a lazy list in constant time. One viewport anchored at the target, not two lists cross-fading, so a jump costs one screenful whatever the distance.
+
 version: 0.1.0
 repository: https://github.com/devShakib015/flutter_packages
 issue_tracker: https://github.com/devShakib015/flutter_packages/issues
