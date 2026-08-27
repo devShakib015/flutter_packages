@@ -6,7 +6,11 @@ import PackageDescription
 let package = Package(
     name: "apple_foundation_models",
     platforms: [
-        .iOS("15.0")
+        // Must match the podspec's deployment targets. SPM defaults an
+        // undeclared platform to macOS 10.13, where `Task` does not exist, so
+        // omitting this builds fine under CocoaPods and fails under SPM.
+        .iOS("15.0"),
+        .macOS("10.15")
     ],
     products: [
         .library(name: "apple-foundation-models", targets: ["apple_foundation_models"])

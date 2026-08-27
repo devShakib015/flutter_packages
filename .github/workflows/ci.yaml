@@ -88,6 +88,11 @@ jobs:
       - name: Scaffold example platforms (vitals)
         run: flutter create --platforms=android .
         working-directory: packages/vitals/example
+      # Health Connect needs API 26; a scaffolded example defaults to Flutter's
+      # minimum, which is lower, and the manifest merge then refuses.
+      - name: Raise the example to minSdk 26
+        run: sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 26/' android/app/build.gradle.kts
+        working-directory: packages/vitals/example
       - name: Build example (Android)
         run: flutter build apk --debug
         working-directory: packages/vitals/example
