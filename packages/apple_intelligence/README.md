@@ -91,13 +91,42 @@ final path = await ImagePlaygroundSheet.present(
 asks the system to find the subjects in a passage itself, which is what makes
 illustrating a note or a message thread practical.
 
-## Not in this version
+## Writing Tools and Genmoji
 
-**Writing Tools and Genmoji are not here yet.** Both are real Apple Intelligence
-surfaces with no Flutter binding, and both are planned, but Writing Tools
-attaches to a native text view and Flutter renders its own text — so it needs a
-design decision rather than a wrapper, and shipping a half-working one would be
-worse than shipping none.
+Flutter draws its own text, which is why Apple's text features never appear in a
+Flutter `TextField`. Writing Tools attaches to a `UIView`; Genmoji is a property
+of `UITextInput`. Flutter's text field is neither, as far as the system is
+concerned.
+
+So this hosts the real thing:
+
+```dart
+final text = NativeTextController();
+
+AppleIntelligenceTextField(
+  controller: text,
+  initialText: 'Select me and try Writing Tools.',
+  onChanged: (value) => setState(() => draft = value),
+);
+
+await text.capabilities();  // writingTools: true, genmoji: true
+```
+
+`onChanged` matters more than it looks. Writing Tools rewrites the text *inside*
+the native view, so without it the only way to notice would be to poll.
+
+**This is not a drop-in for `TextField`, and pretending otherwise would waste
+your time:**
+
+- It is a **platform view**. It composites differently and costs more than a
+  Flutter widget — do not put dozens on a screen.
+- Styling does **not** inherit from your theme. What the constructor exposes is
+  what you get.
+- iOS and macOS only; everywhere else it renders `fallback`.
+
+What you get for that is Writing Tools, Genmoji, and the system's own
+spellcheck, autocorrect and context menu — for free, because it really is the
+system's text view.
 
 ## Requirements
 

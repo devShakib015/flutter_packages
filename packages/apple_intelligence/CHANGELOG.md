@@ -1,3 +1,25 @@
+## 0.2.0
+
+Writing Tools and Genmoji, via a real system text view.
+
+- `AppleIntelligenceTextField` hosts a genuine `UITextView`/`NSTextView` inside
+  Flutter, which is what makes Apple's text features work at all: Writing Tools
+  attaches to a `UIView` and Genmoji is a property of `UITextInput`, and a
+  Flutter text field is neither as far as the system is concerned.
+- `NativeTextController` reads and writes the contents, and `capabilities()`
+  asks the live view what it was actually granted rather than inferring it from
+  the OS version.
+- `onChanged` fires when the native view edits itself — which is the only way to
+  notice that Writing Tools rewrote your text or a Genmoji was inserted.
+
+This is deliberately **not** a drop-in for Flutter's `TextField`. It is a
+platform view, so it composites differently and costs more; styling does not
+inherit from your theme; and it exists on iOS and macOS only, rendering
+`fallback` elsewhere. The README says so before it says anything else about it.
+
+Verified on macOS: the hosted view reports `writingTools: true, genmoji: true`,
+and text round-trips through the controller.
+
 ## 0.1.0
 
 Initial release: Apple Intelligence image generation for Flutter.

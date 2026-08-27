@@ -1,6 +1,7 @@
 import 'package:apple_intelligence/apple_intelligence.dart';
 import 'package:apple_intelligence/src/bridge.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// A minimal PNG header, so byte assertions mean something.
@@ -11,6 +12,7 @@ Uint8List fakePng(int size) {
 }
 
 void main() {
+  _nativeTextTests();
   TestWidgetsFlutterBinding.ensureInitialized();
   final TestDefaultBinaryMessenger messenger =
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
@@ -318,6 +320,104 @@ void main() {
       expect(
         exceptionFor('brand new code', 'x'),
         isA<GenerationFailedException>(),
+      );
+    });
+  });
+}
+
+void _nativeTextTests() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  final TestDefaultBinaryMessenger messenger =
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+  const MethodChannel fake = MethodChannel(
+    'dev.shakib/apple_intelligence/text/7',
+  );
+  final List<MethodCall> calls = <MethodCall>[];
+  String stored = 'hello';
+
+  setUp(() {
+    calls.clear();
+    stored = 'hello';
+    messenger.setMockMethodCallHandler(fake, (MethodCall call) async {
+      calls.add(call);
+      switch (call.method) {
+        case 'getText':
+          return stored;
+        case 'setText':
+          stored = (call.arguments as Map<Object?, Object?>)['text']! as String;
+          return null;
+        case 'capabilities':
+          return <Object?, Object?>{'writingTools': true, 'genmoji': true};
+      }
+      return null;
+    });
+  });
+  tearDown(() => messenger.setMockMethodCallHandler(fake, null));
+
+  group('native text controller', () {
+    test('says so when it is not attached', () {
+      final NativeTextController c = NativeTextController();
+      expect(c.isAttached, isFalse);
+      expect(c.getText, throwsStateError);
+      expect(() => c.setText('x'), throwsStateError);
+      expect(c.capabilities, throwsStateError);
+    });
+
+    test('reads and writes through the attached view', () async {
+      final NativeTextController c = NativeTextController()..attach(fake);
+      expect(c.isAttached, isTrue);
+      expect(await c.getText(), 'hello');
+      await c.setText('rewritten');
+      expect(await c.getText(), 'rewritten');
+      expect(
+        calls.map((MethodCall m) => m.method),
+        containsAll(<String>['getText', 'setText']),
+      );
+    });
+
+    test(
+      'reports what the live view was granted, not what the OS implies',
+      () async {
+        final NativeTextController c = NativeTextController()..attach(fake);
+        final TextCapabilities caps = await c.capabilities();
+        expect(caps.writingTools, isTrue);
+        expect(caps.genmoji, isTrue);
+        expect(caps.toString(), contains('writingTools: true'));
+      },
+    );
+
+    test('detaching stops it answering', () {
+      final NativeTextController c = NativeTextController()..attach(fake);
+      c.detach();
+      expect(c.isAttached, isFalse);
+      expect(c.getText, throwsStateError);
+    });
+  });
+
+  group('the widget', () {
+    testWidgets('renders the fallback where there is no native view to host', (
+      WidgetTester tester,
+    ) async {
+      // The test binding reports the host platform, so this exercises whichever
+      // branch this machine is: a real view on macOS, the fallback elsewhere.
+      await tester.pumpWidget(
+        const Directionality(
+          textDirection: TextDirection.ltr,
+          child: AppleIntelligenceTextField(
+            fallback: Text('not supported here'),
+          ),
+        ),
+      );
+      if (!AppleIntelligenceTextField.isSupported) {
+        expect(find.text('not supported here'), findsOneWidget);
+      }
+      expect(tester.takeException(), isNull);
+    });
+
+    test('rejects an impossible font size', () {
+      expect(
+        () => AppleIntelligenceTextField(fontSize: 0),
+        throwsAssertionError,
       );
     });
   });

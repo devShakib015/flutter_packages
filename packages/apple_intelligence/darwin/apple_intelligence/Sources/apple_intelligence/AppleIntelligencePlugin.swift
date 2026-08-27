@@ -26,6 +26,8 @@ import CoreGraphics
 public class AppleIntelligencePlugin: NSObject, FlutterPlugin, FlutterStreamHandler {
 
   private var eventSink: FlutterEventSink?
+  /// The registrar does not retain the factory, so the plugin must.
+  private var textViewFactory: NativeTextViewFactory?
   private var running: [Int: Task<Void, Never>] = [:]
 
   // MARK: - Registration
@@ -45,6 +47,14 @@ public class AppleIntelligencePlugin: NSObject, FlutterPlugin, FlutterStreamHand
 
     registrar.addMethodCallDelegate(instance, channel: method)
     events.setStreamHandler(instance)
+
+    let factory = NativeTextViewFactory(messenger: messenger)
+    instance.textViewFactory = factory
+    #if os(iOS)
+      registrar.register(factory, withId: "dev.shakib/apple_intelligence/text")
+    #else
+      registrar.register(factory, withId: "dev.shakib/apple_intelligence/text")
+    #endif
   }
 
   public func onListen(withArguments _: Any?, eventSink sink: @escaping FlutterEventSink)
