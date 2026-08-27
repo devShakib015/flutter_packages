@@ -23,6 +23,8 @@ workspace:
   - packages/masonry_kit/example
   - packages/apple_intelligence
   - packages/apple_intelligence/example
+  - packages/roomplan
+  - packages/roomplan/example
 
 dev_dependencies:
   flutter_lints: ^6.0.0
