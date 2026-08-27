@@ -19,6 +19,8 @@ workspace:
   - packages/vitals/example
   - packages/anchored_list
   - packages/anchored_list/example
+  - packages/masonry_kit
+  - packages/masonry_kit/example
 
 dev_dependencies:
   flutter_lints: ^6.0.0
