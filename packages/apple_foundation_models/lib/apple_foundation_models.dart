@@ -45,7 +45,7 @@ export 'src/generation_options.dart'
         TopPSampling;
 export 'src/schema.dart' show Schema;
 export 'src/session.dart' show AppleFoundationModels, LanguageModelSession;
-export 'src/stream_extensions.dart' show LoadingStreamDeltas;
+export 'src/stream_extensions.dart' show ModelStreamDeltas;
 export 'src/tool.dart' show LanguageModelTool, ToolHandler;
 export 'src/transcript.dart' show TranscriptEntry, TranscriptRole;
 export 'src/use_case.dart' show ModelUseCase;

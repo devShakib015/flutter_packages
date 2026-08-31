@@ -36,7 +36,7 @@ for three things it does not do.
 **Nothing is cast.** The type you ask for decides the type you get back:
 
 ```dart
-final weight = await vitals.read(VitalType.bodyMass, from: a, to: b);
+final weight = await Vitals.instance.read(VitalType.bodyMass, from: a, to: b);
 weight.first.value.pounds;   // a Mass, not a double you hope is kilograms
 ```
 
@@ -73,11 +73,44 @@ bug you can fix. Emptiness afterwards is genuinely ambiguous, on every package,
 forever. Write your UI accordingly:
 
 ```dart
-switch (await vitals.readAccessOnAndroid({VitalType.steps})) {
+switch (await Vitals.instance.readAccessOnAndroid({VitalType.steps})) {
   case null:            // iOS: unknowable, attempt the read and handle empty
   case final access:    // Android: an actual answer
 }
 ```
+
+## Writing
+
+There is one write method per kind of quantity, and **the compiler picks it for
+you**. Each `VitalType` is generic over its sample type, so a mismatch does not
+compile:
+
+```dart
+await Vitals.instance.writeCount(VitalType.steps, 2400, at: DateTime.now());
+await Vitals.instance.writeMass(
+  VitalType.bodyMass, 71.2, unit: Mass.kilograms, at: DateTime.now(),
+);
+
+await Vitals.instance.writeMass(VitalType.steps, 2400, ...);
+// error: VitalType<CountSample> can't be assigned to VitalType<MassSample>
+```
+
+The mapping is the type parameter, so you can read it off the type you already
+have:
+
+| the type you have | the method that takes it |
+| --- | --- |
+| `VitalType<CountSample>` — steps, flights | `writeCount` |
+| `VitalType<MassSample>` — body mass | `writeMass` |
+| `VitalType<LengthSample>` — distance, height | `writeLength` |
+| `VitalType<EnergySample>` — active, basal | `writeEnergy` |
+| `VitalType<RateSample>` — heart, respiratory | `writeRate` |
+| `VitalType<PercentSample>` — oxygen saturation | `writePercent` |
+| `VitalType<VolumeSample>` — water | `writeVolume` |
+
+Writing needs permission that reading does not — see
+[the three permission states](#the-three-permission-states) — and please read
+the status note at the top of this file before relying on it.
 
 ## Statistics, not raw samples
 
@@ -85,7 +118,7 @@ A year of heart-rate readings is hundreds of thousands of points. Reducing them
 on the platform beats shipping them across the channel:
 
 ```dart
-final daily = await vitals.statistics(
+final daily = await Vitals.instance.statistics(
   VitalType.steps,
   from: monthAgo,
   to: now,

@@ -1,5 +1,5 @@
 /// Helpers for the cumulative snapshots the model emits.
-extension LoadingStreamDeltas on Stream<String> {
+extension ModelStreamDeltas on Stream<String> {
   /// Converts cumulative snapshots into incremental deltas.
   ///
   /// `stream` emits the whole response each time, which suits assigning to UI

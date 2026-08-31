@@ -1,3 +1,19 @@
+## 0.2.0
+
+**Renamed `LoadingStreamDeltas` to `ModelStreamDeltas`.** The old name was
+copy-paste from a sibling package and had nothing to do with loading anything.
+It matters more than a private misnomer would: this is an extension on
+`Stream<String>`, so importing this package put that wrong name into the tools
+of anyone with a string stream anywhere in their app.
+
+Nothing about the behaviour changed, and `deltas()` is called the same way. You
+would only notice if you had written the extension name explicitly, which is
+rare — but it is a breaking change, so it gets a minor bump.
+
+- The transcript API is documented now. `session.transcript()` and
+  `TranscriptRole` were public and appeared in neither the README nor the
+  example, so reading back what a session was told meant reading the source.
+
 ## 0.1.2
 
 Packaging only — no API or behaviour changes.

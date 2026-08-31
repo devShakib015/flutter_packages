@@ -200,6 +200,22 @@ StreamBuilder<ModelAvailability>(
 )
 ```
 
+## What was said
+
+A session keeps its own history, and you can read it back — useful for showing
+a conversation, for resuming one, or for seeing exactly what the model was told
+before it answered.
+
+```dart
+for (final entry in await session.transcript()) {
+  print('${entry.role.name}: ${entry.text}');   // prompt, response, instructions
+}
+```
+
+`TranscriptRole` distinguishes the instructions the session was created with
+from the prompts and responses that followed, which matters when you are
+reconstructing a conversation rather than just displaying one.
+
 ## Options
 
 ```dart
