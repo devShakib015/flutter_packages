@@ -1,3 +1,11 @@
+## 0.1.1
+
+- Fixes the README's opening example, which did not compile. It read
+  `if (p.isLeader) startPolling() else stopPolling();` — missing the semicolon
+  before `else` — so the first thing anyone copied out of this package was a
+  syntax error. The corrected snippet was checked through the analyser rather
+  than by eye.
+
 ## 0.1.0
 
 Initial release: cross-tab coordination for Flutter Web.
