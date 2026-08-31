@@ -125,10 +125,10 @@ await Loading.run(
 `LoadingIndicator` needs no overlay and no controller.
 
 ```dart
-const LoadingIndicator(size: 48)
-LoadingIndicator(progress: 0.6)
-LoadingIndicator(status: LoadingStatus.success)
-LoadingIndicator(indicatorStyle: LoadingIndicatorStyle.ripple)
+const LoadingIndicator(size: 48);
+LoadingIndicator(progress: 0.6);
+LoadingIndicator(status: LoadingStatus.success);
+LoadingIndicator(indicatorStyle: LoadingIndicatorStyle.ripple);
 ```
 
 ### Toasts, for things that already happened
@@ -256,11 +256,11 @@ longer before committing for operations you expect to be slow.
 decides how fast the thing on screen moves once it is there:
 
 ```dart
-LoadingStyle.material.copyWith(motion: LoadingMotion.calm)
+LoadingStyle.material.copyWith(motion: LoadingMotion.calm);
 
 LoadingStyle.material.copyWith(
   motion: const LoadingMotion(spinPeriod: Duration(seconds: 2)),
-)
+);
 ```
 
 `standard`, `brisk` and `calm` are built in. Changing motion is purely

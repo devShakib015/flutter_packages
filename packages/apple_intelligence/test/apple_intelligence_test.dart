@@ -1,5 +1,6 @@
 import 'package:apple_intelligence/apple_intelligence.dart';
 import 'package:apple_intelligence/src/bridge.dart';
+import 'package:apple_intelligence/src/exceptions.dart' show exceptionFor;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';

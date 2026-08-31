@@ -43,10 +43,10 @@ dependencies:
 
 ```dart
 // Shrink to fit one line, never below 12.
-FitText('Long product name', maxLines: 1, minFontSize: 12)
+FitText('Long product name', maxLines: 1, minFontSize: 12);
 
 // Grow to fill, but stay on your type scale.
-FitText('42', presetFontSizes: [16, 24, 32, 48, 64])
+FitText('42', presetFontSizes: [16, 24, 32, 48, 64]);
 
 // Rich text — nested sizes scale proportionally.
 FitText.rich(
@@ -54,7 +54,7 @@ FitText.rich(
     TextSpan(text: '£42', style: TextStyle(fontWeight: FontWeight.bold)),
   ]),
   maxLines: 1,
-)
+);
 ```
 
 Both constructors are `const`, like `Text`.

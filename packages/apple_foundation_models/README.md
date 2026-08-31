@@ -94,10 +94,10 @@ them. This is the difference between asking for a 1-to-5 rating and getting
 one — without a bound, "rate this 1 to 5" cheerfully returns 47.
 
 ```dart
-Schema.integer(min: 1, max: 5)          // a real rating
-Schema.number(min: 0, max: 1)           // a real confidence
-Schema.string(pattern: r'^[A-Z]{3}$')   // a real airport code
-Schema.array(Schema.string(), exactItems: 3)
+Schema.integer(min: 1, max: 5);          // a real rating
+Schema.number(min: 0, max: 1);           // a real confidence
+Schema.string(pattern: r'^[A-Z]{3}$');   // a real airport code
+Schema.array(Schema.string(), exactItems: 3);
 ```
 
 ### Decode straight into your own type

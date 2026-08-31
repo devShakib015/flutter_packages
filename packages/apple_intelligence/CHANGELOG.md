@@ -1,3 +1,17 @@
+## 0.2.2
+
+- `exceptionFor`, the internal helper that maps a platform error code to a
+  typed exception, was public API. The barrel exported three files wholesale,
+  and a wholesale export carries top-level functions as well as classes — so a
+  private mapping function became something callers could reach and something
+  that could not be changed without a breaking release. Every export now names
+  what it exposes.
+- README code blocks now parse. Several listed variants one per line without
+  terminating semicolons; each is checked through the analyser now.
+
+Technically breaking if you were calling `exceptionFor`, which you had no
+reason to.
+
 ## 0.2.1
 
 Documentation only — no API or behaviour changes.

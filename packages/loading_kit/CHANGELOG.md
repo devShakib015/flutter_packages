@@ -1,3 +1,12 @@
+## 0.3.1
+
+Documentation only — no API changes.
+
+- README code blocks now parse. Several listed variants one per line without
+  terminating semicolons, so copying a block gave a syntax error even though
+  each individual line was fine. Every snippet in this README is now checked
+  through the analyser.
+
 ## 0.3.0
 
 **Breaking, though probably not for you.** The barrel used to re-export whole
