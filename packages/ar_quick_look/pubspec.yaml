@@ -1,0 +1,36 @@
+name: ar_quick_look
+description: >-
+  Show a USDZ or Reality file in Apple's AR Quick Look, placed in the room
+  through the camera. iOS, with the system viewer rather than a rebuilt one.
+
+version: 0.1.0
+repository: https://github.com/devShakib015/flutter_packages
+issue_tracker: https://github.com/devShakib015/flutter_packages/issues
+documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/ar_quick_look
+resolution: workspace
+
+topics:
+  - ar
+  - usdz
+  - quicklook
+  - augmented-reality
+  - ios
+
+environment:
+  sdk: ^3.13.0
+  flutter: '>=3.32.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  plugin:
+    platforms:
+      ios:
+        pluginClass: ArQuickLookPlugin

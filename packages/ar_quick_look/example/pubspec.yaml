@@ -1,0 +1,22 @@
+name: ar_quick_look_example
+description: Demonstrates ar_quick_look.
+publish_to: none
+version: 1.0.0
+resolution: workspace
+
+environment:
+  sdk: ^3.13.0
+  flutter: '>=3.32.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  ar_quick_look:
+    path: ../
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
