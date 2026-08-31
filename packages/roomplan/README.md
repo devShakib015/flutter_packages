@@ -21,6 +21,28 @@ controller.rooms.listen((room) {
 });
 ```
 
+![A scanned room drawn as a floor plan](https://raw.githubusercontent.com/devShakib015/flutter_packages/HEAD/packages/roomplan/doc/floor_plan.png)
+
+*The `RoomFloorPlan` widget. The geometry above is the sample room from the
+test suite — a real scan needs LiDAR, and this package does not illustrate
+itself with hardware it has not run on.*
+
+## Seeing the room
+
+A `CapturedRoom` is geometry: transforms and extents in metres. Useful, but not
+something a person can look at. `RoomFloorPlan` projects it onto the floor and
+draws it:
+
+```dart
+RoomFloorPlan(room: room, style: FloorPlanStyle(wall: Colors.white));
+```
+
+Walls, doors, windows and openings each get their own colour, furniture is
+drawn as its footprint with the right rotation, and the whole plan scales to
+fit whatever box you put it in. Usually the first thing an app wants to do with
+a scan, and fiddly enough — column-major transforms, metres to pixels, fitting
+to the widget — to be worth doing once.
+
 ## What you get
 
 Not a point cloud — a **parametric model**. RoomPlan post-processes the scan

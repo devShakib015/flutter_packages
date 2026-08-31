@@ -44,9 +44,7 @@ class FileHandle {
   /// saving again does not ask them, and does not leave a `document (3).txt`
   /// behind.
   Future<void> writeBytes(Uint8List bytes) async {
-    final web.FileSystemWritableFileStream stream = await native
-        .createWritable()
-        .toDart;
+    final web.FileSystemWritableFileStream stream = await _open();
     try {
       await stream.write(bytes.toJS).toDart;
     } finally {
@@ -58,13 +56,30 @@ class FileHandle {
 
   /// Overwrites the file in place with UTF-8 text.
   Future<void> writeText(String text) async {
-    final web.FileSystemWritableFileStream stream = await native
-        .createWritable()
-        .toDart;
+    final web.FileSystemWritableFileStream stream = await _open();
     try {
       await stream.write(text.toJS).toDart;
     } finally {
       await stream.close().toDart;
+    }
+  }
+
+  /// Opens the writable stream, translating the browser's refusal.
+  ///
+  /// A denied write surfaces as NotAllowedError, which says nothing useful on
+  /// its own. Callers want to know it was permission — usually so they can
+  /// prompt from a user gesture and try again.
+  Future<web.FileSystemWritableFileStream> _open() async {
+    try {
+      return await native.createWritable().toDart;
+    } catch (e) {
+      if (_isNotAllowed(e)) {
+        throw PermissionDeniedException(
+          'Write access to "$name" was refused. Call requestPermission('
+          'write: true) from a user gesture, then try again.',
+        );
+      }
+      throw FileSystemFailure('Could not open "$name" for writing: $e');
     }
   }
 
@@ -442,4 +457,10 @@ class FileSystemAccess {
   /// A cancelled picker throws AbortError, which is not a failure — the user
   /// simply changed their mind.
   static bool _isAbort(Object error) => error.toString().contains('AbortError');
+}
+
+/// Whether the browser refused for permission reasons.
+bool _isNotAllowed(Object error) {
+  final String text = error.toString();
+  return text.contains('NotAllowedError') || text.contains('SecurityError');
 }

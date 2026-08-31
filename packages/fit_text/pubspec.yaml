@@ -3,11 +3,17 @@ description: >-
   Text that shrinks to fit its box, correctly. Works inside Expanded, Row,
   IntrinsicHeight and unbounded constraints, where LayoutBuilder-based
   auto-sizing gives up.
-version: 0.1.1
+version: 0.1.2
 repository: https://github.com/devShakib015/flutter_packages
 issue_tracker: https://github.com/devShakib015/flutter_packages/issues
 documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/fit_text
 resolution: workspace
+
+screenshots:
+  - description: >-
+      The same sentence in a narrowing box: FitText keeps all of it, Text
+      ellipsises.
+    path: doc/fitting.gif
 
 topics:
   - text

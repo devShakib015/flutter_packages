@@ -31,7 +31,11 @@ class RenderSliverMasonryGrid extends RenderSliverMultiBoxAdaptor {
     required int crossAxisCount,
     required double mainAxisSpacing,
     required double crossAxisSpacing,
-  }) : assert(crossAxisCount > 0),
+    double? maxCrossAxisExtent,
+  }) : // The field is private but the parameter must stay public for callers.
+       // ignore: prefer_initializing_formals
+       _maxCrossAxisExtent = maxCrossAxisExtent,
+       assert(crossAxisCount > 0),
        assert(mainAxisSpacing >= 0),
        assert(crossAxisSpacing >= 0),
        _crossAxisCount = crossAxisCount,
@@ -43,7 +47,34 @@ class RenderSliverMasonryGrid extends RenderSliverMultiBoxAdaptor {
   /// Cross-axis extent the cache was built against; a change invalidates it.
   double _layoutCrossAxisExtent = double.nan;
 
-  /// Number of columns.
+  /// The widest a column may be, or null to use a fixed [crossAxisCount].
+  ///
+  /// When set, the column count is derived from the space available, the way
+  /// `GridView.extent` does it — which is what a photo grid wants when the
+  /// same code runs on a phone and a tablet.
+  double? get maxCrossAxisExtent => _maxCrossAxisExtent;
+  double? _maxCrossAxisExtent;
+  set maxCrossAxisExtent(double? value) {
+    if (_maxCrossAxisExtent == value) return;
+    _maxCrossAxisExtent = value;
+    _invalidateLayout();
+  }
+
+  /// Columns actually used for [crossAxisExtent], honouring
+  /// [maxCrossAxisExtent] when one is set.
+  int columnsFor(double crossAxisExtent) {
+    final double? max = _maxCrossAxisExtent;
+    if (max == null) return _crossAxisCount;
+    // Matches SliverGridDelegateWithMaxCrossAxisExtent: as many columns as fit
+    // without any exceeding the maximum.
+    return math.max(
+      1,
+      ((crossAxisExtent + _crossAxisSpacing) / (max + _crossAxisSpacing))
+          .ceil(),
+    );
+  }
+
+  /// Number of columns when [maxCrossAxisExtent] is null.
   int get crossAxisCount => _crossAxisCount;
   int _crossAxisCount;
   set crossAxisCount(int value) {
@@ -98,9 +129,10 @@ class RenderSliverMasonryGrid extends RenderSliverMultiBoxAdaptor {
   double childCrossAxisPosition(RenderBox child) =>
       _parentDataOf(child).crossAxisOffset;
 
-  double _childCrossAxisExtent(double crossAxisExtent) =>
-      (crossAxisExtent - _crossAxisSpacing * (_crossAxisCount - 1)) /
-      _crossAxisCount;
+  double _childCrossAxisExtent(double crossAxisExtent) {
+    final int columns = columnsFor(crossAxisExtent);
+    return (crossAxisExtent - _crossAxisSpacing * (columns - 1)) / columns;
+  }
 
   double _crossAxisOffsetFor(int column, double childCrossAxisExtent) =>
       column * (childCrossAxisExtent + _crossAxisSpacing);
@@ -131,7 +163,7 @@ class RenderSliverMasonryGrid extends RenderSliverMultiBoxAdaptor {
     // The cache is only valid for the geometry it was measured under.
     if (_layout == null || _layoutCrossAxisExtent != crossAxisExtent) {
       _layout = MasonryLayout(
-        crossAxisCount: _crossAxisCount,
+        crossAxisCount: columnsFor(crossAxisExtent),
         mainAxisSpacing: _mainAxisSpacing,
       );
       _layoutCrossAxisExtent = crossAxisExtent;
@@ -389,7 +421,7 @@ class RenderSliverMasonryGrid extends RenderSliverMultiBoxAdaptor {
     }
     final double averagePerItem = sum / measured;
     final double remaining = (total - measured) * averagePerItem;
-    return layout.extent + remaining / _crossAxisCount;
+    return layout.extent + remaining / layout.crossAxisCount;
   }
 
   void _reportEmpty() {

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:roomplan/roomplan.dart';
 
@@ -49,6 +50,7 @@ String sampleRoom() => jsonEncode(<String, Object?>{
 });
 
 void main() {
+  _floorPlanTests();
   group('parsing a scan', () {
     test('reads the room into typed lists', () {
       final CapturedRoom room = CapturedRoom.fromJson(sampleRoom());
@@ -246,6 +248,157 @@ void main() {
             (_) {},
           );
       expect(await next, 'Insufficient lighting.');
+    });
+  });
+}
+
+void _floorPlanTests() {
+  /// A small square room with one door, one window and a table, laid out so
+  /// the expected geometry can be reasoned about by hand.
+  CapturedRoom squareRoom() {
+    List<double> at(double x, double z, {double dirX = 1, double dirZ = 0}) =>
+        <double>[dirX, 0, dirZ, 0, 0, 1, 0, 0, -dirZ, 0, dirX, 0, x, 0, z, 1];
+    return CapturedRoom.fromJson(
+      jsonEncode(<String, Object?>{
+        'walls': <Object?>[
+          <String, Object?>{
+            'dimensions': <double>[4, 2.4, .1],
+            'transform': at(0, -2),
+          },
+          <String, Object?>{
+            'dimensions': <double>[4, 2.4, .1],
+            'transform': at(0, 2),
+          },
+          <String, Object?>{
+            'dimensions': <double>[4, 2.4, .1],
+            'transform': at(-2, 0, dirX: 0, dirZ: 1),
+          },
+          <String, Object?>{
+            'dimensions': <double>[4, 2.4, .1],
+            'transform': at(2, 0, dirX: 0, dirZ: 1),
+          },
+        ],
+        'doors': <Object?>[
+          <String, Object?>{
+            'dimensions': <double>[0.9, 2, .1],
+            'transform': at(-1, -2),
+          },
+        ],
+        'windows': <Object?>[
+          <String, Object?>{
+            'dimensions': <double>[1.2, 1, .1],
+            'transform': at(1, 2),
+          },
+        ],
+        'objects': <Object?>[
+          <String, Object?>{
+            'dimensions': <double>[1.2, 0.75, 0.8],
+            'transform': at(0, 0),
+            'category': <String, Object?>{'table': <String, Object?>{}},
+          },
+        ],
+      }),
+    );
+  }
+
+  group('floor plan', () {
+    testWidgets('draws a room without throwing', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: SizedBox(
+            width: 400,
+            height: 300,
+            child: RoomFloorPlan(room: squareRoom()),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.byType(RoomFloorPlan), findsOneWidget);
+    });
+
+    testWidgets('an empty room paints nothing and does not crash', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: SizedBox(
+            width: 200,
+            height: 200,
+            child: RoomFloorPlan(room: CapturedRoom.fromJson('{}')),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('survives surfaces with no usable transform', (
+      WidgetTester tester,
+    ) async {
+      final CapturedRoom broken = CapturedRoom.fromJson(
+        jsonEncode(<String, Object?>{
+          'walls': <Object?>[
+            <String, Object?>{
+              'dimensions': <double>[3, 2, .1],
+            }, // no transform
+          ],
+        }),
+      );
+      await tester.pumpWidget(
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: SizedBox(
+            width: 200,
+            height: 200,
+            child: RoomFloorPlan(room: broken),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('renders at any size, including very small', (
+      WidgetTester tester,
+    ) async {
+      for (final Size size in <Size>[
+        const Size(40, 30),
+        const Size(200, 200),
+        const Size(800, 200),
+      ]) {
+        await tester.pumpWidget(
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: SizedBox(
+              width: size.width,
+              height: size.height,
+              child: RoomFloorPlan(room: squareRoom()),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull, reason: '$size');
+      }
+    });
+
+    testWidgets('hiding objects still draws the shell', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: SizedBox(
+            width: 300,
+            height: 300,
+            child: RoomFloorPlan(room: squareRoom(), showObjects: false),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
     });
   });
 }

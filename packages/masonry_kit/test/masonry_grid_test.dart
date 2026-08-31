@@ -5,6 +5,7 @@ import 'package:masonry_kit/masonry_kit.dart';
 double h(int i) => 60.0 + (i * 37) % 90;
 
 void main() {
+  _extentTests();
   Widget host(Widget child, {Size size = const Size(300, 500)}) => MaterialApp(
     home: Scaffold(
       // Top-left, not centred: the tests assert absolute positions, and a
@@ -268,6 +269,106 @@ void main() {
       sc.jumpTo(0);
       await tester.pumpAndSettle();
       expect(tester.getRect(find.text('i0')), before);
+    });
+  });
+}
+
+void _extentTests() {
+  Widget host(Widget child, {double width = 600}) => MaterialApp(
+    home: Scaffold(
+      body: Align(
+        alignment: Alignment.topLeft,
+        child: SizedBox(width: width, height: 500, child: child),
+      ),
+    ),
+  );
+
+  Widget extent(double maxCrossAxisExtent, {double spacing = 0}) =>
+      MasonryGridView.extent(
+        maxCrossAxisExtent: maxCrossAxisExtent,
+        crossAxisSpacing: spacing,
+        itemCount: 40,
+        itemBuilder: (BuildContext c, int i) =>
+            SizedBox(height: 60.0 + (i * 37) % 90, child: Text('i$i')),
+      );
+
+  group('responsive columns', () {
+    testWidgets('fits as many columns as the width allows', (
+      WidgetTester tester,
+    ) async {
+      // 600 wide, 200 max -> 3 columns of exactly 200.
+      await tester.pumpWidget(host(extent(200)));
+      await tester.pumpAndSettle();
+      expect(tester.getRect(find.text('i0')).width, closeTo(200, 0.01));
+      expect(tester.getRect(find.text('i2')).left, closeTo(400, 0.01));
+    });
+
+    testWidgets('a narrower window uses fewer columns, same code', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(host(extent(200), width: 400));
+      await tester.pumpAndSettle();
+      // 400 / 200 -> 2 columns.
+      expect(tester.getRect(find.text('i0')).width, closeTo(200, 0.01));
+      expect(tester.getRect(find.text('i1')).left, closeTo(200, 0.01));
+      // The third item wraps to the shortest column rather than a third one.
+      expect(tester.getRect(find.text('i2')).left, lessThan(400));
+    });
+
+    testWidgets('no column ever exceeds the maximum', (
+      WidgetTester tester,
+    ) async {
+      for (final double width in <double>[320, 500, 777, 1024]) {
+        await tester.pumpWidget(host(extent(240), width: width));
+        await tester.pumpAndSettle();
+        expect(
+          tester.getRect(find.text('i0')).width,
+          lessThanOrEqualTo(240.01),
+          reason: 'width $width produced an over-wide column',
+        );
+      }
+    });
+
+    testWidgets('spacing is taken out of the available width', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(host(extent(200, spacing: 10), width: 620));
+      await tester.pumpAndSettle();
+      // 620 with 10px gaps -> 3 columns of (620 - 20) / 3.
+      expect(tester.getRect(find.text('i0')).width, closeTo(200, 0.01));
+      expect(tester.getRect(find.text('i1')).left, closeTo(210, 0.01));
+    });
+
+    testWidgets('a very narrow window still gets one column', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(host(extent(400), width: 120));
+      await tester.pumpAndSettle();
+      expect(tester.getRect(find.text('i0')).width, closeTo(120, 0.01));
+      expect(tester.getRect(find.text('i1')).top, greaterThan(0));
+    });
+
+    testWidgets('resizing relayouts rather than keeping stale columns', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(host(extent(200), width: 600));
+      await tester.pumpAndSettle();
+      final double wide = tester.getRect(find.text('i0')).width;
+      await tester.pumpWidget(host(extent(200), width: 300));
+      await tester.pumpAndSettle();
+      expect(tester.getRect(find.text('i0')).width, closeTo(150, 0.01));
+      expect(wide, closeTo(200, 0.01));
+    });
+
+    testWidgets('rejects a non-positive maximum', (WidgetTester tester) async {
+      expect(
+        () => MasonryGridView.extent(
+          maxCrossAxisExtent: 0,
+          itemCount: 1,
+          itemBuilder: (_, _) => const SizedBox(),
+        ),
+        throwsAssertionError,
+      );
     });
   });
 }

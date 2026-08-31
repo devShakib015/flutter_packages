@@ -1,3 +1,13 @@
+## 0.2.0
+
+- `MasonryGridView.extent` and `SliverMasonryGrid.extent` size the column count
+  to the space available, the way `GridView.extent` does, rather than taking a
+  fixed number. A masonry grid is usually a photo feed, and a fixed count
+  either wastes a tablet or squeezes a phone — this was the obvious gap against
+  every other grid in Flutter.
+- Columns are recomputed when the viewport changes width, so a resize or a
+  rotation relayouts rather than keeping a stale count.
+
 ## 0.1.1
 
 Packaging only — no API or behaviour changes.

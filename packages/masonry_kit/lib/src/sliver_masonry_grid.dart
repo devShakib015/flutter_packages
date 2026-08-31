@@ -36,7 +36,8 @@ class SliverMasonryGrid extends SliverMultiBoxAdaptorWidget {
     bool addRepaintBoundaries = true,
     bool addSemanticIndexes = true,
     ChildIndexGetter? findChildIndexCallback,
-  }) : assert(crossAxisCount > 0, 'crossAxisCount must be positive'),
+  }) : _maxCrossAxisExtent = null,
+       assert(crossAxisCount > 0, 'crossAxisCount must be positive'),
        assert(childCount >= 0, 'childCount cannot be negative'),
        assert(mainAxisSpacing >= 0, 'mainAxisSpacing cannot be negative'),
        assert(crossAxisSpacing >= 0, 'crossAxisSpacing cannot be negative'),
@@ -61,7 +62,8 @@ class SliverMasonryGrid extends SliverMultiBoxAdaptorWidget {
     bool addAutomaticKeepAlives = true,
     bool addRepaintBoundaries = true,
     bool addSemanticIndexes = true,
-  }) : assert(crossAxisCount > 0, 'crossAxisCount must be positive'),
+  }) : _maxCrossAxisExtent = null,
+       assert(crossAxisCount > 0, 'crossAxisCount must be positive'),
        assert(mainAxisSpacing >= 0, 'mainAxisSpacing cannot be negative'),
        assert(crossAxisSpacing >= 0, 'crossAxisSpacing cannot be negative'),
        super(
@@ -73,6 +75,40 @@ class SliverMasonryGrid extends SliverMultiBoxAdaptorWidget {
          ),
        );
 
+  /// Creates a masonry sliver whose columns are as many as will fit without
+  /// any exceeding [maxCrossAxisExtent].
+  ///
+  /// Use this rather than [SliverMasonryGrid.count] when the same screen has
+  /// to work on a phone and a tablet: a fixed count either wastes a wide
+  /// window or squeezes a narrow one.
+  SliverMasonryGrid.extent({
+    super.key,
+    required double maxCrossAxisExtent,
+    required int childCount,
+    required IndexedWidgetBuilder itemBuilder,
+    this.mainAxisSpacing = 0,
+    this.crossAxisSpacing = 0,
+    bool addAutomaticKeepAlives = true,
+    bool addRepaintBoundaries = true,
+    bool addSemanticIndexes = true,
+    ChildIndexGetter? findChildIndexCallback,
+  }) : crossAxisCount = 1,
+       _maxCrossAxisExtent = maxCrossAxisExtent,
+       assert(maxCrossAxisExtent > 0, 'maxCrossAxisExtent must be positive'),
+       assert(childCount >= 0, 'childCount cannot be negative'),
+       assert(mainAxisSpacing >= 0, 'mainAxisSpacing cannot be negative'),
+       assert(crossAxisSpacing >= 0, 'crossAxisSpacing cannot be negative'),
+       super(
+         delegate: SliverChildBuilderDelegate(
+           itemBuilder,
+           childCount: childCount,
+           addAutomaticKeepAlives: addAutomaticKeepAlives,
+           addRepaintBoundaries: addRepaintBoundaries,
+           addSemanticIndexes: addSemanticIndexes,
+           findChildIndexCallback: findChildIndexCallback,
+         ),
+       );
+
   /// Creates a masonry sliver from an arbitrary [delegate].
   const SliverMasonryGrid.custom({
     super.key,
@@ -80,12 +116,16 @@ class SliverMasonryGrid extends SliverMultiBoxAdaptorWidget {
     required super.delegate,
     this.mainAxisSpacing = 0,
     this.crossAxisSpacing = 0,
-  }) : assert(crossAxisCount > 0, 'crossAxisCount must be positive'),
+  }) : _maxCrossAxisExtent = null,
+       assert(crossAxisCount > 0, 'crossAxisCount must be positive'),
        assert(mainAxisSpacing >= 0, 'mainAxisSpacing cannot be negative'),
        assert(crossAxisSpacing >= 0, 'crossAxisSpacing cannot be negative');
 
-  /// How many columns to distribute children across.
+  /// How many columns to distribute children across, when a fixed count was
+  /// asked for.
   final int crossAxisCount;
+
+  final double? _maxCrossAxisExtent;
 
   /// Gap between two children in the same column.
   final double mainAxisSpacing;
@@ -102,6 +142,7 @@ class SliverMasonryGrid extends SliverMultiBoxAdaptorWidget {
       crossAxisCount: crossAxisCount,
       mainAxisSpacing: mainAxisSpacing,
       crossAxisSpacing: crossAxisSpacing,
+      maxCrossAxisExtent: _maxCrossAxisExtent,
     );
   }
 
@@ -112,6 +153,7 @@ class SliverMasonryGrid extends SliverMultiBoxAdaptorWidget {
   ) {
     renderObject
       ..crossAxisCount = crossAxisCount
+      ..maxCrossAxisExtent = _maxCrossAxisExtent
       ..mainAxisSpacing = mainAxisSpacing
       ..crossAxisSpacing = crossAxisSpacing;
   }

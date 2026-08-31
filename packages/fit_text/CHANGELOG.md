@@ -1,3 +1,12 @@
+## 0.1.2
+
+Documentation only.
+
+- Adds a recording to the README and the pub.dev page: the same sentence in a
+  box that narrows from 460 to 150 pixels, with `FitText` above and a plain
+  `Text` below. At the narrow end `FitText` still shows every word and `Text`
+  reads "The qui…".
+
 ## 0.1.1
 
 Packaging only — no API or behaviour changes.

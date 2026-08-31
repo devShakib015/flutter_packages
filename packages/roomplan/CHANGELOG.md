@@ -1,3 +1,17 @@
+## 0.2.0
+
+- `RoomFloorPlan` draws a scan as a top-down floor plan: walls, doors, windows
+  and openings in their own colours, furniture as correctly rotated footprints,
+  scaled to fit whatever box it is given. A `CapturedRoom` is transforms and
+  extents in metres — useful, but not something a person can look at, and
+  turning it into a picture involves enough column-major arithmetic to be worth
+  doing once here rather than in every app.
+- `FloorPlanStyle` for colours and stroke weights.
+
+The README now has a picture, drawn from the sample room in the test suite. It
+is still not a photograph of a real scan, because that needs LiDAR hardware
+this package has not been run on — and that remains stated plainly.
+
 ## 0.1.0
 
 Initial release: Apple RoomPlan for Flutter.

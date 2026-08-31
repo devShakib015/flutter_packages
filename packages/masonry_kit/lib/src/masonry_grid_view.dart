@@ -47,11 +47,62 @@ class MasonryGridView extends BoxScrollView {
     super.restorationId,
     super.clipBehavior,
     int? semanticChildCount,
-  }) : _itemCount = itemCount,
+  }) : _maxCrossAxisExtent = null,
+       _itemCount = itemCount,
        // ignore: prefer_initializing_formals
        _itemBuilder = itemBuilder,
        _children = null,
        assert(crossAxisCount > 0, 'crossAxisCount must be positive'),
+       assert(itemCount >= 0, 'itemCount cannot be negative'),
+       super(semanticChildCount: semanticChildCount ?? itemCount);
+
+  /// Creates a scrollable masonry grid whose columns are as many as will fit
+  /// without any exceeding [maxCrossAxisExtent].
+  ///
+  /// Prefer this to [MasonryGridView.count] when the same screen runs on a
+  /// phone and a tablet: a fixed count either wastes a wide window or squeezes
+  /// a narrow one.
+  ///
+  /// ```dart
+  /// MasonryGridView.extent(
+  ///   maxCrossAxisExtent: 220,   // roughly this wide, however many fit
+  ///   itemCount: photos.length,
+  ///   itemBuilder: (context, index) => Photo(photos[index]),
+  /// )
+  /// ```
+  const MasonryGridView.extent({
+    super.key,
+    required double maxCrossAxisExtent,
+    required int itemCount,
+    required IndexedWidgetBuilder itemBuilder,
+    this.mainAxisSpacing = 0,
+    this.crossAxisSpacing = 0,
+    this.addAutomaticKeepAlives = true,
+    this.addRepaintBoundaries = true,
+    this.addSemanticIndexes = true,
+    this.findChildIndexCallback,
+    super.scrollDirection,
+    super.reverse,
+    super.controller,
+    super.primary,
+    super.physics,
+    super.shrinkWrap,
+    super.padding,
+    // Renamed to scrollCacheExtent after Flutter 3.41; our floor is 3.32.
+    // ignore: deprecated_member_use
+    super.cacheExtent,
+    super.dragStartBehavior = DragStartBehavior.start,
+    super.keyboardDismissBehavior,
+    super.restorationId,
+    super.clipBehavior,
+    int? semanticChildCount,
+  }) : crossAxisCount = 1,
+       _maxCrossAxisExtent = maxCrossAxisExtent,
+       _itemCount = itemCount,
+       // ignore: prefer_initializing_formals
+       _itemBuilder = itemBuilder,
+       _children = null,
+       assert(maxCrossAxisExtent > 0, 'maxCrossAxisExtent must be positive'),
        assert(itemCount >= 0, 'itemCount cannot be negative'),
        super(semanticChildCount: semanticChildCount ?? itemCount);
 
@@ -80,15 +131,19 @@ class MasonryGridView extends BoxScrollView {
     super.restorationId,
     super.clipBehavior,
     int? semanticChildCount,
-  }) : _children = children,
+  }) : _maxCrossAxisExtent = null,
+       _children = children,
        _itemCount = children.length,
        _itemBuilder = null,
        findChildIndexCallback = null,
        assert(crossAxisCount > 0, 'crossAxisCount must be positive'),
        super(semanticChildCount: semanticChildCount ?? children.length);
 
-  /// How many columns to distribute children across.
+  /// How many columns to distribute children across, when a fixed count was
+  /// asked for.
   final int crossAxisCount;
+
+  final double? _maxCrossAxisExtent;
 
   /// Gap between two children in the same column.
   final double mainAxisSpacing;
@@ -124,6 +179,20 @@ class MasonryGridView extends BoxScrollView {
         addRepaintBoundaries: addRepaintBoundaries,
         addSemanticIndexes: addSemanticIndexes,
         children: children,
+      );
+    }
+    final double? maxExtent = _maxCrossAxisExtent;
+    if (maxExtent != null) {
+      return SliverMasonryGrid.extent(
+        maxCrossAxisExtent: maxExtent,
+        childCount: _itemCount,
+        itemBuilder: _itemBuilder!,
+        mainAxisSpacing: mainAxisSpacing,
+        crossAxisSpacing: crossAxisSpacing,
+        addAutomaticKeepAlives: addAutomaticKeepAlives,
+        addRepaintBoundaries: addRepaintBoundaries,
+        addSemanticIndexes: addSemanticIndexes,
+        findChildIndexCallback: findChildIndexCallback,
       );
     }
     return SliverMasonryGrid.count(

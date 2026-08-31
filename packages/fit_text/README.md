@@ -1,5 +1,7 @@
 # fit_text
 
+![The same sentence in a narrowing box](https://raw.githubusercontent.com/devShakib015/flutter_packages/HEAD/packages/fit_text/doc/fitting.gif)
+
 Text that shrinks to fit its box — including in the places auto-sizing usually
 breaks.
 

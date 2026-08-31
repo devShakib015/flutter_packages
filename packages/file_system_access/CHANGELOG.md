@@ -1,3 +1,11 @@
+## 0.1.1
+
+- `PermissionDeniedException` is now actually thrown. It was exported from
+  0.1.0 but nothing raised it, so a caller could write a `catch` that could
+  never fire. A refused write surfaces as the browser's `NotAllowedError`,
+  which says nothing useful on its own; it is now translated, and the message
+  says to call `requestPermission(write: true)` from a user gesture.
+
 ## 0.1.0
 
 Initial release: the File System Access API for Flutter Web.
