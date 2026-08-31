@@ -1,3 +1,16 @@
+## 0.1.2
+
+Actually fixes the README's opening example.
+
+**0.1.1 said it had fixed this and had not.** The edit was made in the working
+tree and never staged, so that release changed only the version and the
+changelog — the broken snippet went out again, now with a note claiming it was
+gone. Verifying that a fix landed is part of the fix, and skipping it turned a
+small error into a false claim.
+
+The opening example read `if (p.isLeader) startPolling() else stopPolling();`,
+which is missing the semicolon before `else` and does not compile.
+
 ## 0.1.1
 
 - Fixes the README's opening example, which did not compile. It read

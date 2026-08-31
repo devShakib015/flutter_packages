@@ -6,7 +6,11 @@ Coordinate the browser tabs of a Flutter Web app.
 final tabs = CrossTab.open('my-app');
 
 tabs.presence.listen((p) {
-  if (p.isLeader) startPolling() else stopPolling();
+  if (p.isLeader) {
+    startPolling();
+  } else {
+    stopPolling();
+  }
 });
 
 tabs.messages.listen((m) => print('${m.from} said ${m.data}'));
