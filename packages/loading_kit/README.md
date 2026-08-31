@@ -65,8 +65,18 @@ and bottom sheets included — and survives transitions underneath it.
 ### Run a future
 
 ```dart
+// With a BuildContext — prefer this. It is ordinary state, not shared state.
+final orders = await context.loading.run(() => repo.fetchOrders());
+
+// Without one, from a repository or a bloc:
 final orders = await Loading.run(() => repo.fetchOrders());
 ```
+
+Both do the same thing. `context.loading` reaches the nearest [scoped
+controller](#scoped-controllers), which is easier to test and lets one screen
+differ from another; `Loading` is a global facade for code that has no context
+to reach through. The rest of this README uses `Loading` for brevity — every
+example works either way.
 
 `run` rethrows whatever the task threw, so your error handling is unchanged.
 Its future completes only once the overlay has finished leaving — returning

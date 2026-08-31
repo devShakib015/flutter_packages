@@ -6,6 +6,6 @@
 /// ```
 library;
 
-export 'src/fit_text.dart';
-export 'src/fit_text_group.dart';
+export 'src/fit_text.dart' show FitText;
+export 'src/fit_text_group.dart' show FitTextGroup;
 export 'src/render_fit_text.dart' show RenderFitText;

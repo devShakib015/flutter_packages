@@ -15,12 +15,37 @@
 /// ```
 library;
 
-export 'src/availability.dart';
-export 'src/exceptions.dart';
-export 'src/generation_options.dart';
-export 'src/schema.dart';
-export 'src/session.dart';
-export 'src/stream_extensions.dart';
-export 'src/tool.dart';
-export 'src/transcript.dart';
-export 'src/use_case.dart';
+export 'src/availability.dart'
+    show
+        ModelAvailability,
+        ModelAvailable,
+        ModelUnavailable,
+        ModelUnavailableReason;
+export 'src/exceptions.dart'
+    show
+        AssetsUnavailableException,
+        ConcurrentRequestException,
+        ContextWindowExceededException,
+        DecodingFailureException,
+        FoundationModelsException,
+        FoundationModelsPlatformException,
+        GuardrailViolationException,
+        ModelUnavailableException,
+        RateLimitedException,
+        RefusalException,
+        SchemaException,
+        ToolCallException,
+        UnsupportedLanguageException;
+export 'src/generation_options.dart'
+    show
+        GenerationOptions,
+        GreedySampling,
+        SamplingMode,
+        TopKSampling,
+        TopPSampling;
+export 'src/schema.dart' show Schema;
+export 'src/session.dart' show AppleFoundationModels, LanguageModelSession;
+export 'src/stream_extensions.dart' show LoadingStreamDeltas;
+export 'src/tool.dart' show LanguageModelTool, ToolHandler;
+export 'src/transcript.dart' show TranscriptEntry, TranscriptRole;
+export 'src/use_case.dart' show ModelUseCase;

@@ -11,6 +11,7 @@
 /// ```
 library;
 
-export 'src/anchored_list.dart';
-export 'src/anchored_list_controller.dart';
-export 'src/item_position.dart';
+export 'src/anchored_list.dart' show AnchoredList;
+export 'src/anchored_list_controller.dart'
+    show AnchoredListBinding, AnchoredListController;
+export 'src/item_position.dart' show ItemPosition;

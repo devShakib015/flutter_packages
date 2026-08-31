@@ -1,3 +1,23 @@
+## 0.3.0
+
+**Breaking, though probably not for you.** The barrel used to re-export whole
+files, which made every public member in them public API by accident. Three
+package internals were reachable as a result — `LoadingOperation`,
+`ResolvedLoadingStyle` and `LoadingIndicatorPainter`. Two of them say
+"internal" in their own doc comments. They are hidden now.
+
+Nothing else changed, and nothing documented has moved. If you were importing
+one of those three, you were reaching into the plumbing; open an issue and say
+what for, and it can be exposed deliberately instead of by accident.
+
+The exports are written with explicit `show` clauses now, so what is public is
+a decision rather than a side effect of file layout.
+
+**Documentation.** The Usage section opened with `Loading.run(...)`, while the
+README went on to recommend `context.loading.run(...)` three hundred lines
+later. A newcomer copies the first example, so the first example now shows
+both and says which to prefer and why.
+
 ## 0.2.1
 
 Packaging only — no API or behaviour changes.
