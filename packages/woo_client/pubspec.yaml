@@ -1,4 +1,4 @@
-name: woo_commerce
+name: woo_client
 description: >-
   A typed WooCommerce REST v3 client for Dart. Products, orders, customers and
   coupons, with real pagination and errors you can catch by kind.
@@ -6,7 +6,7 @@ description: >-
 version: 0.1.0
 repository: https://github.com/devShakib015/flutter_packages
 issue_tracker: https://github.com/devShakib015/flutter_packages/issues
-documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/woo_commerce
+documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/woo_client
 resolution: workspace
 
 topics:

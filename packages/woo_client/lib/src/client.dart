@@ -33,7 +33,7 @@ class WooCommerce {
   /// A test keeps this in step with the package version. Browsers forbid
   /// setting this header and drop it, so on the web the browser's own
   /// `User-Agent` is sent instead.
-  static const String userAgent = 'woo_commerce/0.1.0 (Dart)';
+  static const String userAgent = 'woo_client/0.1.0 (Dart)';
 
   /// Connects to the store at [baseUrl].
   ///

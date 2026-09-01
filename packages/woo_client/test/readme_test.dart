@@ -8,7 +8,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:test/test.dart';
-import 'package:woo_commerce/woo_commerce.dart';
+import 'package:woo_client/woo_client.dart';
 
 void main() {
   test('the README compiles and runs', () async {

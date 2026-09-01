@@ -1,4 +1,4 @@
-# woo_commerce
+# woo_client
 
 A typed WooCommerce REST v3 client for Dart.
 
@@ -40,7 +40,7 @@ Pure Dart, so it runs in Flutter, on a server, and in a CLI. One dependency:
 ## Install
 
 ```bash
-dart pub add woo_commerce
+dart pub add woo_client
 ```
 
 ## Credentials — please read this

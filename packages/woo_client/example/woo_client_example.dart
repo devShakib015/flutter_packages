@@ -1,16 +1,16 @@
 // A small tour of the client, runnable against any WooCommerce store.
 //
-//   dart run example/woo_commerce_example.dart https://your-store.com ck_... cs_...
+//   dart run example/woo_client_example.dart https://your-store.com ck_... cs_...
 //
 // The read-only key you can make under WooCommerce → Settings → Advanced →
 // REST API is enough for everything here.
 import 'dart:io';
 
-import 'package:woo_commerce/woo_commerce.dart';
+import 'package:woo_client/woo_client.dart';
 
 Future<void> main(List<String> args) async {
   if (args.length != 3) {
-    stderr.writeln('usage: woo_commerce_example <store-url> <key> <secret>');
+    stderr.writeln('usage: woo_client_example <store-url> <key> <secret>');
     exitCode = 64;
     return;
   }

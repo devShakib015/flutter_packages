@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:test/test.dart';
-import 'package:woo_commerce/woo_commerce.dart';
+import 'package:woo_client/woo_client.dart';
 
 import 'support.dart';
 
@@ -238,7 +238,7 @@ void main() {
         r'^version:\s*(\S+)',
         multiLine: true,
       ).firstMatch(pubspec)!.group(1)!;
-      expect(WooCommerce.userAgent, 'woo_commerce/$version (Dart)');
+      expect(WooCommerce.userAgent, 'woo_client/$version (Dart)');
     });
   });
 }

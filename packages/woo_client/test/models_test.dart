@@ -1,5 +1,5 @@
 import 'package:test/test.dart';
-import 'package:woo_commerce/woo_commerce.dart';
+import 'package:woo_client/woo_client.dart';
 
 import 'support.dart';
 
