@@ -31,6 +31,7 @@ workspace:
   - packages/ar_quick_look/example
   - packages/cross_tab
   - packages/cross_tab/example
+  - packages/woo_commerce
 
 dev_dependencies:
   flutter_lints: ^6.0.0
