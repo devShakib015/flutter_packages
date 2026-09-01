@@ -1,3 +1,4 @@
+import '../json.dart';
 import 'money.dart';
 
 /// How a coupon reduces the total.
@@ -44,20 +45,19 @@ class WooCoupon {
 
   /// Reads WooCommerce's representation.
   factory WooCoupon.fromJson(Map<String, Object?> json) => WooCoupon(
-    id: (json['id'] as num?)?.toInt() ?? 0,
-    code: json['code'] as String? ?? '',
-    amount: WooPrice(json['amount'] as String? ?? ''),
+    id: readInt(json['id'], orElse: 0),
+    code: readString(json['code']),
+    amount: WooPrice(readString(json['amount'])),
     discountType: WooDiscountType.parse(json['discount_type']),
-    description: json['description'] as String? ?? '',
-    dateExpires: DateTime.tryParse(json['date_expires'] as String? ?? ''),
-    usageCount: (json['usage_count'] as num?)?.toInt() ?? 0,
-    usageLimit: (json['usage_limit'] as num?)?.toInt(),
-    minimumAmount: WooPrice(json['minimum_amount'] as String? ?? ''),
-    maximumAmount: WooPrice(json['maximum_amount'] as String? ?? ''),
-    freeShipping: json['free_shipping'] as bool? ?? false,
+    description: readString(json['description']),
+    dateExpires: DateTime.tryParse(readString(json['date_expires'])),
+    usageCount: readInt(json['usage_count'], orElse: 0),
+    usageLimit: readIntOrNull(json['usage_limit']),
+    minimumAmount: WooPrice(readString(json['minimum_amount'])),
+    maximumAmount: WooPrice(readString(json['maximum_amount'])),
+    freeShipping: readBool(json['free_shipping']),
     productIds: <int>[
-      for (final Object? v
-          in (json['product_ids'] as List<Object?>? ?? const <Object?>[]))
+      for (final Object? v in (readList(json['product_ids'])))
         if (v is num) v.toInt(),
     ],
     raw: json,

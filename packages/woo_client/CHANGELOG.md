@@ -1,3 +1,79 @@
+## 0.2.0
+
+The Store API — WooCommerce's public, keyless one — plus everything the admin
+API exposes rather than only the four resources 0.1.0 shipped.
+
+Nothing from 0.1.0 changed shape, so upgrading is a version bump.
+
+### The Store API (new)
+
+`WooStore` speaks `wc/store/v1`, which needs **no API keys at all** and is the
+API a shipped app should use. Nothing else in Dart implements it.
+
+- Cart: add, update, remove, coupons, customer addresses, shipping rate
+  selection, and a batch add that is one request and one recalculation instead
+  of one of each per item.
+- Checkout: the draft order, field persistence, submitting, retrying a declined
+  payment, and off-site gateways (`needsRedirect` — the order is not paid until
+  the shopper comes back).
+- `expectedTotal` on submit, so a total that moved underneath is refused with
+  `WooTotalMismatchException` — carrying the refreshed cart — instead of
+  charging an amount the shopper never saw.
+- Public product browsing, categories, tags, and reviews.
+- `StoreMoney` and `StoreCurrency`. The Store API sends prices as integer minor
+  units — `"1800"` is eighteen dollars — with the store's own symbol and
+  separators alongside. These print what the store would print, in the store's
+  own format, and do arithmetic on integers so it is exact.
+- `CartSession` captures the `Cart-Token` and replays it. Supply a
+  `CartTokenStore` and a shopper's basket survives an app restart. A cart token
+  also removes the nonce requirement, which matters because a nonce can only be
+  minted by WordPress, so an app has no way to produce one.
+- `StoreQuantityLimits.clamp` respects minimums, maximums, and multiples, so a
+  stepper cannot ask for a quantity the store will refuse.
+
+### Admin API
+
+- Categories, tags, attributes and their terms, reviews, shipping classes, tax
+  rates and classes, shipping zones with locations and methods, payment
+  gateways, webhooks, reports, settings, reference data, and system status —
+  all under `woo.admin`.
+- All of them, and products/orders/customers/coupons, are `WooCollection`s, so
+  they share `list` / `get` / `create` / `update` / `delete` / `all()` /
+  `batch()`. Nothing gets paging or batching only because someone got round to
+  it.
+- `batch()` does up to 100 operations in one request, and throws over that
+  rather than letting WooCommerce silently truncate.
+
+### Everywhere
+
+- **Webhook signature verification.** `WooWebhookDelivery` parses a delivery and
+  checks its HMAC-SHA256 in constant time. Without this a stranger can POST to
+  your endpoint and tell your system an order was paid.
+- **Application passwords.** `WooCredentials.applicationPassword` — built into
+  WordPress since 5.6, revocable on its own, and running as a real user. The
+  cosmetic spaces WordPress displays are stripped, since pasting them in is the
+  commonest reason it fails.
+- **Retry**, off by default because this package cannot know whether your POST
+  is safe to repeat. `WooRetry.reads()` covers GETs; backoff is exponential with
+  jitter and honours the store's own `Retry-After`.
+- **Rate limiting** is `WooRateLimitException`, carrying how long to wait, read
+  from WooCommerce's `RateLimit-Retry-After` or a proxy's `Retry-After` in
+  either seconds or HTTP-date form.
+- **Parsing tolerates a store that sends the wrong type.** WordPress writes a
+  boolean as `true`, `"yes"`, `"1"`, or `1` depending on who wrote the field,
+  and PHP turns a sparse array into an object. A hard cast lost the whole
+  response over one field nobody was reading; now it costs that field. An absent
+  moderation or webhook state deliberately does **not** default to approved or
+  active.
+- `HttpDate` was avoided in favour of `http_parser`, so the package still
+  supports all six platforms including web and WASM.
+
+### Fixed
+
+- Store product paging headers lived on the client, so two list calls in flight
+  at once read each other's totals.
+- The README said `getOne('/reports/sales')`; that route returns an array.
+
 ## 0.1.0
 
 First release.

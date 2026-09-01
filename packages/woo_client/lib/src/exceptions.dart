@@ -89,3 +89,49 @@ class WooBadResponseException extends WooException {
   /// The first part of what came back, to make the cause obvious.
   final String? body;
 }
+
+/// The store is refusing requests because too many arrived too quickly.
+///
+/// WooCommerce can rate limit the Store API, and hosts often rate limit the
+/// whole REST API. Distinct from [WooServerException] because the fix is to
+/// wait exactly [retryAfter] and try again, not to give up.
+class WooRateLimitException extends WooException {
+  /// Creates the exception.
+  const WooRateLimitException(
+    super.message, {
+    super.code,
+    super.statusCode,
+    this.retryAfter,
+    this.limit,
+    this.remaining,
+  });
+
+  /// How long to wait, when the store said. Comes from `RateLimit-Retry-After`
+  /// or the standard `Retry-After` header.
+  final Duration? retryAfter;
+
+  /// Requests allowed per window, when the store said.
+  final int? limit;
+
+  /// Requests left in this window, when the store said.
+  final int? remaining;
+}
+
+/// The shopper confirmed a total the store no longer agrees with.
+///
+/// Thrown when a checkout was submitted with an `expectedTotal` and something
+/// changed underneath — a coupon expired, stock ran out, a shipping rate
+/// moved. Nothing was charged. Show [cart] and ask the shopper again.
+class WooTotalMismatchException extends WooException {
+  /// Creates the exception.
+  const WooTotalMismatchException(
+    super.message, {
+    super.code,
+    super.statusCode,
+    this.cart,
+  });
+
+  /// The store's refreshed cart, so you can show the new total without a
+  /// second round trip. Null if the store did not include one.
+  final Map<String, Object?>? cart;
+}

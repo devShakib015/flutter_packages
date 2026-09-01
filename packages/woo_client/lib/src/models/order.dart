@@ -1,3 +1,4 @@
+import '../json.dart';
 import 'money.dart';
 
 /// Where an order is in its life.
@@ -76,17 +77,17 @@ class WooAddress {
 
   /// Reads WooCommerce's representation.
   factory WooAddress.fromJson(Map<String, Object?> json) => WooAddress(
-    firstName: json['first_name'] as String? ?? '',
-    lastName: json['last_name'] as String? ?? '',
-    company: json['company'] as String? ?? '',
-    address1: json['address_1'] as String? ?? '',
-    address2: json['address_2'] as String? ?? '',
-    city: json['city'] as String? ?? '',
-    state: json['state'] as String? ?? '',
-    postcode: json['postcode'] as String? ?? '',
-    country: json['country'] as String? ?? '',
-    email: json['email'] as String? ?? '',
-    phone: json['phone'] as String? ?? '',
+    firstName: readString(json['first_name']),
+    lastName: readString(json['last_name']),
+    company: readString(json['company']),
+    address1: readString(json['address_1']),
+    address2: readString(json['address_2']),
+    city: readString(json['city']),
+    state: readString(json['state']),
+    postcode: readString(json['postcode']),
+    country: readString(json['country']),
+    email: readString(json['email']),
+    phone: readString(json['phone']),
   );
 
   /// Given name.
@@ -161,14 +162,14 @@ class WooLineItem {
 
   /// Reads WooCommerce's representation.
   factory WooLineItem.fromJson(Map<String, Object?> json) => WooLineItem(
-    id: (json['id'] as num?)?.toInt() ?? 0,
-    name: json['name'] as String? ?? '',
-    productId: (json['product_id'] as num?)?.toInt() ?? 0,
-    variationId: (json['variation_id'] as num?)?.toInt() ?? 0,
-    quantity: (json['quantity'] as num?)?.toInt() ?? 0,
-    subtotal: WooPrice(json['subtotal'] as String? ?? ''),
-    total: WooPrice(json['total'] as String? ?? ''),
-    sku: json['sku'] as String? ?? '',
+    id: readInt(json['id'], orElse: 0),
+    name: readString(json['name']),
+    productId: readInt(json['product_id'], orElse: 0),
+    variationId: readInt(json['variation_id'], orElse: 0),
+    quantity: readInt(json['quantity'], orElse: 0),
+    subtotal: WooPrice(readString(json['subtotal'])),
+    total: WooPrice(readString(json['total'])),
+    sku: readString(json['sku']),
     raw: json,
   );
 
@@ -259,16 +260,15 @@ class WooOrder {
   /// Reads WooCommerce's representation.
   factory WooOrder.fromJson(Map<String, Object?> json) {
     final List<WooLineItem> lines = <WooLineItem>[
-      for (final Object? v
-          in (json['line_items'] as List<Object?>? ?? const <Object?>[]))
+      for (final Object? v in (readList(json['line_items'])))
         if (v is Map<String, Object?>) WooLineItem.fromJson(v),
     ];
     return WooOrder(
-      id: (json['id'] as num?)?.toInt() ?? 0,
-      number: json['number'] as String? ?? '',
+      id: readInt(json['id'], orElse: 0),
+      number: readString(json['number']),
       status: WooOrderStatus.parse(json['status']),
-      currency: json['currency'] as String? ?? '',
-      total: WooPrice(json['total'] as String? ?? ''),
+      currency: readString(json['currency']),
+      total: WooPrice(readString(json['total'])),
       // WooCommerce does not send a subtotal on the order, only per line.
       subtotal: WooPrice(
         lines.isEmpty
@@ -278,22 +278,18 @@ class WooOrder {
                   .reduce((double a, double b) => a + b)
                   .toStringAsFixed(2),
       ),
-      totalTax: WooPrice(json['total_tax'] as String? ?? ''),
-      shippingTotal: WooPrice(json['shipping_total'] as String? ?? ''),
-      discountTotal: WooPrice(json['discount_total'] as String? ?? ''),
-      customerId: (json['customer_id'] as num?)?.toInt() ?? 0,
-      billing: WooAddress.fromJson(
-        json['billing'] as Map<String, Object?>? ?? const <String, Object?>{},
-      ),
-      shipping: WooAddress.fromJson(
-        json['shipping'] as Map<String, Object?>? ?? const <String, Object?>{},
-      ),
+      totalTax: WooPrice(readString(json['total_tax'])),
+      shippingTotal: WooPrice(readString(json['shipping_total'])),
+      discountTotal: WooPrice(readString(json['discount_total'])),
+      customerId: readInt(json['customer_id'], orElse: 0),
+      billing: WooAddress.fromJson(readMap(json['billing'])),
+      shipping: WooAddress.fromJson(readMap(json['shipping'])),
       lineItems: lines,
-      paymentMethod: json['payment_method'] as String? ?? '',
-      paymentMethodTitle: json['payment_method_title'] as String? ?? '',
-      customerNote: json['customer_note'] as String? ?? '',
-      dateCreated: DateTime.tryParse(json['date_created'] as String? ?? ''),
-      datePaid: DateTime.tryParse(json['date_paid'] as String? ?? ''),
+      paymentMethod: readString(json['payment_method']),
+      paymentMethodTitle: readString(json['payment_method_title']),
+      customerNote: readString(json['customer_note']),
+      dateCreated: DateTime.tryParse(readString(json['date_created'])),
+      datePaid: DateTime.tryParse(readString(json['date_paid'])),
       raw: json,
     );
   }

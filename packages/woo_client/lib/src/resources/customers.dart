@@ -1,6 +1,7 @@
 import '../client.dart';
 import '../models/customer.dart';
 import '../page.dart';
+import 'collection.dart';
 
 /// Customers and the queries over them.
 class WooCustomers {
@@ -73,4 +74,27 @@ class WooCustomers {
           query: <String, Object?>{'reassign': reassignTo},
         ),
       );
+
+  /// Creates, updates, and deletes in one request.
+  ///
+  /// WooCommerce handles up to 100 operations per call. For a catalogue sync
+  /// this is the difference between a minute and an hour.
+  ///
+  /// ```dart
+  /// await woo.customers.batch(
+  ///   update: [
+  ///     {'id': 799, 'regular_price': '119.00'},
+  ///     {'id': 812, 'stock_quantity': 0},
+  ///   ],
+  /// );
+  /// ```
+  Future<WooBatchResult<WooCustomer>> batch({
+    List<Map<String, Object?>> create = const <Map<String, Object?>>[],
+    List<Map<String, Object?>> update = const <Map<String, Object?>>[],
+    List<int> delete = const <int>[],
+  }) => WooCollection<WooCustomer>(
+    _client,
+    '/customers',
+    WooCustomer.fromJson,
+  ).batch(create: create, update: update, delete: delete);
 }

@@ -1,3 +1,4 @@
+import '../json.dart';
 import 'money.dart';
 
 /// Whether a product is on sale, and how it is sold.
@@ -58,9 +59,9 @@ class WooImage {
 
   /// Reads WooCommerce's representation.
   factory WooImage.fromJson(Map<String, Object?> json) => WooImage(
-    id: (json['id'] as num?)?.toInt() ?? 0,
-    src: json['src'] as String? ?? '',
-    alt: json['alt'] as String? ?? '',
+    id: readInt(json['id'], orElse: 0),
+    src: readString(json['src']),
+    alt: readString(json['alt']),
   );
 
   /// The attachment id.
@@ -83,9 +84,9 @@ class WooTerm {
 
   /// Reads WooCommerce's representation.
   factory WooTerm.fromJson(Map<String, Object?> json) => WooTerm(
-    id: (json['id'] as num?)?.toInt() ?? 0,
-    name: json['name'] as String? ?? '',
-    slug: json['slug'] as String? ?? '',
+    id: readInt(json['id'], orElse: 0),
+    name: readString(json['name']),
+    slug: readString(json['slug']),
   );
 
   /// The term id.
@@ -140,45 +141,37 @@ class WooProduct {
 
   /// Reads WooCommerce's representation.
   factory WooProduct.fromJson(Map<String, Object?> json) {
-    List<T> listOf<T>(String key, T Function(Map<String, Object?>) read) {
-      final Object? value = json[key];
-      if (value is! List) return <T>[];
-      return value
-          .whereType<Map<String, Object?>>()
-          .map(read)
-          .toList(growable: false);
-    }
+    List<T> listOf<T>(String key, T Function(Map<String, Object?>) read) =>
+        readObjects(json[key]).map(read).toList(growable: false);
 
     return WooProduct(
-      id: (json['id'] as num?)?.toInt() ?? 0,
-      name: json['name'] as String? ?? '',
-      slug: json['slug'] as String? ?? '',
-      permalink: json['permalink'] as String? ?? '',
+      id: readInt(json['id'], orElse: 0),
+      name: readString(json['name']),
+      slug: readString(json['slug']),
+      permalink: readString(json['permalink']),
       type: WooProductType.parse(json['type']),
-      status: json['status'] as String? ?? '',
-      description: json['description'] as String? ?? '',
-      shortDescription: json['short_description'] as String? ?? '',
-      sku: json['sku'] as String? ?? '',
-      price: WooPrice(json['price'] as String? ?? ''),
-      regularPrice: WooPrice(json['regular_price'] as String? ?? ''),
-      salePrice: WooPrice(json['sale_price'] as String? ?? ''),
-      onSale: json['on_sale'] as bool? ?? false,
+      status: readString(json['status']),
+      description: readString(json['description']),
+      shortDescription: readString(json['short_description']),
+      sku: readString(json['sku']),
+      price: WooPrice(readString(json['price'])),
+      regularPrice: WooPrice(readString(json['regular_price'])),
+      salePrice: WooPrice(readString(json['sale_price'])),
+      onSale: readBool(json['on_sale']),
       stockStatus: WooStockStatus.parse(json['stock_status']),
-      stockQuantity: (json['stock_quantity'] as num?)?.toInt(),
+      stockQuantity: readIntOrNull(json['stock_quantity']),
       manageStock: json['manage_stock'] == true,
       categories: listOf('categories', WooTerm.fromJson),
       tags: listOf('tags', WooTerm.fromJson),
       images: listOf('images', WooImage.fromJson),
       variations: <int>[
-        for (final Object? v
-            in (json['variations'] as List<Object?>? ?? const <Object?>[]))
+        for (final Object? v in (readList(json['variations'])))
           if (v is num) v.toInt(),
       ],
-      averageRating:
-          double.tryParse(json['average_rating'] as String? ?? '') ?? 0,
-      ratingCount: (json['rating_count'] as num?)?.toInt() ?? 0,
-      dateCreated: DateTime.tryParse(json['date_created'] as String? ?? ''),
-      dateModified: DateTime.tryParse(json['date_modified'] as String? ?? ''),
+      averageRating: double.tryParse(readString(json['average_rating'])) ?? 0,
+      ratingCount: readInt(json['rating_count'], orElse: 0),
+      dateCreated: DateTime.tryParse(readString(json['date_created'])),
+      dateModified: DateTime.tryParse(readString(json['date_modified'])),
       raw: json,
     );
   }

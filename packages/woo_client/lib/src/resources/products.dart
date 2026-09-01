@@ -1,6 +1,7 @@
 import '../client.dart';
 import '../models/product.dart';
 import '../page.dart';
+import 'collection.dart';
 
 /// How to sort a product listing.
 enum WooProductOrderBy {
@@ -155,4 +156,27 @@ class WooProducts {
       page = next;
     }
   }
+
+  /// Creates, updates, and deletes in one request.
+  ///
+  /// WooCommerce handles up to 100 operations per call. For a catalogue sync
+  /// this is the difference between a minute and an hour.
+  ///
+  /// ```dart
+  /// await woo.products.batch(
+  ///   update: [
+  ///     {'id': 799, 'regular_price': '119.00'},
+  ///     {'id': 812, 'stock_quantity': 0},
+  ///   ],
+  /// );
+  /// ```
+  Future<WooBatchResult<WooProduct>> batch({
+    List<Map<String, Object?>> create = const <Map<String, Object?>>[],
+    List<Map<String, Object?>> update = const <Map<String, Object?>>[],
+    List<int> delete = const <int>[],
+  }) => WooCollection<WooProduct>(
+    _client,
+    '/products',
+    WooProduct.fromJson,
+  ).batch(create: create, update: update, delete: delete);
 }

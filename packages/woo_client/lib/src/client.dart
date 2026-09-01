@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:http/http.dart' as http;
 
 import 'credentials.dart';
@@ -9,6 +7,8 @@ import 'resources/coupons.dart';
 import 'resources/customers.dart';
 import 'resources/orders.dart';
 import 'resources/products.dart';
+import 'resources/store_admin.dart';
+import 'transport.dart';
 
 /// A connection to one WooCommerce store.
 ///
@@ -33,7 +33,7 @@ class WooCommerce {
   /// A test keeps this in step with the package version. Browsers forbid
   /// setting this header and drop it, so on the web the browser's own
   /// `User-Agent` is sent instead.
-  static const String userAgent = 'woo_client/0.1.0 (Dart)';
+  static const String userAgent = wooUserAgent;
 
   /// Connects to the store at [baseUrl].
   ///
@@ -46,23 +46,27 @@ class WooCommerce {
     this.apiPath = '/wp-json/wc/v3',
     http.Client? httpClient,
     this.timeout = const Duration(seconds: 30),
-  }) : _base = Uri.parse(
-         baseUrl.endsWith('/')
-             ? baseUrl.substring(0, baseUrl.length - 1)
-             : baseUrl,
-       ),
-       _http = httpClient ?? http.Client(),
-       _ownsClient = httpClient == null {
-    if (credentials is KeyCredentials && !_base.isScheme('https')) {
-      // WooCommerce refuses key auth over plain HTTP, and sending a secret in
-      // the clear to find that out is worse than refusing here.
+    WooRetry retry = const WooRetry.none(),
+  }) : _transport = WooTransport(
+         baseUrl: baseUrl.replaceAll(RegExp(r'/+$'), ''),
+         timeout: timeout,
+         retry: retry,
+         httpClient: httpClient,
+       ) {
+    final bool secret =
+        credentials is KeyCredentials || credentials is BasicCredentials;
+    if (secret && !Uri.parse(baseUrl).isScheme('https')) {
+      // Both of these put a reusable store credential on the wire. WordPress
+      // and WooCommerce refuse them over plain HTTP anyway, and sending the
+      // secret unencrypted to discover that is worse than refusing here.
       throw ArgumentError.value(
         baseUrl,
         'baseUrl',
-        'Key authentication requires https. WooCommerce rejects consumer keys '
-            'over http, and sending the secret unencrypted to discover that is '
-            'not worth doing. Use https, or WooCredentials.bearer against your '
-            'own backend.',
+        'This credential requires https. WooCommerce rejects consumer keys '
+            'and WordPress rejects application passwords over http, and '
+            'sending the secret unencrypted to find that out is not worth '
+            'doing. Use https, or WooCredentials.bearer against your own '
+            'backend.',
       );
     }
   }
@@ -79,6 +83,16 @@ class WooCommerce {
   /// Discount codes.
   late final WooCoupons coupons = WooCoupons(this);
 
+  /// Everything else the admin API exposes: categories, tags, attributes,
+  /// reviews, shipping, tax, reports, settings, webhooks, system status.
+  ///
+  /// ```dart
+  /// final cats = await woo.admin.productCategories.list();
+  /// final vat = await woo.admin.taxRates.list();
+  /// final gateways = await woo.admin.paymentGateways();
+  /// ```
+  late final WooAdminResources admin = WooAdminResources(this);
+
   /// How this client proves who it is.
   final WooCredentials credentials;
 
@@ -88,19 +102,12 @@ class WooCommerce {
   /// How long to wait for the store before giving up.
   final Duration timeout;
 
-  final Uri _base;
-  final http.Client _http;
-  final bool _ownsClient;
-  bool _closed = false;
+  final WooTransport _transport;
 
   /// Releases the underlying connection, if this client made it.
   ///
   /// Does nothing to an [http.Client] you supplied — that one is yours.
-  void close() {
-    if (_closed) return;
-    _closed = true;
-    if (_ownsClient) _http.close();
-  }
+  void close() => _transport.close();
 
   // ------------------------------------------------------------- requests
 
@@ -122,13 +129,13 @@ class WooCommerce {
       path,
       query: <String, Object?>{...?query, 'page': page, 'per_page': perPage},
     );
-    final Object? decoded = _decode(response);
+    final Object? decoded = _transport.decode(response);
     if (decoded is! List) {
       throw WooBadResponseException(
         'Expected a list from $path but the store sent '
         '${decoded.runtimeType}.',
         statusCode: response.statusCode,
-        body: _snippet(response.body),
+        body: WooTransport.snippet(response.body),
       );
     }
     return WooPage<Map<String, Object?>>(
@@ -170,129 +177,44 @@ class WooCommerce {
     ),
   );
 
+  /// Sends a PUT whose body is a JSON array, and decodes an array back.
+  ///
+  /// A handful of WooCommerce routes take a bare list rather than an object —
+  /// replacing a shipping zone's locations is the one most people meet.
+  Future<List<Map<String, Object?>>> putList(
+    String path,
+    List<Object?> body,
+  ) async => _transport.asList(await _send('PUT', path, body: body));
+
   // ------------------------------------------------------------- internals
 
   Uri _uri(String path, Map<String, Object?>? query) {
     final String clean = path.startsWith('/') ? path : '/$path';
-    final Map<String, String> params = <String, String>{
-      for (final MapEntry<String, Object?> e
-          in (query ?? const <String, Object?>{}).entries)
-        if (e.value != null) e.key: _encode(e.value!),
+    final Map<String, Object?> params = <String, Object?>{
+      ...?query,
+      if (credentials case final KeyCredentials k) ...<String, Object?>{
+        'consumer_key': k.consumerKey,
+        'consumer_secret': k.consumerSecret,
+      },
     };
-    if (credentials case final KeyCredentials k) {
-      params['consumer_key'] = k.consumerKey;
-      params['consumer_secret'] = k.consumerSecret;
-    }
-    return _base.replace(
-      path: '${_base.path}$apiPath$clean',
-      queryParameters: params.isEmpty ? null : params,
-    );
+    return _transport.uri('$apiPath$clean', params);
   }
 
-  /// WooCommerce takes repeated values as `key[]=a&key[]=b`, but its filters
-  /// also accept comma-separated lists, which survive a `Map<String, String>`.
-  static String _encode(Object value) => switch (value) {
-    final List<Object?> list => list.map((Object? e) => '$e').join(','),
-    final DateTime date => date.toUtc().toIso8601String(),
-    final bool flag => flag ? 'true' : 'false',
-    _ => '$value',
-  };
-
   Map<String, String> get _headers => <String, String>{
-    'Accept': 'application/json',
-    // Store owners read their access logs, and security plugins block clients
-    // they cannot name. Browsers forbid setting this and will drop it.
-    'User-Agent': userAgent,
-    'Content-Type': 'application/json; charset=utf-8',
     if (credentials case final BearerCredentials b)
       'Authorization': 'Bearer ${b.token}',
+    if (credentials case final BasicCredentials b)
+      'Authorization': 'Basic ${b.encoded}',
   };
 
   Future<http.Response> _send(
     String method,
     String path, {
     Map<String, Object?>? query,
-    Map<String, Object?>? body,
-  }) async {
-    if (_closed) {
-      throw StateError('This WooCommerce client has been closed.');
-    }
-    final Uri uri = _uri(path, query);
-    final http.Request request = http.Request(method, uri)
-      ..headers.addAll(_headers);
-    if (body != null) request.body = jsonEncode(body);
+    Object? body,
+  }) =>
+      _transport.send(method, _uri(path, query), headers: _headers, body: body);
 
-    final http.Response response;
-    try {
-      response = await http.Response.fromStream(
-        await _http.send(request).timeout(timeout),
-      );
-    } on WooException {
-      rethrow;
-    } catch (e) {
-      // No answer at all: DNS, TLS, timeout, offline. Worth its own type
-      // because retrying is usually reasonable and rarely is for a 4xx.
-      throw WooNetworkException('Could not reach $uri: $e', cause: e);
-    }
-    if (response.statusCode >= 400) throw _errorFor(response);
-    return response;
-  }
-
-  Object? _decode(http.Response response) {
-    if (response.body.isEmpty) return null;
-    try {
-      return jsonDecode(response.body);
-    } catch (_) {
-      throw WooBadResponseException(
-        'The store did not send JSON. A plugin printing a notice before the '
-        'body, or an HTML page where the REST route should be, both look like '
-        'this.',
-        statusCode: response.statusCode,
-        body: _snippet(response.body),
-      );
-    }
-  }
-
-  Map<String, Object?> _asMap(http.Response response) {
-    final Object? decoded = _decode(response);
-    if (decoded is Map<String, Object?>) return decoded;
-    throw WooBadResponseException(
-      'Expected an object but the store sent ${decoded.runtimeType}.',
-      statusCode: response.statusCode,
-      body: _snippet(response.body),
-    );
-  }
-
-  /// Turns WooCommerce's error body into something catchable by kind.
-  WooException _errorFor(http.Response response) {
-    final int status = response.statusCode;
-    String message = 'The store returned HTTP $status.';
-    String? code;
-    Map<String, Object?>? data;
-    try {
-      final Object? decoded = jsonDecode(response.body);
-      if (decoded is Map<String, Object?>) {
-        message = decoded['message'] as String? ?? message;
-        code = decoded['code'] as String?;
-        data = decoded['data'] as Map<String, Object?>?;
-      }
-    } catch (_) {
-      // A non-JSON error body is common when something ahead of WordPress
-      // answered — a firewall, a maintenance page. Keep the status.
-    }
-    return switch (status) {
-      401 || 403 => WooAuthException(message, code: code, statusCode: status),
-      404 => WooNotFoundException(message, code: code, statusCode: status),
-      >= 500 => WooServerException(message, code: code, statusCode: status),
-      _ => WooInvalidRequestException(
-        message,
-        code: code,
-        statusCode: status,
-        details: data,
-      ),
-    };
-  }
-
-  static String _snippet(String body) =>
-      body.length <= 200 ? body : '${body.substring(0, 200)}…';
+  Map<String, Object?> _asMap(http.Response response) =>
+      _transport.asMap(response);
 }

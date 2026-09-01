@@ -1,6 +1,7 @@
 import '../client.dart';
 import '../models/coupon.dart';
 import '../page.dart';
+import 'collection.dart';
 
 /// Coupons and the queries over them.
 class WooCoupons {
@@ -65,4 +66,27 @@ class WooCoupons {
   /// Deletes a coupon, to the trash unless [force] is set.
   Future<WooCoupon> delete(int id, {bool force = false}) async =>
       WooCoupon.fromJson(await _client.delete('/coupons/$id', force: force));
+
+  /// Creates, updates, and deletes in one request.
+  ///
+  /// WooCommerce handles up to 100 operations per call. For a catalogue sync
+  /// this is the difference between a minute and an hour.
+  ///
+  /// ```dart
+  /// await woo.coupons.batch(
+  ///   update: [
+  ///     {'id': 799, 'regular_price': '119.00'},
+  ///     {'id': 812, 'stock_quantity': 0},
+  ///   ],
+  /// );
+  /// ```
+  Future<WooBatchResult<WooCoupon>> batch({
+    List<Map<String, Object?>> create = const <Map<String, Object?>>[],
+    List<Map<String, Object?>> update = const <Map<String, Object?>>[],
+    List<int> delete = const <int>[],
+  }) => WooCollection<WooCoupon>(
+    _client,
+    '/coupons',
+    WooCoupon.fromJson,
+  ).batch(create: create, update: update, delete: delete);
 }

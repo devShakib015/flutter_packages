@@ -1,3 +1,4 @@
+import '../json.dart';
 import 'order.dart' show WooAddress;
 
 /// A customer account in the store.
@@ -22,24 +23,22 @@ class WooCustomer {
 
   /// Reads WooCommerce's representation.
   factory WooCustomer.fromJson(Map<String, Object?> json) => WooCustomer(
-    id: (json['id'] as num?)?.toInt() ?? 0,
-    email: json['email'] as String? ?? '',
-    firstName: json['first_name'] as String? ?? '',
-    lastName: json['last_name'] as String? ?? '',
-    username: json['username'] as String? ?? '',
-    role: json['role'] as String? ?? '',
-    isPayingCustomer: json['is_paying_customer'] as bool? ?? false,
+    id: readInt(json['id'], orElse: 0),
+    email: readString(json['email']),
+    firstName: readString(json['first_name']),
+    lastName: readString(json['last_name']),
+    username: readString(json['username']),
+    role: readString(json['role']),
+    isPayingCustomer: readBool(json['is_paying_customer']),
     // Present on the list endpoint, absent on some single reads.
-    ordersCount: (json['orders_count'] as num?)?.toInt(),
-    totalSpent: json['total_spent'] as String?,
-    avatarUrl: json['avatar_url'] as String? ?? '',
-    billing: WooAddress.fromJson(
-      json['billing'] as Map<String, Object?>? ?? const <String, Object?>{},
-    ),
-    shipping: WooAddress.fromJson(
-      json['shipping'] as Map<String, Object?>? ?? const <String, Object?>{},
-    ),
-    dateCreated: DateTime.tryParse(json['date_created'] as String? ?? ''),
+    ordersCount: readIntOrNull(json['orders_count']),
+    totalSpent: json.containsKey('total_spent')
+        ? readString(json['total_spent'])
+        : null,
+    avatarUrl: readString(json['avatar_url']),
+    billing: WooAddress.fromJson(readMap(json['billing'])),
+    shipping: WooAddress.fromJson(readMap(json['shipping'])),
+    dateCreated: DateTime.tryParse(readString(json['date_created'])),
     raw: json,
   );
 

@@ -1,107 +1,166 @@
-// A small tour of the client, runnable against any WooCommerce store.
+// A shop, end to end, against any WooCommerce store — with no API keys.
 //
-//   dart run example/woo_client_example.dart https://your-store.com ck_... cs_...
+//   dart run example/woo_client_example.dart https://your-store.com
 //
-// The read-only key you can make under WooCommerce → Settings → Advanced →
-// REST API is enough for everything here.
+// Everything here uses the public Store API, which is what a shipped app
+// should use. For the admin API, see admin_example.dart in this directory.
 import 'dart:io';
 
 import 'package:woo_client/woo_client.dart';
 
 Future<void> main(List<String> args) async {
-  if (args.length != 3) {
-    stderr.writeln('usage: woo_client_example <store-url> <key> <secret>');
+  if (args.isEmpty) {
+    stderr.writeln('usage: woo_client_example <store-url>');
     exitCode = 64;
     return;
   }
 
-  final WooCommerce woo = WooCommerce(
-    baseUrl: args[0],
-    credentials: WooCredentials.key(
-      consumerKey: args[1],
-      consumerSecret: args[2],
-    ),
+  final WooStore store = WooStore(
+    baseUrl: args.first,
+    // Reads are retried; nothing here writes money.
+    retry: const WooRetry.reads(),
   );
 
   try {
-    await _products(woo);
-    await _oneProduct(woo);
-    await _orders(woo);
-    await _everything(woo);
-  } on WooAuthException catch (e) {
-    stderr.writeln('The store refused those credentials: ${e.message}');
-    exitCode = 77;
+    final StoreProduct? pick = await _browse(store);
+    if (pick == null) {
+      stdout.writeln('Nothing purchasable in the catalogue; stopping here.');
+      return;
+    }
+    await _fillCart(store, pick);
+    await _quoteShipping(store);
+    await _showCheckout(store);
+  } on WooRateLimitException catch (e) {
+    stderr.writeln('The store is rate limiting; retry in ${e.retryAfter}.');
+    exitCode = 75;
   } on WooNetworkException catch (e) {
     stderr.writeln('Could not reach the store: ${e.message}');
     exitCode = 69;
   } finally {
-    woo.close();
+    store.close();
   }
 }
 
-Future<void> _products(WooCommerce woo) async {
-  final WooPage<WooProduct> page = await woo.products.list(
+Future<StoreProduct?> _browse(WooStore store) async {
+  final WooPage<StoreProduct> page = await store.products.list(
     perPage: 5,
-    orderBy: WooProductOrderBy.popularity,
+    orderBy: StoreProductOrderBy.popularity,
   );
 
-  print('Most popular (${page.totalItems ?? '?'} products in the store):');
-  for (final WooProduct p in page.items) {
-    final String price = p.onSale
-        ? '${p.salePrice} (was ${p.regularPrice})'
-        : '${p.price}';
-    final String stock = switch (p.stockQuantity) {
-      final int n => '$n left',
-      null => p.stockStatus.name,
+  stdout.writeln('Most popular of ${page.totalItems ?? '?'}:');
+  for (final StoreProduct p in page.items) {
+    // Prices arrive as minor units — "1800" — and print themselves the way
+    // the store would, separators, symbol, and all.
+    final String price = switch (p.priceRange) {
+      final StorePriceRange r when !r.isFlat => '$r',
+      _ => '${p.price}',
     };
-    print('  ${p.name} — $price — $stock');
-  }
-}
-
-Future<void> _oneProduct(WooCommerce woo) async {
-  final WooPage<WooProduct> first = await woo.products.list(perPage: 1);
-  if (first.isEmpty) return;
-
-  // A missing product is a WooNotFoundException, not a null.
-  final WooProduct p = await woo.products.get(first.items.first.id);
-  print('\n${p.name}');
-  print('  sku        ${p.sku.isEmpty ? '(none)' : p.sku}');
-  print('  categories ${p.categories.map((WooTerm t) => t.name).join(', ')}');
-  print('  rating     ${p.averageRating} from ${p.ratingCount}');
-
-  if (p.type == WooProductType.variable) {
-    final WooPage<WooProduct> variations = await woo.products.variations(p.id);
-    print('  ${variations.items.length} variations');
+    final String stock = p.isInStock ? '' : ' (out of stock)';
+    stdout.writeln('  ${p.name} — $price$stock');
   }
 
-  // Anything this package does not model is still there.
-  print('  status     ${p.raw['status']}');
+  return page.items
+      .where((StoreProduct p) => p.isPurchasable && p.isInStock)
+      .firstOrNull;
 }
 
-Future<void> _orders(WooCommerce woo) async {
-  final WooPage<WooOrder> page = await woo.orders.list(
-    statuses: <WooOrderStatus>[
-      WooOrderStatus.processing,
-      WooOrderStatus.onHold,
-    ],
-    perPage: 5,
+Future<void> _fillCart(WooStore store, StoreProduct pick) async {
+  // A variable product needs a variation chosen; pick the first of each
+  // attribute so the example works against any catalogue.
+  final Map<String, String>? variation = pick.needsOptions
+      ? <String, String>{
+          for (final StoreAttribute a in pick.attributes)
+            if (a.terms.isNotEmpty) a.wireName: a.terms.first.slug,
+        }
+      : null;
+  final int id = pick.needsOptions
+      ? (pick.variationFor(variation!)?.id ?? pick.id)
+      : pick.id;
+
+  StoreCart cart = await store.cart.addItem(id: id, quantity: 1);
+  stdout.writeln('\nAdded ${pick.name}. Cart: ${cart.totals.totalPrice}');
+
+  // The limits know about minimums and multiples, so a stepper built on them
+  // cannot ask for a quantity the store will refuse.
+  final StoreCartItem line = cart.items.first;
+  cart = await store.cart.updateItem(
+    key: line.key,
+    quantity: line.limits.clamp(3),
+  );
+  stdout.writeln(
+    'Set quantity to ${cart.items.first.quantity}: '
+    '${cart.totals.totalPrice}',
   );
 
-  print('\nOrders needing attention: ${page.totalItems ?? page.items.length}');
-  for (final WooOrder o in page.items) {
-    print(
-      '  #${o.number}  ${o.total}  ${o.itemCount} items  '
-      '${o.billing.fullName}  ${o.status.name}',
-    );
+  for (final StoreCartError e in cart.errors) {
+    // Not a failure — the store telling you something changed underneath.
+    stdout.writeln('  note: ${e.message}');
   }
 }
 
-Future<void> _everything(WooCommerce woo) async {
-  // all() pages behind the scenes; it stops as soon as you stop listening.
-  int counted = 0;
-  await for (final WooProduct _ in woo.products.all(perPage: 100)) {
-    counted++;
-    if (counted >= 250) break;
+Future<void> _quoteShipping(WooStore store) async {
+  // A country and a postcode are enough; no full address needed to quote.
+  final StoreCart cart = await store.cart.updateCustomer(
+    shippingAddress: const StoreAddress(
+      city: 'London',
+      postcode: 'N1 7GU',
+      country: 'GB',
+    ),
+  );
+
+  if (!cart.needsShipping) {
+    stdout.writeln('\nNothing to ship.');
+    return;
   }
-  print('\nWalked $counted products without writing a paging loop.');
+
+  stdout.writeln('\nShipping:');
+  for (final StoreShippingPackage pkg in cart.shippingPackages) {
+    for (final StoreShippingRate rate in pkg.rates) {
+      final String mark = rate.selected ? '*' : ' ';
+      stdout.writeln('  $mark ${rate.name} — ${rate.price}');
+    }
+    final StoreShippingRate? cheapest = pkg.rates.isEmpty
+        ? null
+        : (pkg.rates.toList()..sort(
+                (StoreShippingRate a, StoreShippingRate b) =>
+                    a.price.compareTo(b.price),
+              ))
+              .first;
+    if (cheapest != null && !cheapest.selected) {
+      final StoreCart after = await store.cart.selectShippingRate(
+        packageId: pkg.packageId,
+        rateId: cheapest.rateId,
+      );
+      stdout.writeln('  chose ${cheapest.name}: ${after.totals.totalPrice}');
+    }
+  }
+}
+
+Future<void> _showCheckout(WooStore store) async {
+  final StoreCart cart = await store.cart.get();
+  final StoreCheckout draft = await store.checkout.get();
+
+  stdout
+    ..writeln('\nCheckout')
+    ..writeln('  draft order  ${draft.orderId} (${draft.status})')
+    ..writeln('  items        ${cart.totals.totalItems}')
+    ..writeln('  shipping     ${cart.totals.totalShipping}')
+    ..writeln('  tax          ${cart.totals.totalTax}')
+    ..writeln('  to pay       ${cart.totals.totalPrice}')
+    ..writeln('  pay with     ${cart.paymentMethods.join(', ')}');
+
+  // Deliberately not submitted: this example is safe to run against a real
+  // store. Placing the order would be:
+  //
+  //   final result = await store.checkout.submitAndClear(
+  //     billingAddress: address,
+  //     paymentMethod: cart.paymentMethods.first,
+  //     expectedTotal: cart.totals.totalPrice,  // refuses if the total moved
+  //   );
+  //
+  //   if (result.paymentResult.needsRedirect) {
+  //     // Off-site gateway: not paid until they come back.
+  //     await launchUrl(Uri.parse(result.paymentResult.redirectUrl));
+  //   }
+  stdout.writeln('\n(Not submitting — this example does not place orders.)');
 }
