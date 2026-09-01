@@ -1,13 +1,17 @@
 name: vitals
 description: >-
-  Type-safe access to Apple Health and Health Connect. Bucketed statistics
-  computed on-device, permissions modelled honestly, and an in-memory fake so
-  health flows are testable.
-version: 0.1.2
+  Type-safe Apple Health and Health Connect. Bucketed statistics computed natively, and writing verified end to end on iOS.
+
+version: 0.2.0
 repository: https://github.com/devShakib015/flutter_packages
 issue_tracker: https://github.com/devShakib015/flutter_packages/issues
 documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/vitals
 resolution: workspace
+
+screenshots:
+  - description: >-
+      The example writing a water sample and reading it back at the same value.
+    path: doc/write_verified.png
 
 topics:
   - health

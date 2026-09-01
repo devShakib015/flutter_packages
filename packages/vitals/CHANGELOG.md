@@ -1,3 +1,33 @@
+## 0.2.0
+
+**Writing is verified on iOS.** 250 ml of water written and read back at the
+same value and unit, end to end.
+
+Previous versions said writing had never been observed to work and suggested
+the iOS Simulator might be at fault. That was wrong, and the fault was here:
+this package's own example had a `Runner.entitlements` file that was never
+referenced by its Xcode project — `CODE_SIGN_ENTITLEMENTS` was absent — so the
+app was built with no HealthKit entitlement and every write was refused. The
+package's write path was correct the whole time.
+
+The iOS setup section now warns about it, because adding the file by hand
+without wiring it in is an easy mistake and produces exactly this symptom:
+builds fine, reads look fine, every write returns *Not authorized*.
+
+**The write documentation described an API that does not exist.** 0.1.2 showed
+`writeMass(type, 71.2, unit: Mass.kilograms)` and `writeCount(..., at:)`.
+Neither is real — the unit is carried by the value type, and counts take a
+period rather than an instant. Every snippet in that section is now compiled
+against the real API by `test/readme_examples_test.dart`, so a wrong signature
+fails the suite instead of reaching a reader.
+
+- Adds a screenshot of the verified write.
+- Adds `example/integration_test/write_roundtrip_test.dart`, which asserts the
+  value that comes back as well as the count — a unit-conversion mistake would
+  otherwise be silent.
+
+**Android is still unverified.** The Health Connect round trip has not been run.
+
 ## 0.1.2
 
 Documentation only — no API changes.

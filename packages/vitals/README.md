@@ -11,21 +11,25 @@ final steps = await Vitals.instance.read(
 // List<CountSample> — steps.first.count is an int.
 ```
 
-> **Status — read this before writing data.**
+> **Status.**
 >
-> **Reading is verified.** The iOS path is exercised against a real HealthKit
-> store, and the Dart contract has a full unit-test suite behind it.
+> **Reading is verified** against a real HealthKit store, and the Dart contract
+> has a full unit-test suite behind it.
 >
-> **Writing is not verified on either platform.** The code is complete and
-> compiles, but no write has yet been observed to succeed end to end: on the
-> iOS Simulator `save` returns *Not authorized* even after the permission sheet
-> is granted, and the Android round trip has not been run. It is unclear
-> whether that is a Simulator limitation or a defect here.
+> **Writing is verified on iOS**, end to end: 250 ml of water written and read
+> back at the same value and unit. Earlier versions of this file said writing
+> had never been observed to work and blamed the Simulator. That was wrong —
+> the fault was in this package's own example, whose entitlements file was
+> never wired into its Xcode project, so the app was built without the
+> HealthKit entitlement and every write was refused. See
+> [iOS setup](#ios-setup); it is an easy mistake to repeat.
 >
-> So: use `0.1.0` for reading and aggregating. If you write, verify the values
-> land correctly in Health or Health Connect before trusting it — a unit-
-> conversion mistake would be silent, and health records are awkward to
-> correct. Reports from real devices are very welcome.
+> **Android is still unverified.** The Health Connect round trip has not been
+> run. If you write on Android, check the values land before trusting them — a
+> unit-conversion mistake would be silent, and health records are awkward to
+> correct.
+
+![The example writing a sample and reading it back](https://raw.githubusercontent.com/devShakib015/flutter_packages/HEAD/packages/vitals/doc/write_verified.png)
 
 ## Why another one
 
@@ -81,36 +85,52 @@ switch (await Vitals.instance.readAccessOnAndroid({VitalType.steps})) {
 
 ## Writing
 
-There is one write method per kind of quantity, and **the compiler picks it for
-you**. Each `VitalType` is generic over its sample type, so a mismatch does not
-compile:
+There is one method per kind of quantity, and **the compiler picks it for
+you** — each `VitalType` is generic over its sample type, so a mismatch does
+not compile:
 
 ```dart
-await Vitals.instance.writeCount(VitalType.steps, 2400, at: DateTime.now());
-await Vitals.instance.writeMass(
-  VitalType.bodyMass, 71.2, unit: Mass.kilograms, at: DateTime.now(),
-);
-
-await Vitals.instance.writeMass(VitalType.steps, 2400, ...);
+await vitals.writeMass(VitalType.steps, const Mass.kilograms(71.2), at: now);
 // error: VitalType<CountSample> can't be assigned to VitalType<MassSample>
 ```
 
-The mapping is the type parameter, so you can read it off the type you already
-have:
+The unit is part of the value rather than a separate argument, so there is no
+way to pass kilograms and mean pounds:
 
-| the type you have | the method that takes it |
-| --- | --- |
-| `VitalType<CountSample>` — steps, flights | `writeCount` |
-| `VitalType<MassSample>` — body mass | `writeMass` |
-| `VitalType<LengthSample>` — distance, height | `writeLength` |
-| `VitalType<EnergySample>` — active, basal | `writeEnergy` |
-| `VitalType<RateSample>` — heart, respiratory | `writeRate` |
-| `VitalType<PercentSample>` — oxygen saturation | `writePercent` |
-| `VitalType<VolumeSample>` — water | `writeVolume` |
+```dart
+await vitals.writeMass(VitalType.bodyMass, const Mass.kilograms(71.2), at: now);
+await vitals.writeVolume(VitalType.water, const Volume.millilitres(250), at: now);
+```
 
-Writing needs permission that reading does not — see
-[the three permission states](#the-three-permission-states) — and please read
-the status note at the top of this file before relying on it.
+Some quantities happen at an instant, others accumulate over a period, and the
+signature says which:
+
+```dart
+// over a period
+await vitals.writeCount(VitalType.steps, 2400, from: earlier, to: now);
+await vitals.writeLength(
+  VitalType.distanceWalkingRunning, const Length.metres(1800),
+  from: earlier, to: now,
+);
+
+// at an instant
+await vitals.writeRate(VitalType.heartRate, 62, at: now);
+await vitals.writePercent(VitalType.oxygenSaturation, 0.98, at: now);
+```
+
+| the type you have | the method | the value |
+| --- | --- | --- |
+| `VitalType<CountSample>` | `writeCount` | `int`, over a period |
+| `VitalType<MassSample>` | `writeMass` | `Mass`, at an instant |
+| `VitalType<LengthSample>` | `writeLength` | `Length`, over a period |
+| `VitalType<EnergySample>` | `writeEnergy` | `Energy`, over a period |
+| `VitalType<RateSample>` | `writeRate` | `double` per minute, at an instant |
+| `VitalType<PercentSample>` | `writePercent` | `double` fraction, at an instant |
+| `VitalType<VolumeSample>` | `writeVolume` | `Volume`, at an instant |
+
+Every snippet above is compiled against the real API by
+`test/readme_examples_test.dart`, because the previous version of this section
+documented signatures that did not exist.
 
 ## Statistics, not raw samples
 
@@ -172,6 +192,22 @@ app the moment you request that kind of access:
 
 **3. Minimum iOS 15.** Sleep stages finer than "asleep" and workout totals need
 iOS 16; below that they degrade rather than failing.
+
+
+**Wire the entitlements file into the project, not just into the folder.**
+Adding the capability through Xcode's *Signing & Capabilities* tab does this
+for you. If you create `Runner.entitlements` by hand — or copy one in — you
+must also set `CODE_SIGN_ENTITLEMENTS` in the build settings, or the file is
+simply ignored:
+
+```
+CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
+```
+
+Without it the app builds and runs, reads may appear to work, and every write
+fails with *Not authorized*. This package's own example had exactly that
+mistake, and it cost several releases of a README claiming writes were
+unverified.
 
 ## Android setup
 
