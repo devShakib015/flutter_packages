@@ -1,3 +1,20 @@
+## 0.2.1
+
+Verified the Store API parser against a live store — woocommerce.com's own,
+which serves the public Store API — rather than only against fixtures. It
+parsed, and it surfaced fields the documentation's own example omits:
+
+- `stockText` and `stockClass`: the store's own stock line, already worded and
+  translated (`Only 2 left in stock`). Better than composing one from
+  `isInStock` and `lowStockRemaining`, because this one is in the shopper's
+  language.
+- `weight`, `formattedWeight`, `dimensions`, `formattedDimensions`. Note that
+  stores commonly send the literal string `N/A` rather than an empty one.
+- `groupedProducts` and `variationDescription`.
+
+Also pinned: that store's product ids are thirteen digits, so the fixtures now
+carry one.
+
 ## 0.2.0
 
 The Store API — WooCommerce's public, keyless one — plus everything the admin

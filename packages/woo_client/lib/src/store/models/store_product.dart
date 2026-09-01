@@ -106,6 +106,32 @@ class StoreVariation {
   final Map<String, String> attributes;
 }
 
+/// A product's size, as the store records it.
+class StoreDimensions {
+  /// Creates dimensions.
+  const StoreDimensions({this.length = '', this.width = '', this.height = ''});
+
+  /// Reads the Store API's representation.
+  factory StoreDimensions.fromJson(Map<String, Object?> json) =>
+      StoreDimensions(
+        length: readString(json['length']),
+        width: readString(json['width']),
+        height: readString(json['height']),
+      );
+
+  /// Length, in the store's unit.
+  final String length;
+
+  /// Width, in the store's unit.
+  final String width;
+
+  /// Height, in the store's unit.
+  final String height;
+
+  /// Whether the store records any of them.
+  bool get isEmpty => length.isEmpty && width.isEmpty && height.isEmpty;
+}
+
 /// The range a variable product's price falls in.
 class StorePriceRange {
   /// Creates a range.
@@ -165,6 +191,14 @@ class StoreProduct {
     this.attributes = const <StoreAttribute>[],
     this.variations = const <StoreVariation>[],
     this.addToCartText = '',
+    this.stockText = '',
+    this.stockClass = '',
+    this.weight = '',
+    this.formattedWeight = '',
+    this.dimensions = const StoreDimensions(),
+    this.formattedDimensions = '',
+    this.groupedProducts = const <int>[],
+    this.variationDescription = '',
   });
 
   /// Reads the Store API's representation.
@@ -217,6 +251,20 @@ class StoreProduct {
         for (final Map<String, Object?> v in readObjects(json['variations']))
           StoreVariation.fromJson(v),
       ],
+      stockText: switch (json['stock_availability']) {
+        final Map<String, Object?> a => readString(a['text']),
+        _ => '',
+      },
+      stockClass: switch (json['stock_availability']) {
+        final Map<String, Object?> a => readString(a['class']),
+        _ => '',
+      },
+      weight: readString(json['weight']),
+      formattedWeight: readString(json['formatted_weight']),
+      dimensions: StoreDimensions.fromJson(readMap(json['dimensions'])),
+      formattedDimensions: readString(json['formatted_dimensions']),
+      groupedProducts: readInts(json['grouped_products']),
+      variationDescription: readString(json['variation']),
       addToCartText: switch (json['add_to_cart']) {
         final Map<String, Object?> a => readString(a['text']),
         _ => '',
@@ -324,6 +372,41 @@ class StoreProduct {
   /// The store's own wording for the button, such as `Add to cart` or
   /// `Select options`.
   final String addToCartText;
+
+  /// The store's own stock line, already worded and translated — `In stock`,
+  /// `Only 2 left in stock`, or empty when the store shows nothing.
+  ///
+  /// Worth preferring over composing your own from [isInStock] and
+  /// [lowStockRemaining]: this one is in the shopper's language and follows
+  /// the store's settings.
+  final String stockText;
+
+  /// A CSS class for [stockText], such as `in-stock` or `low-stock`. Useful as
+  /// a key for choosing a colour.
+  final String stockClass;
+
+  /// Weight, in the store's unit.
+  final String weight;
+
+  /// Weight with its unit, as the store writes it — `1.2 kg`.
+  ///
+  /// Stores commonly send the literal string `N/A` here rather than an empty
+  /// one, so check before putting it on screen.
+  final String formattedWeight;
+
+  /// Size, in the store's unit.
+  final StoreDimensions dimensions;
+
+  /// Size with its units, as the store writes it — `20 × 15 × 5 cm`.
+  ///
+  /// Like [formattedWeight], often the literal `N/A`.
+  final String formattedDimensions;
+
+  /// For a grouped product, the ids it contains.
+  final List<int> groupedProducts;
+
+  /// For a variation, the attributes as one line — `Colour: Blue, Size: L`.
+  final String variationDescription;
 
   /// The whole product as the store sent it.
   final Map<String, Object?> raw;

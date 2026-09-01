@@ -296,6 +296,19 @@ Map<String, Object?> storeProductJson({
   'is_password_protected': false,
   'low_stock_remaining': null,
   'add_to_cart': <String, Object?>{'text': 'Add to cart'},
+  // Fields a live store sends that the docs' example omits, captured from
+  // woocommerce.com's own Store API.
+  'variation': '',
+  'grouped_products': <Object?>[],
+  'stock_availability': <String, Object?>{
+    'text': 'Only 2 left in stock',
+    'class': 'low-stock',
+  },
+  'weight': '',
+  'formatted_weight': 'N/A',
+  'dimensions': <String, Object?>{'length': '20', 'width': '15', 'height': '5'},
+  'formatted_dimensions': '20 × 15 × 5 cm',
+  'extensions': <String, Object?>{},
 };
 
 const Map<String, Object?> _usd = <String, Object?>{

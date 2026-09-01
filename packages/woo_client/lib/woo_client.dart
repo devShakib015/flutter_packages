@@ -96,6 +96,7 @@ export 'src/store/models/checkout.dart'
 export 'src/store/models/store_product.dart'
     show
         StoreAttribute,
+        StoreDimensions,
         StorePriceRange,
         StoreProduct,
         StoreTerm,

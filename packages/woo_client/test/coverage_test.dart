@@ -334,6 +334,32 @@ void main() {
       expect(pages[1].totalItems, 2);
     });
 
+    test('the fields a live store sends but the docs omit', () async {
+      // Found by running the parser against woocommerce.com's own Store API:
+      // these were all landing in raw only.
+      final StoreProduct p = StoreProduct.fromJson(storeProductJson());
+      // The store's own wording, already translated — better than composing
+      // your own from isInStock and lowStockRemaining.
+      expect(p.stockText, 'Only 2 left in stock');
+      expect(p.stockClass, 'low-stock');
+      expect(p.dimensions.length, '20');
+      expect(p.dimensions.isEmpty, isFalse);
+      expect(p.formattedDimensions, '20 × 15 × 5 cm');
+      // Stores send the literal "N/A", not an empty string.
+      expect(p.formattedWeight, 'N/A');
+      expect(p.groupedProducts, isEmpty);
+    });
+
+    test('a 13-digit product id survives', () {
+      // woocommerce.com's own store uses ids like 18734006846727. Anything
+      // narrower than 64-bit loses them, and on web a Dart int is a double —
+      // still exact below 2^53, which this is.
+      final StoreProduct p = StoreProduct.fromJson(
+        storeProductJson(id: 18734006846727),
+      );
+      expect(p.id, 18734006846727);
+    });
+
     test('bySlug is a deep-link lookup', () async {
       final FakeStoreApi api = FakeStoreApi(
         (_) => <Object?>[storeProductJson()],
