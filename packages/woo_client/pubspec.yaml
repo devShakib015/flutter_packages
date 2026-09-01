@@ -11,11 +11,10 @@ resolution: workspace
 
 topics:
   - woocommerce
-  - cart
   - wordpress
   - ecommerce
+  - cart
   - rest
-  - api
 
 environment:
   sdk: ^3.13.0
