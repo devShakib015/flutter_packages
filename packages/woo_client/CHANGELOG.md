@@ -1,3 +1,12 @@
+## 0.2.2
+
+- A screenshot on pub.dev, from a real storefront built on the Store API. The
+  demo lives in `storefront/` and runs with no network and no keys, because
+  `WooStore` takes any `http.Client` — so everything in the picture is the
+  package doing real parsing on real Store API payloads. Point it at your own
+  shop with `--dart-define=STORE=https://your-store.com`.
+- Regenerate it with `tool/shoot.sh`.
+
 ## 0.2.1
 
 Verified the Store API parser against a live store — woocommerce.com's own,

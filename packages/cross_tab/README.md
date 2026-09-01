@@ -17,6 +17,15 @@ tabs.messages.listen((m) => print('${m.from} said ${m.data}'));
 tabs.send({'signedOut': true});
 ```
 
+![Four tabs, one leader](https://raw.githubusercontent.com/devShakib015/flutter_packages/HEAD/packages/cross_tab/doc/leader.png)
+
+Every panel above is a real, independent tab. One is elected leader and does
+the polling; close it and another takes over on its own, keeping what it had
+already received.
+
+![Automatic re-election](https://raw.githubusercontent.com/devShakib015/flutter_packages/HEAD/packages/cross_tab/doc/election.png)
+
+
 ## The problem
 
 Open your app in two tabs and things start going wrong quietly. Both poll the

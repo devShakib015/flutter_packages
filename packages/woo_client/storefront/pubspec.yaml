@@ -1,17 +1,18 @@
-name: masonry_kit_example
-description: Demonstrates masonry_kit.
+name: woo_client_storefront
+description: A small storefront built on woo_client's Store API, used for the screenshots.
 publish_to: none
 version: 1.0.0
-resolution: workspace
 
 environment:
   sdk: ^3.13.0
-  flutter: '>=3.32.0'
+
+resolution: workspace
 
 dependencies:
   flutter:
     sdk: flutter
-  masonry_kit:
+  http: ^1.2.0
+  woo_client:
     path: ../
 
 dev_dependencies:

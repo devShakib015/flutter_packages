@@ -13,6 +13,13 @@ final cart = await store.cart.get();
 print(cart.totals.totalPrice);   // $82.56
 ```
 
+![A storefront built on the Store API](https://raw.githubusercontent.com/devShakib015/flutter_packages/HEAD/packages/woo_client/doc/storefront.png)
+
+*Every price above came off the wire as an integer — `"12900"` — and printed
+itself in the store's own currency format. The stock lines are the store's own
+wording. Source in [`storefront/`](https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/woo_client/storefront).*
+
+
 Pure Dart, so it runs in Flutter, on a server, and in a CLI. Three
 dependencies, all from the Dart team.
 

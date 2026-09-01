@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:cross_tab/cross_tab.dart';
 import 'package:flutter/material.dart';
 
+import 'panel_demo.dart';
+
 void main() => runApp(const Demo());
 
 class Demo extends StatelessWidget {
@@ -16,7 +18,7 @@ class Demo extends StatelessWidget {
       colorSchemeSeed: const Color(0xFF4C6FFF),
       useMaterial3: true,
     ),
-    home: const TabsPage(),
+    home: const PanelDemo(),
   );
 }
 

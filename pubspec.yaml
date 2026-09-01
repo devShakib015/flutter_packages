@@ -32,6 +32,7 @@ workspace:
   - packages/cross_tab
   - packages/cross_tab/example
   - packages/woo_client
+  - packages/woo_client/storefront
 
 dev_dependencies:
   flutter_lints: ^6.0.0
