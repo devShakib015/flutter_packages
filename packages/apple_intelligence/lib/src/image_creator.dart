@@ -60,11 +60,9 @@ class ImageCreator {
 
     final int id = _nextId++;
     late StreamController<GeneratedImage> controller;
-    StreamSubscription<dynamic>? subscription;
 
     Future<void> stop() async {
-      await subscription?.cancel();
-      subscription = null;
+      _Fanout.detach(id);
       try {
         await Bridge.method.invokeMethod<void>(
           'creator.cancel',
@@ -78,11 +76,7 @@ class ImageCreator {
     controller = StreamController<GeneratedImage>(
       onCancel: stop,
       onListen: () async {
-        subscription = Bridge.events.receiveBroadcastStream().listen((
-          dynamic event,
-        ) {
-          if (event is! Map) return;
-          if (event['id'] != id) return; // Another run's traffic.
+        _Fanout.attach(id, (Map<Object?, Object?> event) {
           switch (event['type']) {
             case 'image':
               controller.add(
@@ -121,5 +115,54 @@ class ImageCreator {
       },
     );
     return controller.stream;
+  }
+}
+
+/// One subscription to the event channel, shared by every live run.
+///
+/// Each run used to call `receiveBroadcastStream().listen` for itself. A
+/// second listen re-sends `listen` to the platform, which replaces the sink —
+/// so starting a second generation while the first was still going silently
+/// stole its events and the first stream hung forever with no error and no
+/// close. Now there is one subscription, demultiplexed by the run id the
+/// native side already stamps on every event, and it is cancelled when the
+/// last run detaches.
+abstract final class _Fanout {
+  static StreamSubscription<dynamic>? _shared;
+  static final Map<int, void Function(Map<Object?, Object?>)> _sinks =
+      <int, void Function(Map<Object?, Object?>)>{};
+  static final Map<int, void Function(Object, StackTrace?)> _errors =
+      <int, void Function(Object, StackTrace?)>{};
+
+  static void attach(
+    int id,
+    void Function(Map<Object?, Object?>) onEvent, {
+    required void Function(Object, StackTrace?) onError,
+  }) {
+    _sinks[id] = onEvent;
+    _errors[id] = onError;
+    _shared ??= Bridge.events.receiveBroadcastStream().listen(
+      (dynamic event) {
+        if (event is! Map) return;
+        final Object? id = event['id'];
+        if (id is! int) return;
+        _sinks[id]?.call(event.cast<Object?, Object?>());
+      },
+      onError: (Object e, StackTrace st) {
+        // A channel-level failure belongs to everyone listening.
+        for (final void Function(Object, StackTrace?) sink
+            in List<void Function(Object, StackTrace?)>.of(_errors.values)) {
+          sink(e, st);
+        }
+      },
+    );
+  }
+
+  static void detach(int id) {
+    _sinks.remove(id);
+    _errors.remove(id);
+    if (_sinks.isNotEmpty) return;
+    unawaited(_shared?.cancel());
+    _shared = null;
   }
 }

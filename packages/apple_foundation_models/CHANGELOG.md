@@ -1,3 +1,31 @@
+## 0.3.0
+
+An audit of every package in this repo found four defects here.
+
+### Fixed
+
+- **Two enum fields in one schema were rejected at runtime.** The native side
+  mints one Swift type per node and named every unnamed enum `Choice`, so a
+  schema with two of them declared the same type twice — and a classification
+  schema, which is what enums are for, usually has more than one. Unnamed
+  objects collided the same way on `Result`. Names are minted uniquely when a
+  schema is serialised, and `Schema.oneOf` takes a `name` when you want a
+  particular one.
+- **`ToolCallException` and `SchemaException` were unreachable for anything
+  the framework raised.** A tool that threw arrives wrapped in
+  `LanguageModelSession.ToolCallError` with the real error nested inside, and
+  the payload builder only matched this plugin's own types — so every
+  framework-raised failure collapsed into the generic fallback and lost the
+  tool name with it. The wrapper is unwrapped first now.
+- **The in-flight task dictionary was a data race.** It was written from the
+  platform thread when a request started and from the cooperative pool when it
+  finished, with no synchronisation. On a Swift Dictionary that is heap
+  corruption, not a wrong answer. Every access is on the main queue now.
+- **The README told you to install a version that excludes this one.** The
+  install snippet pinned `^0.1.0`, which resolves to `>=0.1.0 <0.2.0`. The
+  0.2.1 note claimed every snippet in the README was analyser-checked, which a
+  YAML block escapes.
+
 ## 0.2.1
 
 Documentation only — no API changes.

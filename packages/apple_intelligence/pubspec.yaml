@@ -2,7 +2,7 @@ name: apple_intelligence
 description: >-
   Apple Intelligence for Flutter: on-device image generation streamed as it is made, plus a native text field with Writing Tools and Genmoji.
 
-version: 0.2.2
+version: 0.3.0
 repository: https://github.com/devShakib015/flutter_packages
 issue_tracker: https://github.com/devShakib015/flutter_packages/issues
 documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/apple_intelligence

@@ -21,6 +21,12 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
   private var methodChannel: FlutterMethodChannel?
   private var eventSink: FlutterEventSink?
   private var sessions: [Int: Any] = [:]
+  /// In-flight streams, keyed by request id.
+  ///
+  /// Written from the platform thread when a request starts and from the
+  /// cooperative pool when it ends, which is a data race on a Swift
+  /// Dictionary — the failure mode is heap corruption, not a wrong answer.
+  /// Every access now goes through the main queue.
   private var running: [Int: Task<Void, Never>] = [:]
   private var nextSessionId = 0
 
@@ -334,7 +340,9 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
             "details": payload.details ?? [:],
           ])
         }
-        self.running.removeValue(forKey: requestId)
+        // Back to the main queue: this closure runs on the cooperative pool,
+        // and `running` is written from the platform thread too.
+        DispatchQueue.main.async { self.running.removeValue(forKey: requestId) }
       }
     }
 
@@ -502,6 +510,23 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
 
     @available(iOS 26.0, macOS 26.0, *)
     private func errorPayload(_ error: Error) -> ErrorPayload {
+      // Unwrap the framework's own wrapper first. A tool that threw arrives
+      // as LanguageModelSession.ToolCallError with the real error nested
+      // inside, so matching on the plugin's types alone made ToolCallException
+      // and SchemaException unreachable for anything the framework raised —
+      // every one of them collapsed into the generic fallback.
+      if #available(iOS 26.0, macOS 26.0, *),
+        let callError = error as? LanguageModelSession.ToolCallError
+      {
+        var payload = errorPayload(callError.underlyingError)
+        if payload.details?["tool"] == nil {
+          var details = payload.details ?? [:]
+          details["tool"] = callError.tool.name
+          payload = ErrorPayload(
+            code: payload.code, message: payload.message, details: details)
+        }
+        return payload
+      }
       if let schemaError = error as? SchemaError {
         return ErrorPayload(code: "schema", message: schemaError.message, details: nil)
       }

@@ -50,7 +50,7 @@ your setup trips on it.
 
 ```yaml
 dependencies:
-  apple_foundation_models: ^0.1.0
+  apple_foundation_models: ^0.3.0
 ```
 
 ## Structured output

@@ -79,12 +79,22 @@ class Schema {
   ///
   /// Stronger than a described string: the model cannot invent a value outside
   /// [values], which is what makes it reliable for classification.
-  factory Schema.oneOf(List<String> values, {String? description}) {
+  /// Pass [name] when a schema has more than one enum field. The native side
+  /// mints a type per enum, and every unnamed one used to be called `Choice` —
+  /// so a schema with two enum fields declared the same type twice and was
+  /// rejected at runtime, which is exactly the shape a classification schema
+  /// tends to have.
+  factory Schema.oneOf(
+    List<String> values, {
+    String? description,
+    String? name,
+  }) {
     assert(values.isNotEmpty, 'Schema.oneOf needs at least one value');
     return Schema._(<String, Object?>{
       'type': 'enum',
       'values': List<String>.unmodifiable(values),
       'description': description,
+      'name': ?name,
     });
   }
 
@@ -153,11 +163,57 @@ class Schema {
 
   final Map<String, Object?> _json;
 
-  /// Wire representation, with nulls stripped.
-  Map<String, Object?> toJson() => <String, Object?>{
-    for (final MapEntry<String, Object?> e in _json.entries)
-      if (e.value != null) e.key: e.value,
-  };
+  /// Wire representation, with nulls stripped and generated type names made
+  /// unique.
+  Map<String, Object?> toJson() =>
+      _uniquify(_strip(_json), <String>{}) as Map<String, Object?>;
+
+  static Map<String, Object?> _strip(Map<String, Object?> json) =>
+      <String, Object?>{
+        for (final MapEntry<String, Object?> e in json.entries)
+          if (e.value != null)
+            e.key: e.value is Schema ? (e.value! as Schema).toJson() : e.value,
+      };
+
+  /// Gives every enum and object node a name unique within one schema.
+  ///
+  /// The native side mints one Swift type per node, defaulting every unnamed
+  /// enum to `Choice` and every unnamed object to `Result`. A schema with two
+  /// enum fields therefore declared `Choice` twice and was rejected at
+  /// runtime — and a classification schema, which is what enums are for,
+  /// usually has more than one. Names are minted here so a caller only passes
+  /// `name:` when they want a particular one.
+  static Object? _uniquify(Object? node, Set<String> taken) {
+    if (node is List<Object?>) {
+      return <Object?>[for (final Object? e in node) _uniquify(e, taken)];
+    }
+    if (node is! Map<String, Object?>) return node;
+
+    final Map<String, Object?> out = Map<String, Object?>.of(node);
+    final String? type = out['type'] as String?;
+
+    // Named before descending, so the outermost node keeps the plain name and
+    // a nested one takes the suffix.
+    if (type == 'enum' || type == 'object') {
+      final String base =
+          (out['name'] as String?) ?? (type == 'enum' ? 'Choice' : 'Result');
+      String candidate = base;
+      int n = 2;
+      while (!taken.add(candidate)) {
+        candidate = '$base$n';
+        n++;
+      }
+      out['name'] = candidate;
+    }
+
+    for (final MapEntry<String, Object?> e in node.entries) {
+      // A property's own 'name' is a field name, not a type name, so only the
+      // nested 'schema' is descended into.
+      if (e.key == 'name') continue;
+      out[e.key] = _uniquify(e.value, taken);
+    }
+    return out;
+  }
 
   @override
   String toString() => 'Schema(${_json['type']})';

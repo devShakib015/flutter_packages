@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -130,7 +130,9 @@ class AppleIntelligenceTextField extends StatefulWidget {
 
   /// Whether this platform can host the native view at all.
   static bool get isSupported =>
-      !kIsWeb && (Platform.isIOS || Platform.isMacOS);
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.iOS ||
+          defaultTargetPlatform == TargetPlatform.macOS);
 
   @override
   State<AppleIntelligenceTextField> createState() =>
@@ -141,6 +143,33 @@ class _AppleIntelligenceTextFieldState
     extends State<AppleIntelligenceTextField> {
   static const String _viewType = 'dev.shakib/apple_intelligence/text';
 
+  /// Kept so a controller swapped in on a rebuild can be attached to the live
+  /// view. Without it the new controller was never attached to anything and
+  /// every call on it silently did nothing.
+  MethodChannel? _channel;
+
+  @override
+  void didUpdateWidget(AppleIntelligenceTextField old) {
+    super.didUpdateWidget(old);
+    final MethodChannel? channel = _channel;
+    if (channel == null) return;
+
+    if (!identical(widget.controller, old.controller)) {
+      old.controller?.detach();
+      widget.controller?.attach(channel);
+    }
+    // readOnly and fontSize were creation-only, so a field switched to
+    // read-only in a rebuild stayed editable until the view was recreated.
+    if (widget.readOnly != old.readOnly || widget.fontSize != old.fontSize) {
+      unawaited(
+        channel.invokeMethod<void>('configure', <String, Object?>{
+          'readOnly': widget.readOnly,
+          'fontSize': widget.fontSize,
+        }),
+      );
+    }
+  }
+
   @override
   void dispose() {
     widget.controller?.detach();
@@ -149,6 +178,7 @@ class _AppleIntelligenceTextFieldState
 
   void _onCreated(int id) {
     final MethodChannel channel = MethodChannel('$_viewType/$id');
+    _channel = channel;
     channel.setMethodCallHandler((MethodCall call) async {
       if (call.method == 'textChanged') {
         final Object? args = call.arguments;
@@ -169,7 +199,7 @@ class _AppleIntelligenceTextFieldState
       'fontSize': widget.fontSize,
       'readOnly': widget.readOnly,
     };
-    if (Platform.isIOS) {
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
       return UiKitView(
         viewType: _viewType,
         creationParams: params,

@@ -131,6 +131,26 @@ final class NativeTextView: NSObject {
       #endif
       applyingFromDart = false
       result(nil)
+    case "configure":
+      // readOnly and fontSize used to be creation-only, so a field switched
+      // to read-only in a rebuild stayed editable until the whole platform
+      // view was recreated.
+      let args = call.arguments as? [String: Any] ?? [:]
+      if let readOnly = args["readOnly"] as? Bool {
+        #if os(iOS)
+          textView.isEditable = !readOnly
+        #else
+          textView.isEditable = !readOnly
+        #endif
+      }
+      if let size = args["fontSize"] as? Double {
+        #if os(iOS)
+          textView.font = UIFont.systemFont(ofSize: CGFloat(size))
+        #else
+          textView.font = NSFont.systemFont(ofSize: CGFloat(size))
+        #endif
+      }
+      result(nil)
     case "capabilities":
       result(capabilities())
     default:
@@ -138,20 +158,34 @@ final class NativeTextView: NSObject {
     }
   }
 
-  /// What this text view actually got from the system, asked of the live view
-  /// rather than inferred from the OS version.
+  /// What this text view actually got from the system.
+  ///
+  /// `writingToolsBehavior` and `supportsAdaptiveImageGlyph` are the values
+  /// this plugin *set* on the view a moment earlier, so reading them back
+  /// answered "did I configure it" and not "will it work" — true on every
+  /// iOS 18 device, including one with Apple Intelligence switched off or
+  /// still downloading. The configured behaviour is now ANDed with the
+  /// system's own availability flag.
   private func capabilities() -> [String: Any] {
     var out: [String: Any] = ["writingTools": false, "genmoji": false]
     #if os(iOS)
       if #available(iOS 18.0, *) {
-        out["writingTools"] = textView.writingToolsBehavior != .none
-        out["genmoji"] = textView.supportsAdaptiveImageGlyph
+        var available = true
+        if #available(iOS 18.2, *) {
+          available = UIWritingToolsCoordinator.isWritingToolsAvailable
+        }
+        out["writingTools"] = available && textView.writingToolsBehavior != .none
+        out["genmoji"] = available && textView.supportsAdaptiveImageGlyph
       }
     #elseif os(macOS)
       if #available(macOS 15.0, *) {
-        out["writingTools"] = textView.writingToolsBehavior != .none
+        var available = true
+        if #available(macOS 15.2, *) {
+          available = NSWritingToolsCoordinator.isWritingToolsAvailable
+        }
+        out["writingTools"] = available && textView.writingToolsBehavior != .none
         // AppKit exposes Genmoji through the attributed string, not a flag.
-        out["genmoji"] = textView.isRichText
+        out["genmoji"] = available && textView.isRichText
       }
     #endif
     return out

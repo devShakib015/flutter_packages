@@ -1,3 +1,39 @@
+## 0.3.0
+
+An audit of every package in this repo found six defects here.
+
+### Fixed
+
+- **`import 'dart:io'` made the package impossible to compile for web,** while
+  the docs promised `fallback` rendered there. Replaced with
+  `defaultTargetPlatform`.
+- **A second concurrent `generate()` silently stole the first one's events.**
+  Each run opened its own `receiveBroadcastStream().listen`, and a second
+  listen re-sends `listen` to the platform, which replaces the sink — so the
+  first stream hung forever with no error and no close. There is one
+  subscription now, demultiplexed by the run id the native side already stamps
+  on every event.
+- **`capabilities()` answered "did I configure it", not "will it work".** It
+  read back `writingToolsBehavior` and `supportsAdaptiveImageGlyph` — values
+  this plugin had set moments earlier — so it returned true on every iOS 18
+  device, including ones with Apple Intelligence switched off or still
+  downloading. It is ANDed with the system's own availability flag now.
+- **The text field ignored rebuilds.** `readOnly` and `fontSize` were
+  creation-only, so a field switched to read-only stayed editable; swapping the
+  controller left the new one attached to nothing, so every call on it did
+  nothing at all. `didUpdateWidget` handles both, with a new native
+  `configure`.
+
+### Known, not fixed
+
+- An inserted Genmoji still cannot be read back: `getText()` and `onChanged`
+  give U+FFFC where the glyph is, and `setText()` removes it. A faithful round
+  trip needs an attributed-string channel (RTFD, or per-attachment identifiers)
+  rather than the plain-string one this uses.
+- On macOS the platform-view host and its `NSScrollView` retain each other, so
+  a text field is not deallocated. Breaking it properly means restructuring the
+  host, which is more than a patch release should carry.
+
 ## 0.2.2
 
 - `exceptionFor`, the internal helper that maps a platform error code to a
