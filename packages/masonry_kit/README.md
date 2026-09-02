@@ -65,11 +65,17 @@ reason to ever issue a correction — and it doesn't.
 The same property makes the scrollbar honest, because measured items contribute
 their exact extent and only the unmeasured tail is estimated:
 
-| worst scrollbar shrink while scrolling | |
+| worst shrink in the reported scroll extent | |
 | --- | --- |
-| `flutter_staggered_grid_view` | 3,928px |
-| Flutter's own `SliverList` | 1,340px |
-| **`masonry_kit`** | **77px** |
+| Flutter's own `SliverList` | 2,887px |
+| `flutter_staggered_grid_view` | 1,920px |
+| **`masonry_kit`** | **145px** |
+
+400 items, 45 forward drags — `test/head_to_head_test.dart` runs it, so these
+figures cannot quietly stop being true. The absolute pixels depend on the item
+count and cell heights; the order of magnitude is the claim. Note that
+Flutter's own lazy estimate drifts furthest here: this is a property of
+estimating an unmeasured tail, not a defect unique to the incumbent.
 
 ## Sliver or box widget
 

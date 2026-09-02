@@ -1,3 +1,26 @@
+## 0.3.3
+
+The scrollbar-drift table in the README was quoted from a one-off measurement
+that no test pinned. Pinned now — and it was wrong in all three figures, and
+wrong about which package drifts most.
+
+| worst shrink in the reported scroll extent | claimed | measured |
+| --- | --- | --- |
+| Flutter's own `SliverList` | 1,340px | **2,887px** |
+| `flutter_staggered_grid_view` | 3,928px | **1,920px** |
+| `masonry_kit` | 77px | **145px** |
+
+The README had `SliverList` drifting *less* than the incumbent. It drifts more.
+The comparative claim survives — masonry_kit revises its extent an order of
+magnitude less than either — but the framing was wrong: estimating an unmeasured
+tail is what causes this, not a defect unique to the package being replaced, and
+the README now says so.
+
+`test/head_to_head_test.dart` runs all three, so the table cannot quietly stop
+being true. One subject per test, deliberately: measuring all three in one test
+body pumps three trees into the same tester and corrupts the later readings —
+`SliverList` read 1,546px and `masonry_kit` read 0px that way.
+
 ## 0.3.2
 
 The README's four-grid figure said "worst 2,200px". Re-measured on Flutter
