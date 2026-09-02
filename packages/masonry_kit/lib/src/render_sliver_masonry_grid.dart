@@ -129,6 +129,15 @@ class RenderSliverMasonryGrid extends RenderSliverMultiBoxAdaptor {
   double childCrossAxisPosition(RenderBox child) =>
       _parentDataOf(child).crossAxisOffset;
 
+  /// How many children there are, when that is known without asking for it.
+  ///
+  /// `childManager.childCount` is not free: for a delegate with no declared
+  /// count it makes Flutter hunt for the last child, and on a genuinely
+  /// unbounded builder that throws rather than returning. This is the same
+  /// number for any bounded delegate and null for an unbounded one, so the
+  /// bounded path is unchanged and the unbounded one stops crashing.
+  int? get _knownChildCount => childManager.estimatedChildCount;
+
   double _childCrossAxisExtent(double crossAxisExtent) {
     final int columns = columnsFor(crossAxisExtent);
     // Clamped: wide spacing in a narrow viewport makes this negative, and
@@ -196,7 +205,7 @@ class RenderSliverMasonryGrid extends RenderSliverMultiBoxAdaptor {
     );
     final double windowEnd = windowStart + constraints.remainingCacheExtent;
 
-    if (childManager.childCount == 0) {
+    if (_knownChildCount == 0) {
       _reportEmpty();
       childManager.didFinishLayout();
       return;
@@ -209,13 +218,17 @@ class RenderSliverMasonryGrid extends RenderSliverMultiBoxAdaptor {
     // children created here are temporary scaffolding; step 3 releases the
     // ones the window does not want.
     final int measuredBefore = layout.count;
+    // True once the delegate has actually declined to build. For an unbounded
+    // delegate that is the only way the end is ever discovered.
+    bool ranOut = false;
+    int sinceRelease = 0;
     while (layout.shortestColumnExtent < windowEnd &&
-        layout.count < childManager.childCount) {
+        (_knownChildCount == null || layout.count < _knownChildCount!)) {
       // Walk the child list forward rather than assuming it already ends
       // where the cache does — after a window jump it can trail well behind,
       // and inserting after the wrong child would misindex everything.
       final int index = lastChild == null ? 0 : indexOf(lastChild!) + 1;
-      if (index >= childManager.childCount) break;
+      if (_knownChildCount case final int n when index >= n) break;
       final RenderBox? child = index == 0
           ? _addFirstChild(childConstraints)
           : insertAndLayoutChild(
@@ -223,7 +236,12 @@ class RenderSliverMasonryGrid extends RenderSliverMultiBoxAdaptor {
               after: lastChild,
               parentUsesSize: true,
             );
-      if (child == null) break; // The manager has no more to give.
+      if (child == null) {
+        // The manager has no more to give — which for an unbounded delegate
+        // is how the end announces itself.
+        ranOut = true;
+        break;
+      }
       if (index == layout.count) {
         // New ground: measure it and commit the placement, once and for all.
         _place(
@@ -236,9 +254,49 @@ class RenderSliverMasonryGrid extends RenderSliverMultiBoxAdaptor {
         // Already placed on an earlier pass. Reuse that answer verbatim.
         _place(child, index, layout.slotOf(index), childCrossAxisExtent);
       }
+
+      // Let go of what we have already walked past.
+      //
+      // Only the placement cache has to survive this walk; the RenderBoxes do
+      // not. Holding them all until step 3 meant a jump to the far end of a
+      // long grid kept every child from index 0 alive at once — measured at
+      // 1,808 live subtrees for a 2,000-item list, which on a device with
+      // images in those cells is a memory spike that can end the app. The
+      // cache keeps the measurements, so dropping the boxes costs nothing.
+      if (++sinceRelease >= _releaseEvery) {
+        sinceRelease = 0;
+        _releaseLeading(layout, windowStart);
+      }
     }
 
     if (layout.isEmpty) {
+      // Nothing measured. That is either a genuinely empty sliver, or one that
+      // sits entirely past the viewport's cache window — the viewport hands
+      // those a zero-length window, so the loop above never ran.
+      //
+      // Reporting SliverGeometry.zero for the second case leaves the sliver
+      // out of maxScrollExtent altogether, so the scrollbar under-reports the
+      // page until the reader scrolls near it. That shows up in exactly the
+      // arrangement this package is for: two grids in one CustomScrollView.
+      //
+      // So measure one item and extrapolate. paintExtent stays zero because
+      // there really is nothing on screen; only the scroll extent is claimed.
+      final bool windowIsDegenerate = windowEnd <= windowStart;
+      final bool hasChildren =
+          _knownChildCount == null || _knownChildCount! > 0;
+      if (windowIsDegenerate && hasChildren) {
+        final double estimate = _estimateOffscreenExtent(childConstraints);
+        if (estimate > 0) {
+          geometry = SliverGeometry(
+            scrollExtent: estimate,
+            paintExtent: 0,
+            maxPaintExtent: estimate,
+            cacheExtent: 0,
+          );
+          childManager.didFinishLayout();
+          return;
+        }
+      }
       _reportEmpty();
       childManager.didFinishLayout();
       return;
@@ -266,7 +324,8 @@ class RenderSliverMasonryGrid extends RenderSliverMultiBoxAdaptor {
 
     // 4. Report geometry. No correction is ever requested: every offset came
     //    from the cache, so there is nothing to take back.
-    final bool reachedEnd = layout.count >= childManager.childCount;
+    final int? known = _knownChildCount;
+    final bool reachedEnd = ranOut || (known != null && layout.count >= known);
     final double scrollExtent =
         reachedEnd ? layout.extent : _estimateTotalExtent(layout);
 
@@ -431,7 +490,11 @@ class RenderSliverMasonryGrid extends RenderSliverMultiBoxAdaptor {
   /// keeps this stable: the estimate moves as the average settles, not as the
   /// tallest column changes hands.
   double _estimateTotalExtent(MasonryLayout layout) {
-    final int total = childManager.childCount;
+    final int? total = _knownChildCount;
+    // An unbounded delegate has no total to extrapolate towards. Infinity is
+    // what Flutter's own lazy slivers report until the end is found, and it
+    // keeps the scrollbar from claiming the list is nearly over.
+    if (total == null) return double.infinity;
     final int measured = layout.count;
     if (measured == 0) return 0;
     double sum = 0;
@@ -441,6 +504,62 @@ class RenderSliverMasonryGrid extends RenderSliverMultiBoxAdaptor {
     final double averagePerItem = sum / measured;
     final double remaining = (total - measured) * averagePerItem;
     return layout.extent + remaining / layout.crossAxisCount;
+  }
+
+  /// How many children to insert before dropping the ones already passed.
+  ///
+  /// Large enough that ordinary scrolling — a screenful at a time — never
+  /// reaches it and pays nothing, small enough that a long jump never holds
+  /// more than a few hundred subtrees at once.
+  static const int _releaseEvery = 100;
+
+  /// Drops children whose placement ends before the window starts.
+  ///
+  /// Never drops the last child: the walk uses it to work out which index to
+  /// insert after, so losing it would restart the walk from zero.
+  void _releaseLeading(MasonryLayout layout, double windowStart) {
+    int garbage = 0;
+    RenderBox? walk = firstChild;
+    while (walk != null && garbage < childCount - 1) {
+      final int index = indexOf(walk);
+      if (index >= layout.count) break;
+      if (layout.slotOf(index).end >= windowStart) break;
+      garbage++;
+      walk = childAfter(walk);
+    }
+    if (garbage > 0) collectGarbage(garbage, 0);
+  }
+
+  /// Measures a single child to estimate a sliver nobody has looked at yet.
+  ///
+  /// Used only when the viewport gave this sliver a zero-length window, which
+  /// means it is entirely past the cache region. One measurement is enough to
+  /// stop `maxScrollExtent` pretending the sliver is not there, and it is
+  /// thrown away immediately so nothing is cached from a layout pass that
+  /// never really happened.
+  double _estimateOffscreenExtent(BoxConstraints childConstraints) {
+    final int? known = _knownChildCount;
+    if (known == 0) return 0;
+
+    double perItem = 0;
+    invokeLayoutCallback<SliverConstraints>((SliverConstraints _) {
+      childManager.createChild(0, after: null);
+    });
+    final RenderBox? probe = firstChild;
+    if (probe != null) {
+      probe.layout(childConstraints, parentUsesSize: true);
+      perItem = _mainExtentOf(probe) + _mainAxisSpacing;
+      // Give it straight back: this sliver is off screen and should hold
+      // nothing.
+      invokeLayoutCallback<SliverConstraints>((SliverConstraints _) {
+        childManager.removeChild(probe);
+      });
+    }
+    if (perItem <= 0) return 0;
+
+    // Unbounded: no total to extrapolate towards, so say so rather than guess.
+    if (known == null) return double.infinity;
+    return known * perItem / columnsFor(constraints.crossAxisExtent);
   }
 
   void _reportEmpty() {

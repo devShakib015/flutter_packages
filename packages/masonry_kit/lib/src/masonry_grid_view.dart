@@ -106,6 +106,53 @@ class MasonryGridView extends BoxScrollView {
         assert(itemCount >= 0, 'itemCount cannot be negative'),
         super(semanticChildCount: semanticChildCount ?? itemCount);
 
+  /// Creates a scrollable masonry grid whose length may be unknown.
+  ///
+  /// Leave [itemCount] null for a feed with no end. The grid discovers the end
+  /// when [itemBuilder] returns null, the same way `ListView.builder` does.
+  ///
+  /// ```dart
+  /// MasonryGridView.builder(
+  ///   crossAxisCount: 2,
+  ///   itemBuilder: (context, index) =>
+  ///       index < loaded.length ? Photo(loaded[index]) : null,
+  /// )
+  /// ```
+  const MasonryGridView.builder({
+    super.key,
+    required this.crossAxisCount,
+    required NullableIndexedWidgetBuilder itemBuilder,
+    int? itemCount,
+    this.mainAxisSpacing = 0,
+    this.crossAxisSpacing = 0,
+    this.addAutomaticKeepAlives = true,
+    this.addRepaintBoundaries = true,
+    this.addSemanticIndexes = true,
+    this.findChildIndexCallback,
+    super.scrollDirection,
+    super.reverse,
+    super.controller,
+    super.primary,
+    super.physics,
+    super.shrinkWrap,
+    super.padding,
+    // Renamed to scrollCacheExtent after Flutter 3.41; our floor is 3.24.
+    // ignore: deprecated_member_use
+    super.cacheExtent,
+    super.dragStartBehavior = DragStartBehavior.start,
+    super.keyboardDismissBehavior,
+    super.restorationId,
+    super.clipBehavior,
+    int? semanticChildCount,
+  })  : _maxCrossAxisExtent = null,
+        _children = null,
+        _itemCount = itemCount,
+        _itemBuilder = itemBuilder,
+        assert(crossAxisCount > 0, 'crossAxisCount must be positive'),
+        assert(itemCount == null || itemCount >= 0,
+            'itemCount cannot be negative'),
+        super(semanticChildCount: semanticChildCount ?? itemCount);
+
   /// Creates a scrollable masonry grid from an explicit list of children.
   const MasonryGridView({
     super.key,
@@ -163,8 +210,8 @@ class MasonryGridView extends BoxScrollView {
   /// Locates a child by key so its state survives insertions.
   final ChildIndexGetter? findChildIndexCallback;
 
-  final int _itemCount;
-  final IndexedWidgetBuilder? _itemBuilder;
+  final int? _itemCount;
+  final NullableIndexedWidgetBuilder? _itemBuilder;
   final List<Widget>? _children;
 
   @override
@@ -182,11 +229,28 @@ class MasonryGridView extends BoxScrollView {
       );
     }
     final double? maxExtent = _maxCrossAxisExtent;
+    final int? count = _itemCount;
+
+    // An unknown length can only go through the builder path, which leaves the
+    // delegate unbounded and lets the end announce itself.
+    if (count == null) {
+      return SliverMasonryGrid.builder(
+        crossAxisCount: crossAxisCount,
+        itemBuilder: _itemBuilder!,
+        mainAxisSpacing: mainAxisSpacing,
+        crossAxisSpacing: crossAxisSpacing,
+        addAutomaticKeepAlives: addAutomaticKeepAlives,
+        addRepaintBoundaries: addRepaintBoundaries,
+        addSemanticIndexes: addSemanticIndexes,
+        findChildIndexCallback: findChildIndexCallback,
+      );
+    }
+
     if (maxExtent != null) {
       return SliverMasonryGrid.extent(
         maxCrossAxisExtent: maxExtent,
-        childCount: _itemCount,
-        itemBuilder: _itemBuilder!,
+        childCount: count,
+        itemBuilder: (BuildContext c, int i) => _itemBuilder!(c, i)!,
         mainAxisSpacing: mainAxisSpacing,
         crossAxisSpacing: crossAxisSpacing,
         addAutomaticKeepAlives: addAutomaticKeepAlives,
@@ -197,8 +261,8 @@ class MasonryGridView extends BoxScrollView {
     }
     return SliverMasonryGrid.count(
       crossAxisCount: crossAxisCount,
-      childCount: _itemCount,
-      itemBuilder: _itemBuilder!,
+      childCount: count,
+      itemBuilder: (BuildContext c, int i) => _itemBuilder!(c, i)!,
       mainAxisSpacing: mainAxisSpacing,
       crossAxisSpacing: crossAxisSpacing,
       addAutomaticKeepAlives: addAutomaticKeepAlives,

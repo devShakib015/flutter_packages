@@ -1,3 +1,39 @@
+## 0.4.0
+
+Closes both limitations this package was shipping with, and one it did not know
+it had. Nothing existing changes: all 56 tests from 0.3.3 pass untouched.
+
+### Added
+
+- **`SliverMasonryGrid.builder` and `MasonryGridView.builder`, with an optional
+  `itemCount`.** Leave it out and the grid discovers the end when the builder
+  returns null, exactly as `ListView.builder` does — so a paginated feed works
+  without knowing its length. An unbounded delegate previously threw during
+  layout: `performLayout` read `childManager.childCount` unconditionally, and
+  for a delegate with no declared count that makes Flutter hunt for the last
+  child and fail. The count is read lazily now, so the bounded path is
+  identical and the unbounded one works.
+
+### Fixed
+
+- **A grid below the cache region is counted again.** A masonry sliver sitting
+  entirely past the viewport's cache window reported `SliverGeometry.zero`, so
+  `maxScrollExtent` left it out and the scrollbar under-reported the page until
+  the reader scrolled near it — in exactly the two-grids-in-one-`CustomScrollView`
+  arrangement this package exists for. It now measures a single child and
+  extrapolates, with `paintExtent` still zero because nothing is on screen.
+- **A far jump no longer holds the whole list in memory.** The catch-up walk
+  kept every child from index 0 alive until the pass ended. Measured on a
+  2,000-item grid jumped to 90%: **peak live subtrees 1,808 → 118**, with the
+  same 1,790 builder calls. The measuring is inherent to sequential masonry;
+  holding all of it was not. Children already walked past are released as it
+  goes, and the placement cache — the only thing that has to survive — is
+  untouched.
+
+67 tests, including that a far jump and a scroll to the same offset agree about
+what is on screen, which is the contract the release could plausibly have
+broken.
+
 ## 0.3.3
 
 The scrollbar-drift table in the README was quoted from a one-off measurement

@@ -77,6 +77,25 @@ count and cell heights; the order of magnitude is the claim. Note that
 Flutter's own lazy estimate drifts furthest here: this is a property of
 estimating an unmeasured tail, not a defect unique to the incumbent.
 
+## Feeds with no end
+
+`itemCount` is optional. Leave it out and the grid discovers the end when the
+builder returns null, the same contract `ListView.builder` has — so a paginated
+feed works without knowing its length up front.
+
+```dart
+SliverMasonryGrid.builder(
+  crossAxisCount: 2,
+  itemBuilder: (context, index) =>
+      index < loaded.length ? Photo(loaded[index]) : null,
+)
+```
+
+`MasonryGridView.builder` is the same thing as a scrollable. Pass `itemCount`
+when you do know the length — a known count lets the scroll extent be
+estimated instead of reported as infinite, which is what keeps the scrollbar
+meaningful.
+
 ## Sliver or box widget
 
 `MasonryGridView` is the scrollable; `SliverMasonryGrid` is the same layout for
@@ -104,21 +123,14 @@ Both take `mainAxisSpacing`, `crossAxisSpacing` and `crossAxisCount`.
 staired layouts. Those are not broken, so they are not here; if you use them,
 stay where you are.
 
-**A grid below the cache region is missing from `maxScrollExtent`.** A masonry
-sliver that sits entirely past the viewport's cache window reports zero extent
-until it is scrolled near, so the scrollbar under-reports the total until then.
-This shows up in exactly the arrangement this package is for — two grids in one
-`CustomScrollView` — so it is worth knowing before you adopt it. Fix planned.
-
-**`.builder` and `.custom` are not here yet.** `childCount` / `itemCount` are
-required, where the incumbent allows them to be null. Drop-in for `.count` and
-`.extent` with a known item count; an unbounded feed is not supported yet.
-
 **A far jump measures its way there.** Because masonry is sequential, jumping to
 the far end of an unvisited list has to measure everything in between. Ordinary
 scrolling never notices, since the cache grows a screenful at a time, but a
 scrollbar dragged from top to bottom of a very long grid will do real work.
-That cost is the price of never lying about where an item is.
+That cost is the price of never lying about where an item is. It measures, but
+it no longer *holds* — children already walked past are released as it goes, so
+a jump to the end of a 2,000-item grid peaks at ~118 live subtrees rather than
+1,808.
 
 ## Alternatives, honestly
 

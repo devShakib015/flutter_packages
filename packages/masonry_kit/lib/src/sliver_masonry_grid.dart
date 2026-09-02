@@ -109,6 +109,51 @@ class SliverMasonryGrid extends SliverMultiBoxAdaptorWidget {
           ),
         );
 
+  /// Creates a masonry sliver whose length may be unknown.
+  ///
+  /// Leave [itemCount] null for a feed with no end — an infinite scroller, or
+  /// one that pages in from a server. The sliver then discovers the end only
+  /// when [itemBuilder] returns null, exactly as `ListView.builder` does, and
+  /// reports an infinite scroll extent until it does.
+  ///
+  /// Pass [itemCount] when you know it: a known length lets the extent be
+  /// estimated instead of infinite, which is what keeps the scrollbar honest.
+  ///
+  /// ```dart
+  /// SliverMasonryGrid.builder(
+  ///   crossAxisCount: 2,
+  ///   itemBuilder: (context, index) =>
+  ///       index < loaded.length ? Photo(loaded[index]) : null,
+  /// )
+  /// ```
+  SliverMasonryGrid.builder({
+    super.key,
+    required this.crossAxisCount,
+    required NullableIndexedWidgetBuilder itemBuilder,
+    int? itemCount,
+    this.mainAxisSpacing = 0,
+    this.crossAxisSpacing = 0,
+    bool addAutomaticKeepAlives = true,
+    bool addRepaintBoundaries = true,
+    bool addSemanticIndexes = true,
+    ChildIndexGetter? findChildIndexCallback,
+  })  : _maxCrossAxisExtent = null,
+        assert(crossAxisCount > 0, 'crossAxisCount must be positive'),
+        assert(itemCount == null || itemCount >= 0,
+            'itemCount cannot be negative'),
+        assert(mainAxisSpacing >= 0, 'mainAxisSpacing cannot be negative'),
+        assert(crossAxisSpacing >= 0, 'crossAxisSpacing cannot be negative'),
+        super(
+          delegate: SliverChildBuilderDelegate(
+            itemBuilder,
+            childCount: itemCount,
+            addAutomaticKeepAlives: addAutomaticKeepAlives,
+            addRepaintBoundaries: addRepaintBoundaries,
+            addSemanticIndexes: addSemanticIndexes,
+            findChildIndexCallback: findChildIndexCallback,
+          ),
+        );
+
   /// Creates a masonry sliver from an arbitrary [delegate].
   const SliverMasonryGrid.custom({
     super.key,
