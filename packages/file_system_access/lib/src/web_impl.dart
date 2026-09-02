@@ -210,11 +210,10 @@ Future<FilePermission> _query(
   final JSObject descriptor = JSObject()
     ..setProperty('mode'.toJS, (write ? 'readwrite' : 'read').toJS);
   try {
-    final JSString state =
-        await (prompt
-                ? handle.requestPermission(descriptor)
-                : handle.queryPermission(descriptor))
-            .toDart;
+    final JSString state = await (prompt
+            ? handle.requestPermission(descriptor)
+            : handle.queryPermission(descriptor))
+        .toDart;
     return switch (state.toDart) {
       'granted' => FilePermission.granted,
       'denied' => FilePermission.denied,
@@ -233,11 +232,11 @@ class FileSystemAccess {
 
   /// What this browser can do, asked feature by feature.
   static FileSystemAccessSupport get support => FileSystemAccessSupport(
-    openPicker: windowHas('showOpenFilePicker'),
-    savePicker: windowHas('showSaveFilePicker'),
-    directoryPicker: windowHas('showDirectoryPicker'),
-    originPrivate: _hasOriginPrivate(),
-  );
+        openPicker: windowHas('showOpenFilePicker'),
+        savePicker: windowHas('showSaveFilePicker'),
+        directoryPicker: windowHas('showDirectoryPicker'),
+        originPrivate: _hasOriginPrivate(),
+      );
 
   /// Whether any picker is available.
   static bool get isSupported => support.anyPicker;
@@ -274,9 +273,8 @@ class FileSystemAccess {
       ..setProperty('excludeAcceptAllOption'.toJS, excludeAcceptAllOption.toJS);
     if (types.isNotEmpty) options.setProperty('types'.toJS, _types(types));
     try {
-      final JSArray<web.FileSystemFileHandle> handles = await fsWindow
-          .showOpenFilePicker(options)
-          .toDart;
+      final JSArray<web.FileSystemFileHandle> handles =
+          await fsWindow.showOpenFilePicker(options).toDart;
       return handles.toDart.map(FileHandle.fromNative).toList(growable: false);
     } catch (e) {
       if (_isAbort(e)) return const <FileHandle>[];
@@ -304,9 +302,8 @@ class FileSystemAccess {
     }
     if (types.isNotEmpty) options.setProperty('types'.toJS, _types(types));
     try {
-      final web.FileSystemFileHandle handle = await fsWindow
-          .showSaveFilePicker(options)
-          .toDart;
+      final web.FileSystemFileHandle handle =
+          await fsWindow.showSaveFilePicker(options).toDart;
       return FileHandle.fromNative(handle);
     } catch (e) {
       if (_isAbort(e)) return null;
@@ -324,9 +321,8 @@ class FileSystemAccess {
     final JSObject options = JSObject()
       ..setProperty('mode'.toJS, (write ? 'readwrite' : 'read').toJS);
     try {
-      final web.FileSystemDirectoryHandle handle = await fsWindow
-          .showDirectoryPicker(options)
-          .toDart;
+      final web.FileSystemDirectoryHandle handle =
+          await fsWindow.showDirectoryPicker(options).toDart;
       return DirectoryHandle.fromNative(handle);
     } catch (e) {
       if (_isAbort(e)) return null;
@@ -346,12 +342,8 @@ class FileSystemAccess {
         'This browser has no origin-private file system.',
       );
     }
-    final web.FileSystemDirectoryHandle root = await web
-        .window
-        .navigator
-        .storage
-        .getDirectory()
-        .toDart;
+    final web.FileSystemDirectoryHandle root =
+        await web.window.navigator.storage.getDirectory().toDart;
     return DirectoryHandle.fromNative(root);
   }
 
@@ -371,10 +363,10 @@ class FileSystemAccess {
       FileHandle() => handle.native,
       DirectoryHandle() => handle.native,
       _ => throw ArgumentError.value(
-        handle,
-        'handle',
-        'expected a FileHandle or DirectoryHandle',
-      ),
+          handle,
+          'handle',
+          'expected a FileHandle or DirectoryHandle',
+        ),
     };
     final web.IDBDatabase db = await _open();
     final web.IDBTransaction tx = db.transaction(_storeName.toJS, 'readwrite');

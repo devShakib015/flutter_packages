@@ -1,6 +1,10 @@
 # masonry_kit
 
-A masonry grid you can put more than one of in the same scroll view.
+A staggered / masonry grid for Flutter — Pinterest-style columns of uneven
+height, as a sliver or a plain box widget.
+
+Unlike the alternatives, you can put **more than one in the same scroll view**
+without the viewport jumping backwards as you scroll.
 
 ```dart
 MasonryGridView.count(
@@ -17,7 +21,7 @@ MasonryGridView.count(
 ## The problem
 
 
-`flutter_staggered_grid_view` does 1.18M downloads a month and has not had a
+`flutter_staggered_grid_view` does 1.22M downloads a month and has not had a
 commit since July 2023. Its tracker has been carrying the same complaint since
 2022 — [#265](https://github.com/letsar/flutter_staggered_grid_view/issues/265),
 [#244](https://github.com/letsar/flutter_staggered_grid_view/issues/244),
@@ -94,11 +98,33 @@ Both take `mainAxisSpacing`, `crossAxisSpacing` and `crossAxisCount`.
 staired layouts. Those are not broken, so they are not here; if you use them,
 stay where you are.
 
+**A grid below the cache region is missing from `maxScrollExtent`.** A masonry
+sliver that sits entirely past the viewport's cache window reports zero extent
+until it is scrolled near, so the scrollbar under-reports the total until then.
+This shows up in exactly the arrangement this package is for — two grids in one
+`CustomScrollView` — so it is worth knowing before you adopt it. Fix planned.
+
+**`.builder` and `.custom` are not here yet.** `childCount` / `itemCount` are
+required, where the incumbent allows them to be null. Drop-in for `.count` and
+`.extent` with a known item count; an unbounded feed is not supported yet.
+
 **A far jump measures its way there.** Because masonry is sequential, jumping to
 the far end of an unvisited list has to measure everything in between. Ordinary
 scrolling never notices, since the cache grows a screenful at a time, but a
 scrollbar dragged from top to bottom of a very long grid will do real work.
 That cost is the price of never lying about where an item is.
+
+## Alternatives, honestly
+
+`waterfall_flow` (21k downloads a month, maintained) does not have the
+backwards-scrolling bug either, and if it suits you, use it. The difference is
+the API: `SliverWaterfallFlow.count` takes a `List<Widget> children`, so lazy
+building means restructuring your call site into a delegate. `masonry_kit`
+keeps `itemBuilder`, so the switch from `flutter_staggered_grid_view` is an
+import line.
+
+`flutter_staggered_grid_view` itself is still the right answer if you need
+aligned, quilted, woven or staired layouts, or if you are below Flutter 3.24.
 
 ## License
 

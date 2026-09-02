@@ -72,13 +72,15 @@ class FileSystemAccess {
     bool multiple = false,
     List<FilePickerType> types = const <FilePickerType>[],
     bool excludeAcceptAllOption = false,
-  }) => throw _off();
+  }) =>
+      throw _off();
 
   /// Throws [UnsupportedByBrowserException].
   static Future<FileHandle?> saveFile({
     String? suggestedName,
     List<FilePickerType> types = const <FilePickerType>[],
-  }) => throw _off();
+  }) =>
+      throw _off();
 
   /// Throws [UnsupportedByBrowserException].
   static Future<DirectoryHandle?> openDirectory({bool write = false}) =>
@@ -101,6 +103,6 @@ class FileSystemAccess {
 }
 
 UnsupportedByBrowserException _off() => const UnsupportedByBrowserException(
-  'The File System Access API only exists on the web. Check '
-  'FileSystemAccess.isSupported before calling this.',
-);
+      'The File System Access API only exists on the web. Check '
+      'FileSystemAccess.isSupported before calling this.',
+    );

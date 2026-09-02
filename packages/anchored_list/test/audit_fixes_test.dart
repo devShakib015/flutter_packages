@@ -14,25 +14,25 @@ void main() {
     bool reverse = false,
     EdgeInsets? padding,
     Widget Function(BuildContext, int)? itemBuilder,
-  }) => MaterialApp(
-    home: Scaffold(
-      body: SizedBox(
-        height: 600,
-        child: AnchoredList.builder(
-          controller: controller,
-          itemCount: items.length,
-          initialIndex: initialIndex,
-          initialAlignment: initialAlignment,
-          reverse: reverse,
-          padding: padding,
-          itemBuilder:
-              itemBuilder ??
-              (BuildContext c, int i) =>
-                  SizedBox(height: 50, child: Text(items[i])),
+  }) =>
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            height: 600,
+            child: AnchoredList.builder(
+              controller: controller,
+              itemCount: items.length,
+              initialIndex: initialIndex,
+              initialAlignment: initialAlignment,
+              reverse: reverse,
+              padding: padding,
+              itemBuilder: itemBuilder ??
+                  (BuildContext c, int i) =>
+                      SizedBox(height: 50, child: Text(items[i])),
+            ),
+          ),
         ),
-      ),
-    ),
-  );
+      );
 
   group('a prepend is never dropped, wherever the anchor sits', () {
     testWidgets('anchored at the very last item', (WidgetTester tester) async {

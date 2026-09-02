@@ -8,14 +8,14 @@ class Demo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-    title: 'anchored_list',
-    debugShowCheckedModeBanner: false,
-    theme: ThemeData(
-      colorSchemeSeed: const Color(0xFF4C6FFF),
-      useMaterial3: true,
-    ),
-    home: const DemoPage(),
-  );
+        title: 'anchored_list',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorSchemeSeed: const Color(0xFF4C6FFF),
+          useMaterial3: true,
+        ),
+        home: const DemoPage(),
+      );
 }
 
 class DemoPage extends StatelessWidget {

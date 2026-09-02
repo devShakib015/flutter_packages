@@ -11,20 +11,20 @@ Widget cell(int seed, int i) =>
     SizedBox(height: h(i + seed), child: Text('s$seed-i$i'));
 
 Widget oldGrid(int seed, int n) => incumbent.SliverMasonryGrid.count(
-  crossAxisCount: 2,
-  mainAxisSpacing: 4,
-  crossAxisSpacing: 4,
-  childCount: n,
-  itemBuilder: (BuildContext c, int i) => cell(seed, i),
-);
+      crossAxisCount: 2,
+      mainAxisSpacing: 4,
+      crossAxisSpacing: 4,
+      childCount: n,
+      itemBuilder: (BuildContext c, int i) => cell(seed, i),
+    );
 
 Widget newGrid(int seed, int n) => kit.SliverMasonryGrid.count(
-  crossAxisCount: 2,
-  mainAxisSpacing: 4,
-  crossAxisSpacing: 4,
-  childCount: n,
-  itemBuilder: (BuildContext c, int i) => cell(seed, i),
-);
+      crossAxisCount: 2,
+      mainAxisSpacing: 4,
+      crossAxisSpacing: 4,
+      childCount: n,
+      itemBuilder: (BuildContext c, int i) => cell(seed, i),
+    );
 
 /// Drags forward 45 times and reports how far the viewport ever went
 /// backwards, which is the thing users notice.
@@ -59,7 +59,8 @@ Future<({int jumps, double worst})> walk(
 
 void main() {
   group('two grids in one CustomScrollView', () {
-    testWidgets('the incumbent still jumps — if this fails, it was fixed '
+    testWidgets(
+        'the incumbent still jumps — if this fails, it was fixed '
         'upstream and the README needs revisiting', (
       WidgetTester tester,
     ) async {

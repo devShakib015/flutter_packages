@@ -103,11 +103,12 @@ class ArQuickLook {
     String path, {
     bool allowsContentScaling = true,
     Uri? canonicalWebPage,
-  }) => presentAll(
-    <String>[path],
-    allowsContentScaling: allowsContentScaling,
-    canonicalWebPage: canonicalWebPage,
-  );
+  }) =>
+      presentAll(
+        <String>[path],
+        allowsContentScaling: allowsContentScaling,
+        canonicalWebPage: canonicalWebPage,
+      );
 
   /// Shows several models, which the user can page between.
   static Future<void> presentAll(

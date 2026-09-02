@@ -40,9 +40,9 @@ class MasonrySlot {
 class MasonryLayout {
   /// Creates an empty layout for [crossAxisCount] columns.
   MasonryLayout({required this.crossAxisCount, required this.mainAxisSpacing})
-    : assert(crossAxisCount > 0, 'crossAxisCount must be positive'),
-      assert(mainAxisSpacing >= 0, 'mainAxisSpacing cannot be negative'),
-      _columnEnd = List<double>.filled(crossAxisCount, 0);
+      : assert(crossAxisCount > 0, 'crossAxisCount must be positive'),
+        assert(mainAxisSpacing >= 0, 'mainAxisSpacing cannot be negative'),
+        _columnEnd = List<double>.filled(crossAxisCount, 0);
 
   /// How many columns items are distributed across.
   final int crossAxisCount;

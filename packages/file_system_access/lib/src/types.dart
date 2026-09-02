@@ -14,10 +14,11 @@ class FilePickerType {
     String mimeType,
     List<String> extensions, {
     String? description,
-  }) => FilePickerType(
-    description: description ?? mimeType,
-    accept: <String, List<String>>{mimeType: extensions},
-  );
+  }) =>
+      FilePickerType(
+        description: description ?? mimeType,
+        accept: <String, List<String>>{mimeType: extensions},
+      );
 
   /// Shown in the browser's filter dropdown.
   final String description;

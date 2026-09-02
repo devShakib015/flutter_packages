@@ -43,12 +43,12 @@ class RoomSurface {
 
   /// Builds a surface from RoomPlan's encoding.
   factory RoomSurface.fromJson(Map<String, Object?> json) => RoomSurface(
-    identifier: json['identifier']?.toString() ?? '',
-    dimensions: Vector3.fromJson(json['dimensions']),
-    transform: _matrix(json['transform']),
-    category: _categoryOf(json['category']),
-    confidence: json['confidence']?.toString(),
-  );
+        identifier: json['identifier']?.toString() ?? '',
+        dimensions: Vector3.fromJson(json['dimensions']),
+        transform: _matrix(json['transform']),
+        category: _categoryOf(json['category']),
+        confidence: json['confidence']?.toString(),
+      );
 
   /// Stable id for this element within the scan.
   final String identifier;
@@ -87,12 +87,12 @@ class RoomObject {
 
   /// Builds an object from RoomPlan's encoding.
   factory RoomObject.fromJson(Map<String, Object?> json) => RoomObject(
-    identifier: json['identifier']?.toString() ?? '',
-    dimensions: Vector3.fromJson(json['dimensions']),
-    transform: _matrix(json['transform']),
-    category: _categoryOf(json['category']),
-    confidence: json['confidence']?.toString(),
-  );
+        identifier: json['identifier']?.toString() ?? '',
+        dimensions: Vector3.fromJson(json['dimensions']),
+        transform: _matrix(json['transform']),
+        category: _categoryOf(json['category']),
+        confidence: json['confidence']?.toString(),
+      );
 
   /// Stable id for this object within the scan.
   final String identifier;
@@ -142,9 +142,8 @@ class CapturedRoom {
   /// Parses RoomPlan's JSON.
   factory CapturedRoom.fromJson(String source, {String? usdzPath}) {
     final Object? decoded = jsonDecode(source);
-    final Map<String, Object?> map = decoded is Map<String, Object?>
-        ? decoded
-        : <String, Object?>{};
+    final Map<String, Object?> map =
+        decoded is Map<String, Object?> ? decoded : <String, Object?>{};
     List<RoomSurface> surfaces(String key) =>
         _listOf(map[key]).map(RoomSurface.fromJson).toList(growable: false);
     return CapturedRoom(
@@ -187,12 +186,12 @@ class CapturedRoom {
 
   /// Every flat element, in one list.
   List<RoomSurface> get surfaces => <RoomSurface>[
-    ...walls,
-    ...doors,
-    ...windows,
-    ...openings,
-    ...floors,
-  ];
+        ...walls,
+        ...doors,
+        ...windows,
+        ...openings,
+        ...floors,
+      ];
 
   @override
   String toString() =>

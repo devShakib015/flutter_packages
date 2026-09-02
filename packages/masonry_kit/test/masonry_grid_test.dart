@@ -7,15 +7,16 @@ double h(int i) => 60.0 + (i * 37) % 90;
 void main() {
   _extentTests();
   Widget host(Widget child, {Size size = const Size(300, 500)}) => MaterialApp(
-    home: Scaffold(
-      // Top-left, not centred: the tests assert absolute positions, and a
-      // Center would offset every one of them by the surface margin.
-      body: Align(
-        alignment: Alignment.topLeft,
-        child: SizedBox(width: size.width, height: size.height, child: child),
-      ),
-    ),
-  );
+        home: Scaffold(
+          // Top-left, not centred: the tests assert absolute positions, and a
+          // Center would offset every one of them by the surface margin.
+          body: Align(
+            alignment: Alignment.topLeft,
+            child:
+                SizedBox(width: size.width, height: size.height, child: child),
+          ),
+        ),
+      );
 
   Widget view({
     int itemCount = 40,
@@ -26,19 +27,20 @@ void main() {
     EdgeInsets? padding,
     bool shrinkWrap = false,
     ScrollController? controller,
-  }) => MasonryGridView.count(
-    crossAxisCount: crossAxisCount,
-    mainAxisSpacing: mainAxisSpacing,
-    crossAxisSpacing: crossAxisSpacing,
-    scrollDirection: scrollDirection,
-    padding: padding,
-    shrinkWrap: shrinkWrap,
-    controller: controller,
-    itemCount: itemCount,
-    itemBuilder: (BuildContext c, int i) => scrollDirection == Axis.vertical
-        ? SizedBox(height: h(i), child: Text('i$i'))
-        : SizedBox(width: h(i), child: Text('i$i')),
-  );
+  }) =>
+      MasonryGridView.count(
+        crossAxisCount: crossAxisCount,
+        mainAxisSpacing: mainAxisSpacing,
+        crossAxisSpacing: crossAxisSpacing,
+        scrollDirection: scrollDirection,
+        padding: padding,
+        shrinkWrap: shrinkWrap,
+        controller: controller,
+        itemCount: itemCount,
+        itemBuilder: (BuildContext c, int i) => scrollDirection == Axis.vertical
+            ? SizedBox(height: h(i), child: Text('i$i'))
+            : SizedBox(width: h(i), child: Text('i$i')),
+      );
 
   group('layout', () {
     testWidgets('columns divide the cross axis, minus the gaps', (
@@ -223,7 +225,7 @@ void main() {
         () => MasonryGridView.count(
           crossAxisCount: 0,
           itemCount: 1,
-          itemBuilder: (_, _) => const SizedBox(),
+          itemBuilder: (_, __) => const SizedBox(),
         ),
         throwsAssertionError,
       );
@@ -231,7 +233,7 @@ void main() {
         () => MasonryGridView.count(
           crossAxisCount: 2,
           itemCount: -1,
-          itemBuilder: (_, _) => const SizedBox(),
+          itemBuilder: (_, __) => const SizedBox(),
         ),
         throwsAssertionError,
       );
@@ -275,13 +277,13 @@ void main() {
 
 void _extentTests() {
   Widget host(Widget child, {double width = 600}) => MaterialApp(
-    home: Scaffold(
-      body: Align(
-        alignment: Alignment.topLeft,
-        child: SizedBox(width: width, height: 500, child: child),
-      ),
-    ),
-  );
+        home: Scaffold(
+          body: Align(
+            alignment: Alignment.topLeft,
+            child: SizedBox(width: width, height: 500, child: child),
+          ),
+        ),
+      );
 
   Widget extent(double maxCrossAxisExtent, {double spacing = 0}) =>
       MasonryGridView.extent(
@@ -365,7 +367,7 @@ void _extentTests() {
         () => MasonryGridView.extent(
           maxCrossAxisExtent: 0,
           itemCount: 1,
-          itemBuilder: (_, _) => const SizedBox(),
+          itemBuilder: (_, __) => const SizedBox(),
         ),
         throwsAssertionError,
       );

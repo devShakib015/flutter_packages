@@ -40,8 +40,8 @@ class RoomScanController extends ChangeNotifier {
       );
     }
     const MethodChannel channel = MethodChannel('dev.shakib/roomplan');
-    final Map<Object?, Object?>? reply = await channel
-        .invokeMethod<Map<Object?, Object?>>('support');
+    final Map<Object?, Object?>? reply =
+        await channel.invokeMethod<Map<Object?, Object?>>('support');
     return RoomScanSupport.fromMap(reply ?? const <Object?, Object?>{});
   }
 

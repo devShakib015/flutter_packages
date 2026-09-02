@@ -9,45 +9,45 @@ import 'package:roomplan/roomplan.dart';
 /// a 4x4 as four columns, categories as single-key objects for the cases that
 /// carry an associated value.
 String sampleRoom() => jsonEncode(<String, Object?>{
-  'walls': <Object?>[
-    <String, Object?>{
-      'identifier': 'wall-1',
-      'dimensions': <double>[3.2, 2.4, 0.1],
-      'transform': <List<double>>[
-        <double>[1, 0, 0, 0],
-        <double>[0, 1, 0, 0],
-        <double>[0, 0, 1, 0],
-        <double>[1.5, 0, -2.0, 1],
+      'walls': <Object?>[
+        <String, Object?>{
+          'identifier': 'wall-1',
+          'dimensions': <double>[3.2, 2.4, 0.1],
+          'transform': <List<double>>[
+            <double>[1, 0, 0, 0],
+            <double>[0, 1, 0, 0],
+            <double>[0, 0, 1, 0],
+            <double>[1.5, 0, -2.0, 1],
+          ],
+          'category': 'wall',
+          'confidence': 'high',
+        },
       ],
-      'category': 'wall',
-      'confidence': 'high',
-    },
-  ],
-  'doors': <Object?>[
-    <String, Object?>{
-      'identifier': 'door-1',
-      'dimensions': <double>[0.9, 2.0, 0.05],
-      'category': <String, Object?>{'door': <String, Object?>{}},
-    },
-  ],
-  'windows': <Object?>[],
-  'openings': <Object?>[],
-  'floors': <Object?>[
-    <String, Object?>{
-      'identifier': 'floor-1',
-      'dimensions': <double>[4, 0.1, 5],
-    },
-  ],
-  'objects': <Object?>[
-    <String, Object?>{
-      'identifier': 'obj-1',
-      'dimensions': <double>[0.6, 0.9, 0.6],
-      'category': <String, Object?>{'chair': <String, Object?>{}},
-      'confidence': 'medium',
-    },
-  ],
-  'version': 3,
-});
+      'doors': <Object?>[
+        <String, Object?>{
+          'identifier': 'door-1',
+          'dimensions': <double>[0.9, 2.0, 0.05],
+          'category': <String, Object?>{'door': <String, Object?>{}},
+        },
+      ],
+      'windows': <Object?>[],
+      'openings': <Object?>[],
+      'floors': <Object?>[
+        <String, Object?>{
+          'identifier': 'floor-1',
+          'dimensions': <double>[4, 0.1, 5],
+        },
+      ],
+      'objects': <Object?>[
+        <String, Object?>{
+          'identifier': 'obj-1',
+          'dimensions': <double>[0.6, 0.9, 0.6],
+          'category': <String, Object?>{'chair': <String, Object?>{}},
+          'confidence': 'medium',
+        },
+      ],
+      'version': 3,
+    });
 
 void main() {
   _floorPlanTests();
@@ -213,16 +213,16 @@ void main() {
       final Future<CapturedRoom> next = c.rooms.first;
       await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .handlePlatformMessage(
-            channel.name,
-            channel.codec.encodeMethodCall(
-              MethodCall('event', <Object?, Object?>{
-                'type': 'room',
-                'json': sampleRoom(),
-                'usdz': '/tmp/a.usdz',
-              }),
-            ),
-            (_) {},
-          );
+        channel.name,
+        channel.codec.encodeMethodCall(
+          MethodCall('event', <Object?, Object?>{
+            'type': 'room',
+            'json': sampleRoom(),
+            'usdz': '/tmp/a.usdz',
+          }),
+        ),
+        (_) {},
+      );
       final CapturedRoom room = await next;
       expect(room.walls, hasLength(1));
       expect(room.usdzPath, '/tmp/a.usdz');
@@ -238,15 +238,15 @@ void main() {
       final Future<String> next = c.errors.first;
       await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .handlePlatformMessage(
-            channel.name,
-            channel.codec.encodeMethodCall(
-              MethodCall('event', <Object?, Object?>{
-                'type': 'error',
-                'message': 'Insufficient lighting.',
-              }),
-            ),
-            (_) {},
-          );
+        channel.name,
+        channel.codec.encodeMethodCall(
+          MethodCall('event', <Object?, Object?>{
+            'type': 'error',
+            'message': 'Insufficient lighting.',
+          }),
+        ),
+        (_) {},
+      );
       expect(await next, 'Insufficient lighting.');
     });
   });

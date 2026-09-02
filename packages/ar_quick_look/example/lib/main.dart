@@ -8,14 +8,14 @@ class Demo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-    title: 'ar_quick_look',
-    debugShowCheckedModeBanner: false,
-    theme: ThemeData(
-      colorSchemeSeed: const Color(0xFF4C6FFF),
-      useMaterial3: true,
-    ),
-    home: const PreviewPage(),
-  );
+        title: 'ar_quick_look',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorSchemeSeed: const Color(0xFF4C6FFF),
+          useMaterial3: true,
+        ),
+        home: const PreviewPage(),
+      );
 }
 
 class PreviewPage extends StatefulWidget {

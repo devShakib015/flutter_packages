@@ -126,9 +126,8 @@ void main() {
       final List<CrossTab> tabs = <CrossTab>[tab(r), tab(r), tab(r), tab(r)];
       await settle(6);
 
-      final Set<String?> verdicts = tabs
-          .map((CrossTab t) => t.current.leader)
-          .toSet();
+      final Set<String?> verdicts =
+          tabs.map((CrossTab t) => t.current.leader).toSet();
       expect(
         verdicts,
         hasLength(1),

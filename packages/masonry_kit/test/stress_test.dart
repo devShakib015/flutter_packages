@@ -6,13 +6,14 @@ double h(int i) => 60.0 + (i * 37) % 90;
 
 void main() {
   Widget host(Widget child, {Size size = const Size(300, 500)}) => MaterialApp(
-    home: Scaffold(
-      body: Align(
-        alignment: Alignment.topLeft,
-        child: SizedBox(width: size.width, height: size.height, child: child),
-      ),
-    ),
-  );
+        home: Scaffold(
+          body: Align(
+            alignment: Alignment.topLeft,
+            child:
+                SizedBox(width: size.width, height: size.height, child: child),
+          ),
+        ),
+      );
 
   testWidgets('a scrollbar-style jump lands somewhere sane', (
     WidgetTester tester,
@@ -63,14 +64,14 @@ void main() {
 
   testWidgets('repeated resizes stay consistent', (WidgetTester tester) async {
     Widget build(double width) => host(
-      MasonryGridView.count(
-        crossAxisCount: 2,
-        itemCount: 80,
-        itemBuilder: (BuildContext c, int i) =>
-            SizedBox(height: h(i), child: Text('i$i')),
-      ),
-      size: Size(width, 500),
-    );
+          MasonryGridView.count(
+            crossAxisCount: 2,
+            itemCount: 80,
+            itemBuilder: (BuildContext c, int i) =>
+                SizedBox(height: h(i), child: Text('i$i')),
+          ),
+          size: Size(width, 500),
+        );
     for (final double w in <double>[300, 200, 420, 300, 150, 300]) {
       await tester.pumpWidget(build(w));
       await tester.pumpAndSettle();

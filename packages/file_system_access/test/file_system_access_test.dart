@@ -78,9 +78,8 @@ void main() {
       await dir.directory('nested', create: true);
 
       final List<DirectoryEntry> entries = await dir.list();
-      final Set<String> names = entries
-          .map((DirectoryEntry e) => e.name)
-          .toSet();
+      final Set<String> names =
+          entries.map((DirectoryEntry e) => e.name).toSet();
       expect(names, containsAll(<String>['one.txt', 'two.txt', 'nested']));
       expect(
         entries

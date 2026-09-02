@@ -8,14 +8,14 @@ class Demo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-    title: 'file_system_access',
-    debugShowCheckedModeBanner: false,
-    theme: ThemeData(
-      colorSchemeSeed: const Color(0xFF4C6FFF),
-      useMaterial3: true,
-    ),
-    home: const EditorPage(),
-  );
+        title: 'file_system_access',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorSchemeSeed: const Color(0xFF4C6FFF),
+          useMaterial3: true,
+        ),
+        home: const EditorPage(),
+      );
 }
 
 /// A text editor that saves back into the file the user opened, and finds it
@@ -67,11 +67,14 @@ class _EditorPageState extends State<EditorPage> {
   Future<void> _open() async {
     final List<FileHandle> chosen = await FileSystemAccess.openFiles(
       types: <FilePickerType>[
-        FilePickerType.mime('text/plain', <String>[
-          '.txt',
-          '.md',
-          '.dart',
-        ], description: 'Text'),
+        FilePickerType.mime(
+            'text/plain',
+            <String>[
+              '.txt',
+              '.md',
+              '.dart',
+            ],
+            description: 'Text'),
       ],
     );
     if (chosen.isEmpty) return setState(() => _status = 'cancelled');
@@ -101,9 +104,12 @@ class _EditorPageState extends State<EditorPage> {
     f ??= await FileSystemAccess.saveFile(
       suggestedName: 'untitled.txt',
       types: <FilePickerType>[
-        FilePickerType.mime('text/plain', <String>[
-          '.txt',
-        ], description: 'Text'),
+        FilePickerType.mime(
+            'text/plain',
+            <String>[
+              '.txt',
+            ],
+            description: 'Text'),
       ],
     );
     if (f == null) return setState(() => _status = 'cancelled');
@@ -171,8 +177,7 @@ class _EditorPageState extends State<EditorPage> {
                 textAlignVertical: TextAlignVertical.top,
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
-                  hintText:
-                      'Open a file, edit it, then Save. '
+                  hintText: 'Open a file, edit it, then Save. '
                       'Reload the page — it comes back.',
                 ),
               ),

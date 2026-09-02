@@ -8,14 +8,14 @@ class Demo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-    title: 'masonry_kit',
-    debugShowCheckedModeBanner: false,
-    theme: ThemeData(
-      colorSchemeSeed: const Color(0xFF4C6FFF),
-      useMaterial3: true,
-    ),
-    home: const DemoPage(),
-  );
+        title: 'masonry_kit',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorSchemeSeed: const Color(0xFF4C6FFF),
+          useMaterial3: true,
+        ),
+        home: const DemoPage(),
+      );
 }
 
 class DemoPage extends StatefulWidget {
@@ -57,28 +57,28 @@ class _DemoPageState extends State<DemoPage> {
   Color _tint(int i) => Colors.primaries[i % Colors.primaries.length].shade200;
 
   Widget _tile(String tag, int i) => DecoratedBox(
-    decoration: BoxDecoration(
-      color: _tint(i),
-      borderRadius: BorderRadius.circular(10),
-    ),
-    child: SizedBox(
-      height: _height(i),
-      child: Center(
-        child: Text(
-          '$tag$i',
-          style: const TextStyle(fontWeight: FontWeight.w600),
+        decoration: BoxDecoration(
+          color: _tint(i),
+          borderRadius: BorderRadius.circular(10),
         ),
-      ),
-    ),
-  );
+        child: SizedBox(
+          height: _height(i),
+          child: Center(
+            child: Text(
+              '$tag$i',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ),
+      );
 
   SliverMasonryGrid _grid(String tag, int count) => SliverMasonryGrid.count(
-    crossAxisCount: _columns,
-    mainAxisSpacing: 8,
-    crossAxisSpacing: 8,
-    childCount: count,
-    itemBuilder: (BuildContext context, int i) => _tile(tag, i),
-  );
+        crossAxisCount: _columns,
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
+        childCount: count,
+        itemBuilder: (BuildContext context, int i) => _tile(tag, i),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -114,9 +114,11 @@ class _DemoPageState extends State<DemoPage> {
                       ? 'no backward jumps'
                       : 'jumped back ${_worstJump.toStringAsFixed(0)}px',
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: _worstJump == 0 ? Colors.green.shade700 : Colors.red,
-                    fontWeight: FontWeight.w700,
-                  ),
+                        color: _worstJump == 0
+                            ? Colors.green.shade700
+                            : Colors.red,
+                        fontWeight: FontWeight.w700,
+                      ),
                 ),
               ],
             ),

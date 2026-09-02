@@ -44,67 +44,67 @@ class _PanelDemoState extends State<PanelDemo> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: const Color(0xFFF3F4F8),
-    appBar: AppBar(
-      backgroundColor: Colors.white,
-      surfaceTintColor: Colors.transparent,
-      title: const Text('cross_tab'),
-      titleTextStyle: const TextStyle(
-        color: Color(0xFF11142B),
-        fontSize: 19,
-        fontWeight: FontWeight.w600,
-      ),
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(30),
-        child: Padding(
-          padding: const EdgeInsets.only(left: 16, bottom: 10, right: 16),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'Every panel is a real, independent tab. One is elected leader; '
-              'close it and another takes over on its own.',
-              style: TextStyle(fontSize: 12.5, color: Colors.grey.shade700),
-            ),
+        backgroundColor: const Color(0xFFF3F4F8),
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
+          title: const Text('cross_tab'),
+          titleTextStyle: const TextStyle(
+            color: Color(0xFF11142B),
+            fontSize: 19,
+            fontWeight: FontWeight.w600,
           ),
-        ),
-      ),
-      actions: <Widget>[
-        Padding(
-          padding: const EdgeInsets.only(right: 12),
-          child: TextButton.icon(
-            onPressed: () => setState(() => _open.add(_next++)),
-            icon: const Icon(Icons.add, size: 18),
-            label: const Text('New tab'),
-          ),
-        ),
-      ],
-    ),
-    body: Padding(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 18),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          // The key goes on the Expanded, not on the panel inside it.
-          // Flutter matches children positionally by (type, key), and an
-          // unkeyed Expanded that shifts left takes its whole subtree with
-          // it — every remaining tab would be torn down and rebuilt with a
-          // new id, which is the opposite of what this demo is showing.
-          for (final int key in _open) ...<Widget>[
-            Expanded(
-              key: ValueKey<int>(key),
-              child: _TabPanel(
-                onClose: _open.length > 1
-                    ? () => setState(() => _open.remove(key))
-                    : null,
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(30),
+            child: Padding(
+              padding: const EdgeInsets.only(left: 16, bottom: 10, right: 16),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Every panel is a real, independent tab. One is elected leader; '
+                  'close it and another takes over on its own.',
+                  style: TextStyle(fontSize: 12.5, color: Colors.grey.shade700),
+                ),
               ),
             ),
-            if (key != _open.last)
-              SizedBox(key: ValueKey<String>('gap-$key'), width: 12),
+          ),
+          actions: <Widget>[
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: TextButton.icon(
+                onPressed: () => setState(() => _open.add(_next++)),
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('New tab'),
+              ),
+            ),
           ],
-        ],
-      ),
-    ),
-  );
+        ),
+        body: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 18),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              // The key goes on the Expanded, not on the panel inside it.
+              // Flutter matches children positionally by (type, key), and an
+              // unkeyed Expanded that shifts left takes its whole subtree with
+              // it — every remaining tab would be torn down and rebuilt with a
+              // new id, which is the opposite of what this demo is showing.
+              for (final int key in _open) ...<Widget>[
+                Expanded(
+                  key: ValueKey<int>(key),
+                  child: _TabPanel(
+                    onClose: _open.length > 1
+                        ? () => setState(() => _open.remove(key))
+                        : null,
+                  ),
+                ),
+                if (key != _open.last)
+                  SizedBox(key: ValueKey<String>('gap-$key'), width: 12),
+              ],
+            ],
+          ),
+        ),
+      );
 }
 
 class _TabPanel extends StatefulWidget {
@@ -222,9 +222,8 @@ class _TabPanelState extends State<_TabPanel> {
                 Icon(
                   leader ? Icons.star_rounded : Icons.circle_outlined,
                   size: 16,
-                  color: leader
-                      ? const Color(0xFF16A34A)
-                      : Colors.grey.shade500,
+                  color:
+                      leader ? const Color(0xFF16A34A) : Colors.grey.shade500,
                 ),
                 const SizedBox(width: 6),
                 Expanded(
@@ -259,9 +258,8 @@ class _TabPanelState extends State<_TabPanel> {
               children: <Widget>[
                 _Badge(
                   text: leader ? 'LEADER' : 'follower',
-                  colour: leader
-                      ? const Color(0xFF16A34A)
-                      : Colors.grey.shade500,
+                  colour:
+                      leader ? const Color(0xFF16A34A) : Colors.grey.shade500,
                   filled: leader,
                 ),
                 const SizedBox(height: 10),
@@ -272,9 +270,8 @@ class _TabPanelState extends State<_TabPanel> {
                   style: TextStyle(
                     fontSize: 12,
                     height: 1.35,
-                    color: leader
-                        ? const Color(0xFF166534)
-                        : Colors.grey.shade600,
+                    color:
+                        leader ? const Color(0xFF166534) : Colors.grey.shade600,
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -344,20 +341,20 @@ class _Badge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-    decoration: BoxDecoration(
-      color: filled ? colour : Colors.transparent,
-      border: Border.all(color: colour),
-      borderRadius: BorderRadius.circular(20),
-    ),
-    child: Text(
-      text,
-      style: TextStyle(
-        fontSize: 10.5,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 0.5,
-        color: filled ? Colors.white : colour,
-      ),
-    ),
-  );
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: filled ? colour : Colors.transparent,
+          border: Border.all(color: colour),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 10.5,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.5,
+            color: filled ? Colors.white : colour,
+          ),
+        ),
+      );
 }

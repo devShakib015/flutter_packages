@@ -30,7 +30,7 @@ import 'types.dart';
 /// ```
 class CrossTab {
   CrossTab._(this.name, this._heartbeat)
-    : _graceUntil = DateTime.now().add(_heartbeat) {
+      : _graceUntil = DateTime.now().add(_heartbeat) {
     _channel = web.BroadcastChannel(name);
     _channel.onmessage = ((web.MessageEvent event) {
       _receive(event.data);

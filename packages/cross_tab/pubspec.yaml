@@ -3,7 +3,7 @@ description: >-
   Coordinate the browser tabs of a Flutter Web app: send typed messages between
   them, know how many are open, and elect exactly one to do the work.
 
-version: 0.2.0
+version: 0.2.1
 repository: https://github.com/devShakib015/flutter_packages
 issue_tracker: https://github.com/devShakib015/flutter_packages/issues
 documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/cross_tab
@@ -27,8 +27,8 @@ topics:
   - browser
 
 environment:
-  sdk: ^3.13.0
-  flutter: '>=3.32.0'
+  sdk: ^3.5.0
+  flutter: '>=3.24.0'
 
 dependencies:
   flutter:

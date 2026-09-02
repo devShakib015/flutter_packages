@@ -36,21 +36,21 @@ class SliverMasonryGrid extends SliverMultiBoxAdaptorWidget {
     bool addRepaintBoundaries = true,
     bool addSemanticIndexes = true,
     ChildIndexGetter? findChildIndexCallback,
-  }) : _maxCrossAxisExtent = null,
-       assert(crossAxisCount > 0, 'crossAxisCount must be positive'),
-       assert(childCount >= 0, 'childCount cannot be negative'),
-       assert(mainAxisSpacing >= 0, 'mainAxisSpacing cannot be negative'),
-       assert(crossAxisSpacing >= 0, 'crossAxisSpacing cannot be negative'),
-       super(
-         delegate: SliverChildBuilderDelegate(
-           itemBuilder,
-           childCount: childCount,
-           addAutomaticKeepAlives: addAutomaticKeepAlives,
-           addRepaintBoundaries: addRepaintBoundaries,
-           addSemanticIndexes: addSemanticIndexes,
-           findChildIndexCallback: findChildIndexCallback,
-         ),
-       );
+  })  : _maxCrossAxisExtent = null,
+        assert(crossAxisCount > 0, 'crossAxisCount must be positive'),
+        assert(childCount >= 0, 'childCount cannot be negative'),
+        assert(mainAxisSpacing >= 0, 'mainAxisSpacing cannot be negative'),
+        assert(crossAxisSpacing >= 0, 'crossAxisSpacing cannot be negative'),
+        super(
+          delegate: SliverChildBuilderDelegate(
+            itemBuilder,
+            childCount: childCount,
+            addAutomaticKeepAlives: addAutomaticKeepAlives,
+            addRepaintBoundaries: addRepaintBoundaries,
+            addSemanticIndexes: addSemanticIndexes,
+            findChildIndexCallback: findChildIndexCallback,
+          ),
+        );
 
   /// Creates a masonry sliver from an explicit list of children.
   SliverMasonryGrid.list({
@@ -62,18 +62,18 @@ class SliverMasonryGrid extends SliverMultiBoxAdaptorWidget {
     bool addAutomaticKeepAlives = true,
     bool addRepaintBoundaries = true,
     bool addSemanticIndexes = true,
-  }) : _maxCrossAxisExtent = null,
-       assert(crossAxisCount > 0, 'crossAxisCount must be positive'),
-       assert(mainAxisSpacing >= 0, 'mainAxisSpacing cannot be negative'),
-       assert(crossAxisSpacing >= 0, 'crossAxisSpacing cannot be negative'),
-       super(
-         delegate: SliverChildListDelegate(
-           children,
-           addAutomaticKeepAlives: addAutomaticKeepAlives,
-           addRepaintBoundaries: addRepaintBoundaries,
-           addSemanticIndexes: addSemanticIndexes,
-         ),
-       );
+  })  : _maxCrossAxisExtent = null,
+        assert(crossAxisCount > 0, 'crossAxisCount must be positive'),
+        assert(mainAxisSpacing >= 0, 'mainAxisSpacing cannot be negative'),
+        assert(crossAxisSpacing >= 0, 'crossAxisSpacing cannot be negative'),
+        super(
+          delegate: SliverChildListDelegate(
+            children,
+            addAutomaticKeepAlives: addAutomaticKeepAlives,
+            addRepaintBoundaries: addRepaintBoundaries,
+            addSemanticIndexes: addSemanticIndexes,
+          ),
+        );
 
   /// Creates a masonry sliver whose columns are as many as will fit without
   /// any exceeding [maxCrossAxisExtent].
@@ -92,22 +92,22 @@ class SliverMasonryGrid extends SliverMultiBoxAdaptorWidget {
     bool addRepaintBoundaries = true,
     bool addSemanticIndexes = true,
     ChildIndexGetter? findChildIndexCallback,
-  }) : crossAxisCount = 1,
-       _maxCrossAxisExtent = maxCrossAxisExtent,
-       assert(maxCrossAxisExtent > 0, 'maxCrossAxisExtent must be positive'),
-       assert(childCount >= 0, 'childCount cannot be negative'),
-       assert(mainAxisSpacing >= 0, 'mainAxisSpacing cannot be negative'),
-       assert(crossAxisSpacing >= 0, 'crossAxisSpacing cannot be negative'),
-       super(
-         delegate: SliverChildBuilderDelegate(
-           itemBuilder,
-           childCount: childCount,
-           addAutomaticKeepAlives: addAutomaticKeepAlives,
-           addRepaintBoundaries: addRepaintBoundaries,
-           addSemanticIndexes: addSemanticIndexes,
-           findChildIndexCallback: findChildIndexCallback,
-         ),
-       );
+  })  : crossAxisCount = 1,
+        _maxCrossAxisExtent = maxCrossAxisExtent,
+        assert(maxCrossAxisExtent > 0, 'maxCrossAxisExtent must be positive'),
+        assert(childCount >= 0, 'childCount cannot be negative'),
+        assert(mainAxisSpacing >= 0, 'mainAxisSpacing cannot be negative'),
+        assert(crossAxisSpacing >= 0, 'crossAxisSpacing cannot be negative'),
+        super(
+          delegate: SliverChildBuilderDelegate(
+            itemBuilder,
+            childCount: childCount,
+            addAutomaticKeepAlives: addAutomaticKeepAlives,
+            addRepaintBoundaries: addRepaintBoundaries,
+            addSemanticIndexes: addSemanticIndexes,
+            findChildIndexCallback: findChildIndexCallback,
+          ),
+        );
 
   /// Creates a masonry sliver from an arbitrary [delegate].
   const SliverMasonryGrid.custom({
@@ -116,10 +116,10 @@ class SliverMasonryGrid extends SliverMultiBoxAdaptorWidget {
     required super.delegate,
     this.mainAxisSpacing = 0,
     this.crossAxisSpacing = 0,
-  }) : _maxCrossAxisExtent = null,
-       assert(crossAxisCount > 0, 'crossAxisCount must be positive'),
-       assert(mainAxisSpacing >= 0, 'mainAxisSpacing cannot be negative'),
-       assert(crossAxisSpacing >= 0, 'crossAxisSpacing cannot be negative');
+  })  : _maxCrossAxisExtent = null,
+        assert(crossAxisCount > 0, 'crossAxisCount must be positive'),
+        assert(mainAxisSpacing >= 0, 'mainAxisSpacing cannot be negative'),
+        assert(crossAxisSpacing >= 0, 'crossAxisSpacing cannot be negative');
 
   /// How many columns to distribute children across, when a fixed count was
   /// asked for.
@@ -187,8 +187,8 @@ class _MasonryElement extends SliverMultiBoxAdaptorElement {
     // A same-length edit still needs the caller to change the delegate type or
     // pass a new list identity, which the runtimeType check below catches.
     final int? count = newDelegate.estimatedChildCount;
-    final bool listChanged =
-        newDelegate.runtimeType != oldDelegate.runtimeType ||
+    final bool listChanged = newDelegate.runtimeType !=
+            oldDelegate.runtimeType ||
         (count != null && _lastChildCount != null && count != _lastChildCount);
     _lastChildCount = count;
 

@@ -5,13 +5,13 @@ import 'package:masonry_kit/masonry_kit.dart';
 double h(int i) => 60.0 + (i * 37) % 90;
 
 Widget grid(int seed, int n) => SliverMasonryGrid.count(
-  crossAxisCount: 2,
-  mainAxisSpacing: 4,
-  crossAxisSpacing: 4,
-  childCount: n,
-  itemBuilder: (BuildContext c, int i) =>
-      SizedBox(height: h(i + seed), child: Text('s$seed-i$i')),
-);
+      crossAxisCount: 2,
+      mainAxisSpacing: 4,
+      crossAxisSpacing: 4,
+      childCount: n,
+      itemBuilder: (BuildContext c, int i) =>
+          SizedBox(height: h(i + seed), child: Text('s$seed-i$i')),
+    );
 
 /// Drag forward repeatedly. A correct sliver never moves the viewport
 /// backwards while the finger is going forwards. This is the exact

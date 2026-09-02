@@ -3,7 +3,7 @@ description: >-
   Real files on Flutter Web. Save in place instead of downloading a copy, and
   reopen the same file after a reload with the File System Access API.
 
-version: 0.2.0
+version: 0.2.1
 repository: https://github.com/devShakib015/flutter_packages
 issue_tracker: https://github.com/devShakib015/flutter_packages/issues
 documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/file_system_access
@@ -17,8 +17,8 @@ topics:
   - browser
 
 environment:
-  sdk: ^3.13.0
-  flutter: '>=3.32.0'
+  sdk: ^3.5.0
+  flutter: '>=3.24.0'
 
 dependencies:
   flutter:

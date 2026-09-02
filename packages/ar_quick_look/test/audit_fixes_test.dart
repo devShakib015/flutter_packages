@@ -130,12 +130,12 @@ void main() {
 
   test('the exception hierarchy is exhaustive and exported', () {
     Object? name(ArQuickLookException e) => switch (e) {
-      NotOnThisPlatformException() => 'platform',
-      FileNotFoundException() => 'missing',
-      UnsupportedFileException() => 'format',
-      AlreadyPresentingException() => 'busy',
-      NoHostException() => 'host',
-    };
+          NotOnThisPlatformException() => 'platform',
+          FileNotFoundException() => 'missing',
+          UnsupportedFileException() => 'format',
+          AlreadyPresentingException() => 'busy',
+          NoHostException() => 'host',
+        };
     expect(name(const AlreadyPresentingException('x')), 'busy');
   });
 }

@@ -110,8 +110,7 @@ void main() {
             expect(
               i,
               inInclusiveRange(first, last),
-              reason:
-                  'item $i overlaps $start..$end but sits outside '
+              reason: 'item $i overlaps $start..$end but sits outside '
                   'the range $first..$last',
             );
           }

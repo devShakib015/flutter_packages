@@ -55,8 +55,8 @@ class _JumpWatch {
 
 void main() {
   setUpAll(() async {
-    final Uint8List bytes = File('tool/fonts/InterVariable.ttf')
-        .readAsBytesSync();
+    final Uint8List bytes =
+        File('tool/fonts/InterVariable.ttf').readAsBytesSync();
     await ui.loadFontFromList(bytes, fontFamily: 'Inter');
   });
 
@@ -300,12 +300,12 @@ class _Stage extends StatelessWidget {
       );
 
   static Widget _kitGrid(int seed, int n) => kit.SliverMasonryGrid.count(
-    crossAxisCount: 2,
-    mainAxisSpacing: 6,
-    crossAxisSpacing: 6,
-    childCount: n,
-    itemBuilder: (BuildContext c, int i) => _Tile(seed: seed, index: i),
-  );
+        crossAxisCount: 2,
+        mainAxisSpacing: 6,
+        crossAxisSpacing: 6,
+        childCount: n,
+        itemBuilder: (BuildContext c, int i) => _Tile(seed: seed, index: i),
+      );
 }
 
 class _Panel extends StatelessWidget {

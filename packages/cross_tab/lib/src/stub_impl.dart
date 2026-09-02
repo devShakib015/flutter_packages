@@ -34,10 +34,10 @@ class CrossTab {
 
   /// One tab, always leading.
   TabPresence get current => const TabPresence(
-    tabs: <String>['single'],
-    leader: 'single',
-    me: 'single',
-  );
+        tabs: <String>['single'],
+        leader: 'single',
+        me: 'single',
+      );
 
   /// True, because there is nothing to compete with.
   bool get isLeader => true;

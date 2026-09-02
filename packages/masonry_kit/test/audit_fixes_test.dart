@@ -185,7 +185,7 @@ class _GrowState extends State<_Grow> {
 
   @override
   Widget build(BuildContext context) => SizedBox(
-    height: _grown ? 180 : 60,
-    child: Text(_grown ? 'grown-yes' : 'grown-no'),
-  );
+        height: _grown ? 180 : 60,
+        child: Text(_grown ? 'grown-yes' : 'grown-no'),
+      );
 }

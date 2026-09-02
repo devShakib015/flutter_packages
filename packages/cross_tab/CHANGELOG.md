@@ -1,3 +1,14 @@
+## 0.2.1
+
+No code changes. This release exists because the package was almost impossible
+to install.
+
+`sdk: ^3.13.0` meant Dart 3.13, which only ships with **Flutter 3.47** —
+released three weeks ago. Anyone on an older SDK hit a version-solve failure
+before they could try it. The floor is now `^3.5.0` / Flutter 3.24, and it is
+tested: the library resolves and type-checks against Flutter 3.16.9 / Dart
+3.2.6, so the declared range is narrower than the verified one.
+
 ## 0.2.0
 
 An audit of every package in this repo found five defects here, including two

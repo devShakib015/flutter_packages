@@ -1,3 +1,24 @@
+## 0.3.1
+
+No code changes. This release exists because the package was almost impossible
+to install.
+
+- **The SDK floor was wrong, and badly.** `sdk: ^3.13.0` meant Dart 3.13, which
+  only ships with **Flutter 3.47** — released three weeks ago. Anyone on any
+  older SDK hit a version-solve failure before reaching the one-line import
+  swap, which is most of the apps this package is for. The floor is now
+  `^3.5.0` / Flutter 3.24, and it is *tested*: the library resolves and
+  type-checks against Flutter 3.16.9 / Dart 3.2.6, so the declared range is
+  narrower than the verified one.
+- Two limitations moved from the changelog into the README, because they matter
+  in the exact arrangement this package is pitched for: a masonry sliver below
+  the cache region is missing from `maxScrollExtent`, and `.builder`/`.custom`
+  do not exist yet, so `itemCount` is required where the incumbent allows null.
+- `waterfall_flow` is now named in the README as a real alternative that also
+  does not have the backwards-scrolling bug.
+- Search text: the word "staggered" appeared in neither the description nor the
+  topics, while the package it replaces is named for it.
+
 ## 0.3.0
 
 An audit of every package in this repo found six defects here, two of which

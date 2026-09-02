@@ -79,15 +79,15 @@ class AnchoredList extends StatefulWidget {
     this.scrollBehavior,
     this.clipBehavior = Clip.hardEdge,
     this.restorationId,
-  }) : itemCount = children.length,
-       itemBuilder = ((BuildContext _, int index) => children[index]),
-       separatorBuilder = null,
-       findChildIndexCallback = null,
-       assert(initialIndex >= 0, 'initialIndex cannot be negative'),
-       assert(
-         initialAlignment >= 0 && initialAlignment <= 1,
-         'initialAlignment must be 0..1',
-       );
+  })  : itemCount = children.length,
+        itemBuilder = ((BuildContext _, int index) => children[index]),
+        separatorBuilder = null,
+        findChildIndexCallback = null,
+        assert(initialIndex >= 0, 'initialIndex cannot be negative'),
+        assert(
+          initialAlignment >= 0 && initialAlignment <= 1,
+          'initialAlignment must be 0..1',
+        );
 
   /// Creates a lazily-built anchored list.
   const AnchoredList.builder({
@@ -113,13 +113,13 @@ class AnchoredList extends StatefulWidget {
     this.scrollBehavior,
     this.clipBehavior = Clip.hardEdge,
     this.restorationId,
-  }) : separatorBuilder = null,
-       assert(itemCount >= 0, 'itemCount cannot be negative'),
-       assert(initialIndex >= 0, 'initialIndex cannot be negative'),
-       assert(
-         initialAlignment >= 0 && initialAlignment <= 1,
-         'initialAlignment must be 0..1',
-       );
+  })  : separatorBuilder = null,
+        assert(itemCount >= 0, 'itemCount cannot be negative'),
+        assert(initialIndex >= 0, 'initialIndex cannot be negative'),
+        assert(
+          initialAlignment >= 0 && initialAlignment <= 1,
+          'initialAlignment must be 0..1',
+        );
 
   /// Creates a lazily-built anchored list with a separator between items.
   ///
@@ -150,12 +150,12 @@ class AnchoredList extends StatefulWidget {
     this.scrollBehavior,
     this.clipBehavior = Clip.hardEdge,
     this.restorationId,
-  }) : assert(itemCount >= 0, 'itemCount cannot be negative'),
-       assert(initialIndex >= 0, 'initialIndex cannot be negative'),
-       assert(
-         initialAlignment >= 0 && initialAlignment <= 1,
-         'initialAlignment must be 0..1',
-       );
+  })  : assert(itemCount >= 0, 'itemCount cannot be negative'),
+        assert(initialIndex >= 0, 'initialIndex cannot be negative'),
+        assert(
+          initialAlignment >= 0 && initialAlignment <= 1,
+          'initialAlignment must be 0..1',
+        );
 
   /// How many items the list has.
   final int itemCount;
@@ -350,9 +350,8 @@ class _AnchoredListState extends State<AnchoredList>
     SchedulerBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final BuildContext? item = _built[index];
-      final RenderObject? box = item?.mounted ?? false
-          ? item!.findRenderObject()
-          : null;
+      final RenderObject? box =
+          item?.mounted ?? false ? item!.findRenderObject() : null;
       if (box is! RenderBox || !box.hasSize) return;
       final double extent = widget.scrollDirection == Axis.vertical
           ? box.size.height
@@ -458,9 +457,8 @@ class _AnchoredListState extends State<AnchoredList>
       if (box is! RenderBox || !box.hasSize) continue;
 
       final Offset origin = box.localToGlobal(Offset.zero, ancestor: self);
-      final double lead = widget.scrollDirection == Axis.vertical
-          ? origin.dy
-          : origin.dx;
+      final double lead =
+          widget.scrollDirection == Axis.vertical ? origin.dy : origin.dx;
       final double size = widget.scrollDirection == Axis.vertical
           ? box.size.height
           : box.size.width;
@@ -628,18 +626,18 @@ class _AnchoredListState extends State<AnchoredList>
       );
 
   EdgeInsets get _leadingPadding => switch (_axisDirection) {
-    AxisDirection.down => _padding.copyWith(bottom: 0),
-    AxisDirection.up => _padding.copyWith(top: 0),
-    AxisDirection.right => _padding.copyWith(right: 0),
-    AxisDirection.left => _padding.copyWith(left: 0),
-  };
+        AxisDirection.down => _padding.copyWith(bottom: 0),
+        AxisDirection.up => _padding.copyWith(top: 0),
+        AxisDirection.right => _padding.copyWith(right: 0),
+        AxisDirection.left => _padding.copyWith(left: 0),
+      };
 
   EdgeInsets get _trailingPadding => switch (_axisDirection) {
-    AxisDirection.down => _padding.copyWith(top: 0),
-    AxisDirection.up => _padding.copyWith(bottom: 0),
-    AxisDirection.right => _padding.copyWith(left: 0),
-    AxisDirection.left => _padding.copyWith(right: 0),
-  };
+        AxisDirection.down => _padding.copyWith(top: 0),
+        AxisDirection.up => _padding.copyWith(bottom: 0),
+        AxisDirection.right => _padding.copyWith(left: 0),
+        AxisDirection.left => _padding.copyWith(right: 0),
+      };
 
   EdgeInsets get _padding =>
       widget.padding?.resolve(Directionality.maybeOf(context)) ??

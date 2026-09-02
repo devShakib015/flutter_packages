@@ -32,15 +32,15 @@ class RenderSliverMasonryGrid extends RenderSliverMultiBoxAdaptor {
     required double mainAxisSpacing,
     required double crossAxisSpacing,
     double? maxCrossAxisExtent,
-  }) : // The field is private but the parameter must stay public for callers.
-       // ignore: prefer_initializing_formals
-       _maxCrossAxisExtent = maxCrossAxisExtent,
-       assert(crossAxisCount > 0),
-       assert(mainAxisSpacing >= 0),
-       assert(crossAxisSpacing >= 0),
-       _crossAxisCount = crossAxisCount,
-       _mainAxisSpacing = mainAxisSpacing,
-       _crossAxisSpacing = crossAxisSpacing;
+  })  : // The field is private but the parameter must stay public for callers.
+        // ignore: prefer_initializing_formals
+        _maxCrossAxisExtent = maxCrossAxisExtent,
+        assert(crossAxisCount > 0),
+        assert(mainAxisSpacing >= 0),
+        assert(crossAxisSpacing >= 0),
+        _crossAxisCount = crossAxisCount,
+        _mainAxisSpacing = mainAxisSpacing,
+        _crossAxisSpacing = crossAxisSpacing;
 
   MasonryLayout? _layout;
 
@@ -145,8 +145,8 @@ class RenderSliverMasonryGrid extends RenderSliverMultiBoxAdaptor {
     final int columns = columnsFor(constraints.crossAxisExtent);
     final int effective =
         axisDirectionIsReversed(constraints.crossAxisDirection)
-        ? columns - 1 - column
-        : column;
+            ? columns - 1 - column
+            : column;
     return effective * (childCrossAxisExtent + _crossAxisSpacing);
   }
 
@@ -160,9 +160,9 @@ class RenderSliverMasonryGrid extends RenderSliverMultiBoxAdaptor {
   }
 
   double _mainExtentOf(RenderBox child) => switch (constraints.axis) {
-    Axis.vertical => child.size.height,
-    Axis.horizontal => child.size.width,
-  };
+        Axis.vertical => child.size.height,
+        Axis.horizontal => child.size.width,
+      };
 
   @override
   void performLayout() {
@@ -267,9 +267,8 @@ class RenderSliverMasonryGrid extends RenderSliverMultiBoxAdaptor {
     // 4. Report geometry. No correction is ever requested: every offset came
     //    from the cache, so there is nothing to take back.
     final bool reachedEnd = layout.count >= childManager.childCount;
-    final double scrollExtent = reachedEnd
-        ? layout.extent
-        : _estimateTotalExtent(layout);
+    final double scrollExtent =
+        reachedEnd ? layout.extent : _estimateTotalExtent(layout);
 
     final double leading = layout.slotOf(firstIndex).offset;
     double trailing = 0;
@@ -293,8 +292,7 @@ class RenderSliverMasonryGrid extends RenderSliverMultiBoxAdaptor {
       paintExtent: paintExtent,
       cacheExtent: cacheExtent,
       maxPaintExtent: scrollExtent,
-      hasVisualOverflow:
-          trailing >
+      hasVisualOverflow: trailing >
               constraints.scrollOffset + constraints.remainingPaintExtent ||
           constraints.scrollOffset > 0,
     );

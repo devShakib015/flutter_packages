@@ -77,14 +77,14 @@ void main() {
       );
 
       Widget plan(FloorPlanStyle style) => MaterialApp(
-        home: Scaffold(
-          body: SizedBox(
-            width: 300,
-            height: 300,
-            child: RoomFloorPlan(room: room, style: style),
-          ),
-        ),
-      );
+            home: Scaffold(
+              body: SizedBox(
+                width: 300,
+                height: 300,
+                child: RoomFloorPlan(room: room, style: style),
+              ),
+            ),
+          );
 
       await tester.pumpWidget(plan(const FloorPlanStyle()));
       await tester.pumpWidget(

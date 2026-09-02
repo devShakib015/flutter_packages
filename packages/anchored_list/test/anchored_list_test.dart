@@ -9,28 +9,29 @@ void main() {
   late List<int> built;
 
   Widget host(Widget child, {double height = viewportHeight}) => MaterialApp(
-    home: Scaffold(
-      body: Center(
-        child: SizedBox(width: 300, height: height, child: child),
-      ),
-    ),
-  );
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(width: 300, height: height, child: child),
+          ),
+        ),
+      );
 
   Widget list({
     required AnchoredListController controller,
     int itemCount = 1000000,
     int initialIndex = 0,
     double initialAlignment = 0,
-  }) => AnchoredList.builder(
-    controller: controller,
-    itemCount: itemCount,
-    initialIndex: initialIndex,
-    initialAlignment: initialAlignment,
-    itemBuilder: (BuildContext context, int index) {
-      built.add(index);
-      return SizedBox(height: itemHeight, child: Text('Item $index'));
-    },
-  );
+  }) =>
+      AnchoredList.builder(
+        controller: controller,
+        itemCount: itemCount,
+        initialIndex: initialIndex,
+        initialAlignment: initialAlignment,
+        itemBuilder: (BuildContext context, int index) {
+          built.add(index);
+          return SizedBox(height: itemHeight, child: Text('Item $index'));
+        },
+      );
 
   setUp(() => built = <int>[]);
 
@@ -96,9 +97,8 @@ void main() {
       await tester.pump();
 
       final double top = tester.getTopLeft(find.text('Item 100')).dy;
-      final double viewportTop = tester
-          .getTopLeft(find.byType(AnchoredList))
-          .dy;
+      final double viewportTop =
+          tester.getTopLeft(find.byType(AnchoredList)).dy;
       expect(top, moreOrLessEquals(viewportTop, epsilon: 1));
     });
 
@@ -182,9 +182,8 @@ void main() {
       await tester.pumpWidget(host(list(controller: c, initialIndex: 200)));
       await tester.pumpAndSettle();
 
-      final List<ItemPosition> visible = c.itemPositions.value
-          .where((ItemPosition p) => p.isVisible)
-          .toList();
+      final List<ItemPosition> visible =
+          c.itemPositions.value.where((ItemPosition p) => p.isVisible).toList();
 
       expect(visible, isNotEmpty);
       expect(visible.first.index, 200);
@@ -282,7 +281,7 @@ void main() {
       expect(
         () => AnchoredList.builder(
           itemCount: -1,
-          itemBuilder: (_, _) => const SizedBox(),
+          itemBuilder: (_, __) => const SizedBox(),
         ),
         throwsAssertionError,
       );
@@ -290,7 +289,7 @@ void main() {
         () => AnchoredList.builder(
           itemCount: 1,
           initialAlignment: 2,
-          itemBuilder: (_, _) => const SizedBox(),
+          itemBuilder: (_, __) => const SizedBox(),
         ),
         throwsAssertionError,
       );
@@ -304,18 +303,19 @@ void main() {
       required List<String> Function() read,
       required void Function(StateSetter) capture,
       int initialIndex = 200,
-    }) => StatefulBuilder(
-      builder: (BuildContext context, StateSetter setOuter) {
-        capture(setOuter);
-        return AnchoredList.builder(
-          controller: controller,
-          initialIndex: initialIndex,
-          itemCount: read().length,
-          itemBuilder: (BuildContext context, int index) =>
-              SizedBox(height: itemHeight, child: Text(read()[index])),
+    }) =>
+        StatefulBuilder(
+          builder: (BuildContext context, StateSetter setOuter) {
+            capture(setOuter);
+            return AnchoredList.builder(
+              controller: controller,
+              initialIndex: initialIndex,
+              itemCount: read().length,
+              itemBuilder: (BuildContext context, int index) =>
+                  SizedBox(height: itemHeight, child: Text(read()[index])),
+            );
+          },
         );
-      },
-    );
 
     testWidgets('prepending without saying so drifts the view', (
       WidgetTester tester,
@@ -559,15 +559,16 @@ void main() {
       int initialIndex = 0,
       int itemCount = 5,
       AnchoredListController? controller,
-    }) => AnchoredList.separated(
-      controller: controller,
-      itemCount: itemCount,
-      initialIndex: initialIndex,
-      itemBuilder: (BuildContext context, int index) =>
-          SizedBox(height: itemHeight, child: Text('Item $index')),
-      separatorBuilder: (BuildContext context, int index) =>
-          const SizedBox(height: 10, child: Text('sep')),
-    );
+    }) =>
+        AnchoredList.separated(
+          controller: controller,
+          itemCount: itemCount,
+          initialIndex: initialIndex,
+          itemBuilder: (BuildContext context, int index) =>
+              SizedBox(height: itemHeight, child: Text('Item $index')),
+          separatorBuilder: (BuildContext context, int index) =>
+              const SizedBox(height: 10, child: Text('sep')),
+        );
 
     testWidgets('separates items but not after the last one', (
       WidgetTester tester,

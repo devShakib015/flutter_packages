@@ -44,7 +44,6 @@ class ItemPosition {
   int get hashCode => Object.hash(index, leadingEdge, trailingEdge);
 
   @override
-  String toString() =>
-      'ItemPosition($index, '
+  String toString() => 'ItemPosition($index, '
       '${leadingEdge.toStringAsFixed(3)}..${trailingEdge.toStringAsFixed(3)})';
 }

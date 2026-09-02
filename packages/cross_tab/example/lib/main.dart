@@ -12,14 +12,14 @@ class Demo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-    title: 'cross_tab',
-    debugShowCheckedModeBanner: false,
-    theme: ThemeData(
-      colorSchemeSeed: const Color(0xFF4C6FFF),
-      useMaterial3: true,
-    ),
-    home: const PanelDemo(),
-  );
+        title: 'cross_tab',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorSchemeSeed: const Color(0xFF4C6FFF),
+          useMaterial3: true,
+        ),
+        home: const PanelDemo(),
+      );
 }
 
 /// Open this page in two or three browser tabs to see it work.
@@ -87,9 +87,8 @@ class _TabsPageState extends State<TabsPage> {
               padding: const EdgeInsets.only(right: 12),
               child: Chip(
                 label: Text(p.isLeader ? 'leader' : 'follower'),
-                backgroundColor: p.isLeader
-                    ? Colors.green.shade100
-                    : Colors.grey.shade200,
+                backgroundColor:
+                    p.isLeader ? Colors.green.shade100 : Colors.grey.shade200,
               ),
             ),
         ],
@@ -108,7 +107,7 @@ class _TabsPageState extends State<TabsPage> {
               p == null
                   ? 'starting…'
                   : '${p.count} tab(s) open · this one is ${p.me.substring(0, 4)}'
-                        ' · leader ${p.leader?.substring(0, 4) ?? "electing"}',
+                      ' · leader ${p.leader?.substring(0, 4) ?? "electing"}',
               style: Theme.of(context).textTheme.titleSmall,
             ),
             const SizedBox(height: 4),

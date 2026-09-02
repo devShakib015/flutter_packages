@@ -61,16 +61,16 @@ class FloorPlanStyle {
 
   @override
   int get hashCode => Object.hash(
-    wall,
-    door,
-    window,
-    opening,
-    object,
-    objectOutline,
-    wallThickness,
-    detailThickness,
-    padding,
-  );
+        wall,
+        door,
+        window,
+        opening,
+        object,
+        objectOutline,
+        wallThickness,
+        detailThickness,
+        padding,
+      );
 }
 
 /// Draws a scanned room as a top-down floor plan.
@@ -102,13 +102,13 @@ class RoomFloorPlan extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => CustomPaint(
-    painter: _FloorPlanPainter(
-      room: room,
-      style: style,
-      showObjects: showObjects,
-    ),
-    size: Size.infinite,
-  );
+        painter: _FloorPlanPainter(
+          room: room,
+          style: style,
+          showObjects: showObjects,
+        ),
+        size: Size.infinite,
+      );
 }
 
 /// A surface reduced to the line it occupies on the floor.

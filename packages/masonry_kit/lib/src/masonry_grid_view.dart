@@ -47,14 +47,14 @@ class MasonryGridView extends BoxScrollView {
     super.restorationId,
     super.clipBehavior,
     int? semanticChildCount,
-  }) : _maxCrossAxisExtent = null,
-       _itemCount = itemCount,
-       // ignore: prefer_initializing_formals
-       _itemBuilder = itemBuilder,
-       _children = null,
-       assert(crossAxisCount > 0, 'crossAxisCount must be positive'),
-       assert(itemCount >= 0, 'itemCount cannot be negative'),
-       super(semanticChildCount: semanticChildCount ?? itemCount);
+  })  : _maxCrossAxisExtent = null,
+        _itemCount = itemCount,
+        // ignore: prefer_initializing_formals
+        _itemBuilder = itemBuilder,
+        _children = null,
+        assert(crossAxisCount > 0, 'crossAxisCount must be positive'),
+        assert(itemCount >= 0, 'itemCount cannot be negative'),
+        super(semanticChildCount: semanticChildCount ?? itemCount);
 
   /// Creates a scrollable masonry grid whose columns are as many as will fit
   /// without any exceeding [maxCrossAxisExtent].
@@ -96,15 +96,15 @@ class MasonryGridView extends BoxScrollView {
     super.restorationId,
     super.clipBehavior,
     int? semanticChildCount,
-  }) : crossAxisCount = 1,
-       _maxCrossAxisExtent = maxCrossAxisExtent,
-       _itemCount = itemCount,
-       // ignore: prefer_initializing_formals
-       _itemBuilder = itemBuilder,
-       _children = null,
-       assert(maxCrossAxisExtent > 0, 'maxCrossAxisExtent must be positive'),
-       assert(itemCount >= 0, 'itemCount cannot be negative'),
-       super(semanticChildCount: semanticChildCount ?? itemCount);
+  })  : crossAxisCount = 1,
+        _maxCrossAxisExtent = maxCrossAxisExtent,
+        _itemCount = itemCount,
+        // ignore: prefer_initializing_formals
+        _itemBuilder = itemBuilder,
+        _children = null,
+        assert(maxCrossAxisExtent > 0, 'maxCrossAxisExtent must be positive'),
+        assert(itemCount >= 0, 'itemCount cannot be negative'),
+        super(semanticChildCount: semanticChildCount ?? itemCount);
 
   /// Creates a scrollable masonry grid from an explicit list of children.
   const MasonryGridView({
@@ -131,13 +131,13 @@ class MasonryGridView extends BoxScrollView {
     super.restorationId,
     super.clipBehavior,
     int? semanticChildCount,
-  }) : _maxCrossAxisExtent = null,
-       _children = children,
-       _itemCount = children.length,
-       _itemBuilder = null,
-       findChildIndexCallback = null,
-       assert(crossAxisCount > 0, 'crossAxisCount must be positive'),
-       super(semanticChildCount: semanticChildCount ?? children.length);
+  })  : _maxCrossAxisExtent = null,
+        _children = children,
+        _itemCount = children.length,
+        _itemBuilder = null,
+        findChildIndexCallback = null,
+        assert(crossAxisCount > 0, 'crossAxisCount must be positive'),
+        super(semanticChildCount: semanticChildCount ?? children.length);
 
   /// How many columns to distribute children across, when a fixed count was
   /// asked for.

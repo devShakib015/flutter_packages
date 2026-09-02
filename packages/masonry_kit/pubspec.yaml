@@ -1,9 +1,10 @@
 name: masonry_kit
 description: >-
-  A masonry grid whose layout is computed once and never revised, so several
-  grids can share one CustomScrollView without the view jumping backwards.
+  A staggered / masonry grid for Flutter — Pinterest-style columns, as a sliver
+  or a box widget. Several grids share one CustomScrollView without scrolling
+  backwards.
 
-version: 0.3.0
+version: 0.3.1
 repository: https://github.com/devShakib015/flutter_packages
 issue_tracker: https://github.com/devShakib015/flutter_packages/issues
 documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/masonry_kit
@@ -19,14 +20,14 @@ screenshots:
 
 topics:
   - masonry
+  - staggered-grid
   - grid
   - sliver
-  - scrolling
-  - ui
+  - pinterest
 
 environment:
-  sdk: ^3.13.0
-  flutter: '>=3.32.0'
+  sdk: ^3.5.0
+  flutter: '>=3.24.0'
 
 dependencies:
   flutter:

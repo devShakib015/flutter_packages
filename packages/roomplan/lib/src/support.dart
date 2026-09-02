@@ -21,13 +21,13 @@ class RoomScanSupport {
 
   /// Builds a report from the platform's reply.
   factory RoomScanSupport.fromMap(Map<Object?, Object?> map) => RoomScanSupport(
-    supported: map['supported'] as bool? ?? false,
-    reason: switch (map['reason'] as String?) {
-      'supported' => RoomScanUnsupportedReason.supported,
-      'noLidar' => RoomScanUnsupportedReason.noLidar,
-      _ => RoomScanUnsupportedReason.osTooOld,
-    },
-  );
+        supported: map['supported'] as bool? ?? false,
+        reason: switch (map['reason'] as String?) {
+          'supported' => RoomScanUnsupportedReason.supported,
+          'noLidar' => RoomScanUnsupportedReason.noLidar,
+          _ => RoomScanUnsupportedReason.osTooOld,
+        },
+      );
 
   /// Whether a scan can be started at all.
   final bool supported;

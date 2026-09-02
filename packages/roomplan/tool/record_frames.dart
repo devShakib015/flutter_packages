@@ -27,46 +27,47 @@ Map<String, Object?> _surface(
   List<double> dimensions,
   List<double> transform, [
   String? category,
-]) => <String, Object?>{
-  'dimensions': dimensions,
-  'transform': transform,
-  'category': ?category,
-};
+]) =>
+    <String, Object?>{
+      'dimensions': dimensions,
+      'transform': transform,
+      if (category != null) 'category': category,
+    };
 
 /// A plausible living room: five metres by four, with a door, two windows and
 /// some furniture.
 CapturedRoom sampleRoom() => CapturedRoom.fromJson(
-  jsonEncode(<String, Object?>{
-    'walls': <Object?>[
-      _surface(<double>[5, 2.5, .1], _at(0, -2)),
-      _surface(<double>[5, 2.5, .1], _at(0, 2)),
-      _surface(<double>[4, 2.5, .1], _at(-2.5, 0, dirX: 0, dirZ: 1)),
-      _surface(<double>[4, 2.5, .1], _at(2.5, 0, dirX: 0, dirZ: 1)),
-    ],
-    'doors': <Object?>[
-      _surface(<double>[0.9, 2.1, .1], _at(-1.4, 2)),
-    ],
-    'windows': <Object?>[
-      _surface(<double>[1.4, 1.2, .1], _at(0.6, -2)),
-      _surface(<double>[1.0, 1.2, .1], _at(-2.5, -0.6, dirX: 0, dirZ: 1)),
-    ],
-    'objects': <Object?>[
-      _surface(<double>[2.1, 0.8, 0.9], _at(0, -1.2), 'sofa'),
-      _surface(<double>[1.1, 0.4, 0.6], _at(0, -0.1), 'table'),
-      _surface(<double>[0.7, 0.9, 0.7], _at(-1.9, 0.9), 'chair'),
-      _surface(
-        <double>[1.6, 0.5, 0.4],
-        _at(1.8, 0.9, dirX: 0, dirZ: 1),
-        'storage',
-      ),
-    ],
-  }),
-);
+      jsonEncode(<String, Object?>{
+        'walls': <Object?>[
+          _surface(<double>[5, 2.5, .1], _at(0, -2)),
+          _surface(<double>[5, 2.5, .1], _at(0, 2)),
+          _surface(<double>[4, 2.5, .1], _at(-2.5, 0, dirX: 0, dirZ: 1)),
+          _surface(<double>[4, 2.5, .1], _at(2.5, 0, dirX: 0, dirZ: 1)),
+        ],
+        'doors': <Object?>[
+          _surface(<double>[0.9, 2.1, .1], _at(-1.4, 2)),
+        ],
+        'windows': <Object?>[
+          _surface(<double>[1.4, 1.2, .1], _at(0.6, -2)),
+          _surface(<double>[1.0, 1.2, .1], _at(-2.5, -0.6, dirX: 0, dirZ: 1)),
+        ],
+        'objects': <Object?>[
+          _surface(<double>[2.1, 0.8, 0.9], _at(0, -1.2), 'sofa'),
+          _surface(<double>[1.1, 0.4, 0.6], _at(0, -0.1), 'table'),
+          _surface(<double>[0.7, 0.9, 0.7], _at(-1.9, 0.9), 'chair'),
+          _surface(
+            <double>[1.6, 0.5, 0.4],
+            _at(1.8, 0.9, dirX: 0, dirZ: 1),
+            'storage',
+          ),
+        ],
+      }),
+    );
 
 void main() {
   setUpAll(() async {
-    final Uint8List bytes = File('tool/fonts/InterVariable.ttf')
-        .readAsBytesSync();
+    final Uint8List bytes =
+        File('tool/fonts/InterVariable.ttf').readAsBytesSync();
     await ui.loadFontFromList(bytes, fontFamily: 'Inter');
   });
 

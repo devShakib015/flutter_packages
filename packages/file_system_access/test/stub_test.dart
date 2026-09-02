@@ -51,9 +51,12 @@ void main() {
     });
 
     test('a description overrides the mime type as the label', () {
-      final FilePickerType t = FilePickerType.mime('application/json', <String>[
-        '.json',
-      ], description: 'Config files');
+      final FilePickerType t = FilePickerType.mime(
+          'application/json',
+          <String>[
+            '.json',
+          ],
+          description: 'Config files');
       expect(t.description, 'Config files');
     });
 

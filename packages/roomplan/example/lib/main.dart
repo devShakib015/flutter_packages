@@ -10,14 +10,14 @@ class Demo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-    title: 'roomplan',
-    debugShowCheckedModeBanner: false,
-    theme: ThemeData(
-      colorSchemeSeed: const Color(0xFF4C6FFF),
-      useMaterial3: true,
-    ),
-    home: const ScanPage(),
-  );
+        title: 'roomplan',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorSchemeSeed: const Color(0xFF4C6FFF),
+          useMaterial3: true,
+        ),
+        home: const ScanPage(),
+      );
 }
 
 class ScanPage extends StatefulWidget {
@@ -78,13 +78,13 @@ class _ScanPageState extends State<ScanPage> {
               s == null
                   ? 'checking…'
                   : s.supported
-                  ? 'This device can scan.'
-                  : switch (s.reason) {
-                      RoomScanUnsupportedReason.noLidar =>
-                        'This device has no LiDAR sensor, so it cannot scan. '
-                            'RoomPlan needs a Pro iPhone or iPad Pro.',
-                      _ => 'This iOS version predates RoomPlan.',
-                    },
+                      ? 'This device can scan.'
+                      : switch (s.reason) {
+                          RoomScanUnsupportedReason.noLidar =>
+                            'This device has no LiDAR sensor, so it cannot scan. '
+                                'RoomPlan needs a Pro iPhone or iPad Pro.',
+                          _ => 'This iOS version predates RoomPlan.',
+                        },
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ),
@@ -114,9 +114,8 @@ class _ScanPageState extends State<ScanPage> {
                   child: const Text('Start'),
                 ),
                 OutlinedButton(
-                  onPressed: s?.supported == true
-                      ? () => _controller.stop()
-                      : null,
+                  onPressed:
+                      s?.supported == true ? () => _controller.stop() : null,
                   child: const Text('Stop and process'),
                 ),
               ],
