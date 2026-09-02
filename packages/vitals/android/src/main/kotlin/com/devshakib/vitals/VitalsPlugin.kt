@@ -219,20 +219,26 @@ class VitalsPlugin :
       // "already in progress" forever. Answer the caller and reset.
       pendingPermissionResult = null
       requestedPermissions = emptySet()
-      fail(result, "unavailable", "Could not open the Health Connect permission screen: " + e.message)
+      result.error(
+        "unavailable",
+        "Could not open the Health Connect permission screen: " + e.message,
+        null
+      )
     }
   }
 
-  /// Resolves a permission request that can no longer complete.
-  ///
-  /// Detaching from the activity or the engine means the result will never
-  /// arrive. Without this the Dart future hangs for the life of the app and
-  /// every later request is refused as already in progress.
+  /**
+   * Resolves a permission request that can no longer complete.
+   *
+   * Detaching from the activity or the engine means the result will never
+   * arrive. Without this the Dart future hangs for the life of the app and
+   * every later request is refused as already in progress.
+   */
   private fun abandonPendingPermissions(why: String) {
     val pending = pendingPermissionResult ?: return
     pendingPermissionResult = null
     requestedPermissions = emptySet()
-    fail(pending, "cancelled", why)
+    pending.error("cancelled", why, null)
   }
 
   override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {

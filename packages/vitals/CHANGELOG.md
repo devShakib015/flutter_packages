@@ -1,3 +1,10 @@
+## 0.3.1
+
+Fixes the Android build. 0.3.0's permission-flow fix called a `fail` helper
+that exists on the Swift side but not in the Kotlin, so the plugin did not
+compile for Android — this machine cannot run the Android toolchain and CI
+caught it after the release. Use this rather than 0.3.0.
+
 ## 0.3.0
 
 An audit of every package in this repo found six defects here. Two of them

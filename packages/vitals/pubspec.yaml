@@ -2,7 +2,7 @@ name: vitals
 description: >-
   Type-safe Apple Health and Health Connect. Bucketed statistics computed natively, and writing verified end to end on iOS.
 
-version: 0.3.0
+version: 0.3.1
 repository: https://github.com/devShakib015/flutter_packages
 issue_tracker: https://github.com/devShakib015/flutter_packages/issues
 documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/vitals
