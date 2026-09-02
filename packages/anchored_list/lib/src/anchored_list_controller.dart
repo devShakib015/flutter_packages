@@ -61,8 +61,10 @@ class AnchoredListController extends ChangeNotifier {
   /// re-anchors rather than measuring its way there, so jumping to item
   /// 900,000 costs the same as jumping to item 3.
   ///
-  /// [alignment] places the item within the viewport: 0 puts its leading edge
-  /// at the top, 0.5 centres it, 1 puts it at the bottom.
+  /// [alignment] places the item within the viewport, the same way
+  /// `Scrollable.ensureVisible` does: 0 puts it against the leading edge, 0.5
+  /// centres it, 1 puts it against the trailing edge. [animateToIndex] means
+  /// the same thing by it.
   void jumpToIndex(int index, {double alignment = 0}) {
     assert(alignment >= 0 && alignment <= 1, 'alignment must be 0..1');
     _requireBinding().jumpToIndex(index, alignment);

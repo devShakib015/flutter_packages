@@ -420,17 +420,76 @@ class StoreProduct {
   /// The variation whose attributes match [chosen], or null when the
   /// combination is not one the store sells.
   ///
-  /// Keys are attribute names as the store spells them; use
-  /// [StoreAttribute.wireName] to build them.
+  /// Keys may be either spelling. WooCommerce is inconsistent here and it is
+  /// worth knowing why: a variation's attributes come back keyed by the
+  /// **display label** (`Colour`, via `wc_attribute_label`), while
+  /// `StoreCartResource.addItem` requires the **taxonomy** (`pa_colour`).
+  /// This accepts both and resolves between them using the product's own
+  /// [attributes] list, which carries each pair. Values are term slugs.
+  ///
+  /// ```dart
+  /// final variation = product.variationFor({'Colour': 'blue'});
+  /// await store.cart.addItem(
+  ///   id: variation!.id,
+  ///   variation: product.cartAttributes({'Colour': 'blue'}),
+  /// );
+  /// ```
   StoreVariation? variationFor(Map<String, String> chosen) {
+    if (chosen.isEmpty) return null;
     for (final StoreVariation v in variations) {
+      if (v.attributes.length != chosen.length) continue;
       final bool matches = v.attributes.entries.every(
         (MapEntry<String, String> e) =>
-            chosen[e.key] == e.value || e.value.isEmpty,
+            e.value.isEmpty || _chose(chosen, e.key) == e.value,
       );
-      if (matches && v.attributes.length == chosen.length) return v;
+      if (matches) return v;
     }
     return null;
+  }
+
+  /// What the caller chose for [key], under whichever spelling they used.
+  ///
+  /// Stores are not consistent: a variation is keyed by the display label on
+  /// stock WooCommerce, but plugins and older versions key it by the `pa_`
+  /// taxonomy. Accepting both means neither shape silently returns null.
+  String? _chose(Map<String, String> chosen, String key) {
+    if (chosen[key] case final String v) return v;
+    for (final StoreAttribute a in attributes) {
+      final bool isThis = a.name == key || a.taxonomy == key;
+      if (!isThis) continue;
+      if (chosen[a.name] case final String v) return v;
+      if (a.taxonomy.isEmpty) continue;
+      if (chosen[a.taxonomy] case final String v) return v;
+    }
+    return null;
+  }
+
+  /// Rewrites [chosen] into the keys `StoreCartResource.addItem` expects.
+  ///
+  /// Global attributes must be posted under their `pa_` taxonomy;
+  /// product-specific ones under their name. Accepts either spelling in and
+  /// always gives the right one out.
+  Map<String, String> cartAttributes(Map<String, String> chosen) {
+    final Map<String, String> out = <String, String>{};
+    for (final MapEntry<String, String> e in _byLabel(chosen).entries) {
+      final StoreAttribute? a = attributes
+          .where((StoreAttribute x) => x.name == e.key)
+          .firstOrNull;
+      out[a?.wireName ?? e.key] = e.value;
+    }
+    return out;
+  }
+
+  /// Normalises a chosen map onto the labels variations are keyed by.
+  Map<String, String> _byLabel(Map<String, String> chosen) {
+    final Map<String, String> labelFor = <String, String>{
+      for (final StoreAttribute a in attributes)
+        if (a.taxonomy.isNotEmpty) a.taxonomy: a.name,
+    };
+    return <String, String>{
+      for (final MapEntry<String, String> e in chosen.entries)
+        labelFor[e.key] ?? e.key: e.value,
+    };
   }
 
   @override

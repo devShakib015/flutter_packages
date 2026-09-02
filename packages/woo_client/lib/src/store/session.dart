@@ -64,6 +64,7 @@ class CartSession {
 
   final CartTokenStore _tokens;
   String? _nonce;
+  Completer<void>? _establishing;
 
   /// The current cart token, or null before the first request.
   Future<String?> get cartToken => _tokens.read();
@@ -83,16 +84,44 @@ class CartSession {
   /// Use this after a successful checkout, or when a shopper signs out.
   Future<void> clear() async {
     _nonce = null;
+    settle();
     await _tokens.write(null);
   }
 
   /// Headers to attach to a Store API request.
+  ///
+  /// The first request has no token, and the store answers it by creating a
+  /// cart. If two requests go out in that window they get two carts, and one
+  /// shopper's items land in the one nobody keeps. So the first tokenless
+  /// request claims the right to establish the session and any other waits
+  /// for it.
   Future<Map<String, String>> headers() async {
-    final String? token = await _tokens.read();
+    String? token = await _tokens.read();
+
+    if (token == null) {
+      final Completer<void>? waiting = _establishing;
+      if (waiting != null) {
+        await waiting.future;
+        token = await _tokens.read();
+      } else {
+        _establishing = Completer<void>();
+      }
+    }
+
     return <String, String>{
       if (token case final String t) 'Cart-Token': t,
       if (_nonce case final String n) 'Nonce': n,
     };
+  }
+
+  /// Releases anything waiting on the first request, whether it worked or not.
+  ///
+  /// Called even on failure — otherwise one dead request wedges every later
+  /// one behind a future that never completes.
+  void settle() {
+    final Completer<void>? c = _establishing;
+    _establishing = null;
+    if (c != null && !c.isCompleted) c.complete();
   }
 
   /// Records the tokens a response carried.

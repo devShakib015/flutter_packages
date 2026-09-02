@@ -138,13 +138,22 @@ class WooStore {
     Map<String, Object?>? query,
     Map<String, Object?>? body,
   }) async {
-    final http.Response response = await _transport.send(
-      method,
-      _transport.uri('$apiPath$path', query),
-      headers: await session.headers(),
-      body: body,
-    );
+    final Map<String, String> headers = await session.headers();
+    final http.Response response;
+    try {
+      response = await _transport.send(
+        method,
+        _transport.uri('$apiPath$path', query),
+        headers: headers,
+        body: body,
+      );
+    } catch (_) {
+      // A failed first request must not wedge everything queued behind it.
+      session.settle();
+      rethrow;
+    }
     await session.absorb(response.headers);
+    session.settle();
     return response;
   }
 

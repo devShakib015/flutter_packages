@@ -45,6 +45,12 @@ enum WooOrderStatus {
   };
 
   /// The string WooCommerce expects back.
+  ///
+  /// Throws for [unknown]. A plugin status this package does not model has no
+  /// safe wire form, and guessing one is worse than refusing: sending
+  /// `pending` for a status you did not recognise moves a paid order back to
+  /// unpaid. Use `WooOrders.setStatusRaw` to send a status verbatim, and
+  /// `WooOrder.statusName` to read the one the store actually sent.
   String get wireName => switch (this) {
     pending => 'pending',
     processing => 'processing',
@@ -54,7 +60,11 @@ enum WooOrderStatus {
     refunded => 'refunded',
     failed => 'failed',
     checkoutDraft => 'checkout-draft',
-    unknown => 'pending',
+    unknown => throw StateError(
+      'WooOrderStatus.unknown has no wire form. The store sent a status this '
+      'package does not model — read it with WooOrder.statusName and send it '
+      'back with WooOrders.setStatusRaw.',
+    ),
   };
 }
 
@@ -302,6 +312,14 @@ class WooOrder {
 
   /// Where it is in its life.
   final WooOrderStatus status;
+
+  /// The status exactly as the store spelled it.
+  ///
+  /// [status] is `unknown` for anything a plugin added — subscriptions,
+  /// bookings, a shop's own workflow state. This is the original string, so a
+  /// status this package does not model is still readable and still
+  /// re-sendable through `WooOrders.setStatusRaw`.
+  String get statusName => readString(raw['status']);
 
   /// Currency code, such as `GBP`.
   final String currency;

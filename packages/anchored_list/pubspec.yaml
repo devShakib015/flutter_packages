@@ -2,7 +2,7 @@ name: anchored_list
 description: >-
   Jump to any index in a lazy list in constant time, and hold your place when items arrive above it. One viewport anchored at the target, not two lists cross-fading.
 
-version: 0.1.1
+version: 0.2.0
 repository: https://github.com/devShakib015/flutter_packages
 issue_tracker: https://github.com/devShakib015/flutter_packages/issues
 documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/anchored_list

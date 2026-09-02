@@ -94,7 +94,10 @@ adding one item can change shipping, tax, and which coupons still apply.
 
 ```dart
 await store.cart.addItem(id: 799, quantity: 2);
-await store.cart.addItem(id: 815, variation: {'pa_colour': 'blue'});
+await store.cart.addItem(
+  id: variation.id,
+  variation: product.cartAttributes({'Colour': 'blue'}),
+);
 await store.cart.updateItem(key: item.key, quantity: 3);
 await store.cart.removeItem(item.key);
 await store.cart.applyCoupon('SAVE10');

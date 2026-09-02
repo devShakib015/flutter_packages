@@ -30,8 +30,11 @@ class WooOrders {
       perPage: perPage,
       query: <String, Object?>{
         'search': search,
+        // unknown has no wire form, so it cannot be a filter. Dropping it
+        // beats sending 'pending' and quietly listing the wrong orders.
         'status': statuses
-            ?.map((WooOrderStatus s) => s.wireName)
+            ?.where((WooOrderStatus s) => s != WooOrderStatus.unknown)
+            .map((WooOrderStatus s) => s.wireName)
             .toList(growable: false),
         'customer': customerId,
         'product': productId,
@@ -89,6 +92,17 @@ class WooOrders {
         await _client.put('/orders/$id', <String, Object?>{
           'status': status.wireName,
         }),
+      );
+
+  /// Moves an order to a status this package does not model.
+  ///
+  /// For plugin statuses — a subscription state, a booking state, a shop's own
+  /// workflow. [status] is sent verbatim, so pass WooCommerce's own spelling
+  /// (`awaiting-pickup`, not `awaitingPickup`); read the current one from
+  /// `WooOrder.statusName`.
+  Future<WooOrder> setStatusRaw(int id, String status) async =>
+      WooOrder.fromJson(
+        await _client.put('/orders/$id', <String, Object?>{'status': status}),
       );
 
   /// Updates an order, changing only the fields given.

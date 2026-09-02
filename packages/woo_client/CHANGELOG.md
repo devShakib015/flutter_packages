@@ -1,3 +1,42 @@
+## 0.3.0
+
+An audit of every package in this repo found five defects here. Two of them
+could lose or leak real things, so this release is worth taking.
+
+**Breaking:** `WooOrderStatus.unknown.wireName` now throws instead of returning
+`'pending'`. Read an order whose status came from a plugin, call `setStatus`,
+and 0.2.x quietly moved a paid order back to unpaid. There is no safe wire form
+for a status this package does not model, so it refuses to invent one. Use the
+new `WooOrder.statusName` to read the store's own spelling and
+`WooOrders.setStatusRaw` to send it back. `orders.list(statuses:)` drops
+`unknown` from the filter rather than substituting `pending`.
+
+### Fixed
+
+- **Credentials no longer reach an exception message.** Key authentication
+  travels in the query string, and every `WooNetworkException` interpolated the
+  full request URI — consumer key and secret included. Anyone logging that
+  exception shipped their store credentials to their crash reporter. The URI is
+  redacted now, and a test asserts the secret cannot appear.
+- **`variationFor` could never match a global attribute.** WooCommerce builds a
+  variation's attribute name with `wc_attribute_label`, so it is the display
+  label (`Colour`), while `cart.addItem` requires the `pa_` taxonomy. The
+  dartdoc told you to pass the taxonomy, which never matched, and the fixture
+  used the taxonomy for both so the test agreed with the bug. It now accepts
+  either spelling from either side, and the new `cartAttributes` rewrites a
+  chosen map into the keys `addItem` actually wants.
+- **Two concurrent first calls made two carts.** Both went out with no
+  `Cart-Token`, the store created a cart for each, and whichever token arrived
+  last won — the other's items were gone. The first tokenless request now
+  claims the session and the rest wait for it, and a failed first request
+  releases the gate instead of wedging everything behind it.
+- **A partly failed batch was silent.** `cart.addItems` and `cart.clear` threw
+  away the per-item results, so adding five items where one was out of stock
+  returned a cart with four and no sign anything had failed. Both now throw a
+  `WooInvalidRequestException` naming what the store refused.
+
+202 tests, 160/160.
+
 ## 0.2.2
 
 - A screenshot on pub.dev, from a real storefront built on the Store API. The

@@ -1,3 +1,5 @@
+import '../../exceptions.dart';
+import '../../json.dart';
 import '../models/address.dart';
 import '../models/cart.dart';
 import '../store.dart';
@@ -80,10 +82,13 @@ class StoreCartResource {
   Future<StoreCart> clear() async {
     final StoreCart current = await get();
     if (current.isEmpty) return current;
-    await _store.batch(<StoreBatchRequest>[
-      for (final StoreCartItem i in current.items)
-        StoreBatchRequest.removeItem(i.key),
-    ]);
+    _throwIfAnyFailed(
+      await _store.batch(<StoreBatchRequest>[
+        for (final StoreCartItem i in current.items)
+          StoreBatchRequest.removeItem(i.key),
+      ]),
+      'remove',
+    );
     return get();
   }
 
@@ -149,10 +154,41 @@ class StoreCartResource {
   /// Worth it for a "buy it again" button, or restoring a saved basket.
   Future<StoreCart> addItems(Map<int, int> quantitiesByProductId) async {
     if (quantitiesByProductId.isEmpty) return get();
-    await _store.batch(<StoreBatchRequest>[
-      for (final MapEntry<int, int> e in quantitiesByProductId.entries)
-        StoreBatchRequest.addItem(id: e.key, quantity: e.value),
-    ]);
+    _throwIfAnyFailed(
+      await _store.batch(<StoreBatchRequest>[
+        for (final MapEntry<int, int> e in quantitiesByProductId.entries)
+          StoreBatchRequest.addItem(id: e.key, quantity: e.value),
+      ]),
+      'add',
+    );
     return get();
+  }
+
+  /// The Store API's batch endpoint reports per-request status and keeps going
+  /// after a failure, so an out-of-stock item in a batch of five is a 200 with
+  /// one bad entry inside. Silently returning the cart would hide it.
+  static void _throwIfAnyFailed(
+    List<Map<String, Object?>> responses,
+    String verb,
+  ) {
+    final List<Map<String, Object?>> failed = <Map<String, Object?>>[
+      for (final Map<String, Object?> r in responses)
+        if ((readIntOrNull(r['status']) ?? 200) >= 400) r,
+    ];
+    if (failed.isEmpty) return;
+    final String why = failed
+        .map((Map<String, Object?> r) {
+          final Map<String, Object?> body = readMap(r['body']);
+          return readString(body['message']).isEmpty
+              ? 'HTTP ${r['status']}'
+              : readString(body['message']);
+        })
+        .join('; ');
+    throw WooInvalidRequestException(
+      'The store refused to $verb ${failed.length} of ${responses.length} '
+      'items: $why',
+      code: 'woocommerce_rest_batch_partial_failure',
+      details: <String, Object?>{'failed': failed},
+    );
   }
 }

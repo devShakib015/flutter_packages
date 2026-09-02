@@ -76,9 +76,10 @@ void main() {
       final StoreCartItem item = cart.items.first;
 
       await store.cart.addItem(id: 799, quantity: 2);
+      final StoreProduct p = (await store.products.list()).items.first;
       await store.cart.addItem(
         id: 815,
-        variation: <String, String>{'pa_colour': 'blue'},
+        variation: p.cartAttributes(<String, String>{'Colour': 'blue'}),
       );
       await store.cart.updateItem(key: item.key, quantity: 3);
       await store.cart.removeItem(item.key);

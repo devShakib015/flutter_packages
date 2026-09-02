@@ -12,7 +12,7 @@ import 'exceptions.dart';
 ///
 /// A test keeps this in step with the package version. Browsers forbid setting
 /// this header and drop it, so on the web the browser's own is sent instead.
-const String wooUserAgent = 'woo_client/0.2.2 (Dart)';
+const String wooUserAgent = 'woo_client/0.3.0 (Dart)';
 
 /// When to try a failed request again.
 ///
@@ -191,7 +191,10 @@ class WooTransport {
     } catch (e) {
       // No answer at all: DNS, TLS, timeout, offline. Worth its own type
       // because retrying is usually reasonable and rarely is for a 4xx.
-      throw WooNetworkException('Could not reach $target: $e', cause: e);
+      throw WooNetworkException(
+        'Could not reach ${redact(target)}: $e',
+        cause: e,
+      );
     }
     if (response.statusCode >= 400) throw errorFor(response);
     return response;
@@ -309,6 +312,29 @@ class WooTransport {
     } catch (_) {
       return null;
     }
+  }
+
+  /// A URI with its credentials masked, safe to put in a message or a log.
+  ///
+  /// Key authentication travels in the query string, so interpolating a raw
+  /// request URI into an exception hands the store's consumer secret to
+  /// whatever catches it — and error messages end up in crash reporters.
+  static Uri redact(Uri uri) {
+    const Set<String> secret = <String>{
+      'consumer_key',
+      'consumer_secret',
+      'oauth_signature',
+      'oauth_consumer_key',
+      'token',
+      'access_token',
+    };
+    if (!uri.queryParameters.keys.any(secret.contains)) return uri;
+    return uri.replace(
+      queryParameters: <String, String>{
+        for (final MapEntry<String, String> e in uri.queryParameters.entries)
+          e.key: secret.contains(e.key) ? 'REDACTED' : e.value,
+      },
+    );
   }
 
   /// The first part of a body, for putting in an error message.

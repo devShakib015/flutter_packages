@@ -1,3 +1,39 @@
+## 0.2.0
+
+An audit of every package in this repo found six defects here, including one in
+the feature this package exists for. Worth taking.
+
+### Fixed
+
+- **A prepend was silently dropped when the anchor sat near the end of the
+  list.** `itemsInsertedAbove` clamped the new anchor against `itemCount` — but
+  it runs between your `setState` and the rebuild that delivers the longer
+  list, so that count is still the old one. A chat pinned to the newest message
+  is the worst case and the flagship one: the shift was clamped away entirely
+  and the reader's content slid down the screen, which is the exact lurch this
+  API exists to prevent. The anchor is now held unclamped and clamped on read,
+  so the intent survives until the real count arrives. Every prepend test
+  anchored mid-list, so nothing caught it; there is now one anchored at the
+  last item.
+- **An item built with a `GlobalKey` crashed the list.** The child's key was
+  copied onto the wrapper widget, leaving two live elements registered under
+  the same key: "Multiple widgets used the same GlobalKey" on the first frame.
+  Keys are now salted before being lifted, the way
+  `SliverChildBuilderDelegate` does it, and unsalted again before
+  `findChildIndexCallback` sees them.
+- **`reverse: true` put the whole padding in a gap at the anchor.** The inset
+  was split by scroll axis alone, ignoring `reverse` and directionality, so
+  under a reversed list — the standard chat layout — both anchor-facing edges
+  were the ones kept: a blank band mid-content, and no padding at either end.
+  The split now resolves the real axis direction first.
+- **`animateToIndex` overshot by about a screenful × alignment.** Alignment was
+  consumed twice, once as the viewport anchor and once by `ensureVisible`,
+  which never reads the anchor. Only `ensureVisible` consumes it now.
+- **`jumpToIndex` aligned the item's leading edge, not the item.** So `0.5` was
+  not centred and `1.0` scrolled the target off-screen, while `animateToIndex`
+  aligned the box — the example had two adjacent buttons disagreeing on the
+  same argument. Both now mean what `Scrollable.ensureVisible` means.
+
 ## 0.1.1
 
 Packaging only — no API or behaviour changes.
