@@ -1,3 +1,43 @@
+## 0.3.0
+
+An audit of every package in this repo found six defects here. Two of them
+made Android unusable for what it claimed to do.
+
+### Fixed
+
+- **Health Connect looked "not installed" on Android 11-13.** The plugin's
+  manifest had no `<queries>` entry, and Android 11 introduced package
+  visibility filtering — so `isAvailable()` could not see Health Connect on
+  the versions where it ships as a separate APK, and reported false on a
+  device where it was installed and working. Declared in the plugin's own
+  manifest, so it merges into every consuming app.
+- **`writeVolume` always threw on Android.** The Dart signature takes a single
+  instant, so start and end were equal, and `HydrationRecord` rejects a
+  zero-length window. Every water write failed. Interval records now widen a
+  zero-length window by a millisecond.
+- **Reads were silently truncated at 1000 records.** Health Connect caps a
+  response and hands back a `pageToken`; nothing followed it. A month of step
+  data came back short, statistics were computed from a partial series, and
+  `delete` removed only the first thousand matches and reported that as the
+  count. All three paths paginate now.
+- **A failed permission launch wedged the flow permanently.** `pendingResult`
+  was cleared only on a successful activity result, so if the launch threw —
+  or the activity or engine detached first — the Dart future never completed
+  and every later request was refused as already in progress. It resolves on
+  every path now, and a configuration change deliberately does not abandon a
+  live request.
+- **iOS returned a sum labelled as an average.** For a cumulative type,
+  `statistics()` used `.cumulativeSum` whatever aggregate was asked for, so
+  asking for the average of daily steps got the total with a confident wrong
+  name. It refuses now, as `UnsupportedVitalTypeException`, rather than
+  answering wrongly.
+
+### Known, not fixed
+
+- Android flattens a sleep session to a single `asleep` reading rather than
+  emitting its stages, and `statistics()` returns an all-null series for sleep
+  and workout. iOS reports stages correctly.
+
 ## 0.2.0
 
 **Writing is verified on iOS.** 250 ml of water written and read back at the

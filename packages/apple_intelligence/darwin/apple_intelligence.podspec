@@ -17,7 +17,7 @@ Tools, exposed to Flutter.
   # Deliberately low. The plugin compiles into apps targeting far older
   # systems and reports its unavailability at runtime there; ImagePlayground
   # is weak-linked so those apps still launch.
-  s.ios.deployment_target = '13.0'
+  s.ios.deployment_target = '15.0'
   s.osx.deployment_target = '10.15'
   s.weak_frameworks  = 'ImagePlayground'
 

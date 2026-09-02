@@ -167,15 +167,32 @@ class SliverMasonryGrid extends SliverMultiBoxAdaptorWidget {
 class _MasonryElement extends SliverMultiBoxAdaptorElement {
   _MasonryElement(SliverMasonryGrid super.widget);
 
+  int? _lastChildCount;
+
   @override
   void update(SliverMasonryGrid newWidget) {
     final SliverChildDelegate oldDelegate =
         (widget as SliverMasonryGrid).delegate;
     super.update(newWidget);
     final SliverChildDelegate newDelegate = newWidget.delegate;
-    if (newDelegate != oldDelegate &&
-        (newDelegate.runtimeType != oldDelegate.runtimeType ||
-            newDelegate.shouldRebuild(oldDelegate))) {
+
+    // `shouldRebuild` is not the question. It means "rebuild the child
+    // widgets", which super.update has already done, and
+    // SliverChildBuilderDelegate hardcodes it to true — so keying off it threw
+    // away every placement and every live child on ANY ancestor rebuild, and
+    // re-measured the whole list from index 0. A theme change or a parent
+    // setState was enough.
+    //
+    // What actually invalidates a placement is the item list changing length.
+    // A same-length edit still needs the caller to change the delegate type or
+    // pass a new list identity, which the runtimeType check below catches.
+    final int? count = newDelegate.estimatedChildCount;
+    final bool listChanged =
+        newDelegate.runtimeType != oldDelegate.runtimeType ||
+        (count != null && _lastChildCount != null && count != _lastChildCount);
+    _lastChildCount = count;
+
+    if (newDelegate != oldDelegate && listChanged) {
       (renderObject as RenderSliverMasonryGrid).invalidateItemLayout();
     }
   }

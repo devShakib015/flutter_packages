@@ -131,11 +131,24 @@ class RenderSliverMasonryGrid extends RenderSliverMultiBoxAdaptor {
 
   double _childCrossAxisExtent(double crossAxisExtent) {
     final int columns = columnsFor(crossAxisExtent);
-    return (crossAxisExtent - _crossAxisSpacing * (columns - 1)) / columns;
+    // Clamped: wide spacing in a narrow viewport makes this negative, and
+    // BoxConstraints.tightFor throws on a negative width in debug and yields
+    // a nonsense size in release.
+    return math.max(0, crossAxisExtent - _crossAxisSpacing * (columns - 1)) /
+        columns;
   }
 
-  double _crossAxisOffsetFor(int column, double childCrossAxisExtent) =>
-      column * (childCrossAxisExtent + _crossAxisSpacing);
+  double _crossAxisOffsetFor(int column, double childCrossAxisExtent) {
+    // paint() applies a fixed cross-axis unit vector, so a reversed cross axis
+    // has to be mirrored here or column 0 lands on the left under RTL —
+    // Flutter's own grid delegates carry reverseCrossAxis for the same reason.
+    final int columns = columnsFor(constraints.crossAxisExtent);
+    final int effective =
+        axisDirectionIsReversed(constraints.crossAxisDirection)
+        ? columns - 1 - column
+        : column;
+    return effective * (childCrossAxisExtent + _crossAxisSpacing);
+  }
 
   BoxConstraints _childConstraints(double childCrossAxisExtent) {
     // Tight across, free along the scroll axis: the measured extent is
@@ -397,9 +410,17 @@ class RenderSliverMasonryGrid extends RenderSliverMultiBoxAdaptor {
     while (walk != null) {
       final int index = indexOf(walk);
       if (index < layout.count) {
-        if (grewCacheThisPass || _parentDataOf(walk).layoutOffset == null) {
-          walk.layout(childConstraints, parentUsesSize: true);
-        }
+        // Always relayout. Children are laid out loose on the main axis with
+        // parentUsesSize, so none of them is a relayout boundary: a tile that
+        // dirties itself (a network image resolving, a font arriving, its own
+        // setState) marks this sliver dirty and clears nothing of its own. If
+        // we then skip it, it stays _needsLayout and the framework refuses to
+        // paint it — the tile vanishes. RenderObject.layout has a fast path
+        // for a clean child with the same constraints, so this is free in the
+        // steady state, and it does not weaken the never-revise contract: the
+        // slot still comes from layout.slotOf(index), so a child that grew
+        // overflows its slot rather than disappearing.
+        walk.layout(childConstraints, parentUsesSize: true);
         _place(walk, index, layout.slotOf(index), childCrossAxisExtent);
       }
       walk = childAfter(walk);

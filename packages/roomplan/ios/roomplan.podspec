@@ -16,7 +16,7 @@ as structured data, plus a USDZ export.
   # Deliberately low. RoomPlan needs iOS 16 and a LiDAR device, but the plugin
   # compiles into apps targeting older systems and reports `unsupported` at
   # runtime there, so adding it does not raise your deployment target.
-  s.ios.deployment_target = '13.0'
+  s.ios.deployment_target = '15.0'
   s.weak_frameworks  = 'RoomPlan'
 
   s.swift_version    = '5.0'

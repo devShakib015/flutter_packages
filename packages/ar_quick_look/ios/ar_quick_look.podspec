@@ -13,7 +13,7 @@ placing a model in the room through the camera.
   s.source_files     = 'ar_quick_look/Sources/ar_quick_look/**/*.swift'
 
   s.dependency 'Flutter'
-  s.ios.deployment_target = '12.0'
+  s.ios.deployment_target = '15.0'
   s.frameworks       = 'QuickLook'
 
   s.swift_version    = '5.0'

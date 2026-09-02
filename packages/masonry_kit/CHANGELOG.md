@@ -1,3 +1,42 @@
+## 0.3.0
+
+An audit of every package in this repo found six defects here, two of which
+made tiles disappear or re-measured the whole list. Worth taking.
+
+### Fixed
+
+- **A tile that changed its own size after being measured was never painted
+  again.** Children are laid out loose on the main axis with
+  `parentUsesSize`, so none of them is a relayout boundary: when a tile
+  dirtied itself — a `Image.network` resolving, a font arriving, its own
+  `setState` — it marked this sliver dirty but the relayout walk then skipped
+  it, so it stayed `_needsLayout` and the framework refused to paint it. The
+  tile simply vanished. Every carried-over child is relaid out now;
+  `RenderObject.layout` has a fast path for a clean child, so the steady state
+  is unchanged, and the never-revise contract holds because the slot still
+  comes from `slotOf(index)`.
+- **Any ancestor rebuild threw away every placement and re-measured from index
+  0.** Invalidation keyed off `delegate.shouldRebuild`, which
+  `SliverChildBuilderDelegate` hardcodes to `true` — so a theme change or a
+  parent `setState` was enough. It is invisible at the top of a list and
+  brutal once the reader has scrolled. Invalidation now tracks the item count,
+  which is what actually makes a placement wrong.
+- **Columns did not mirror under RTL.** `constraints.crossAxisDirection` was
+  ignored while `paint` applies a fixed cross-axis unit vector, so column 0
+  stayed on the left. Flutter's own grid delegates carry `reverseCrossAxis`
+  for exactly this reason.
+- **Spacing wider than the viewport crashed in debug.**
+  `crossAxisExtent - spacing × (columns - 1)` went negative and reached
+  `BoxConstraints.tightFor`, which asserts. Clamped at zero.
+
+### Known, not fixed
+
+- A masonry sliver sitting entirely below the viewport's cache region reports
+  `SliverGeometry.zero`, so `maxScrollExtent` omits it until it is scrolled
+  near. Two grids in one `CustomScrollView` show it.
+- The catch-up walk holds every child from index 0 to the target window alive
+  at once before releasing them, so a long jump has a memory spike.
+
 ## 0.2.0
 
 - `MasonryGridView.extent` and `SliverMasonryGrid.extent` size the column count

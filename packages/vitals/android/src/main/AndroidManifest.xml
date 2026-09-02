@@ -1,3 +1,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
   package="com.devshakib.vitals">
+
+  <!--
+    Android 11 (API 30) introduced package visibility filtering: an app cannot
+    see another package unless it declares it here. Health Connect ships as a
+    separate APK on Android 11-13, so without this entry the availability
+    check cannot find it and reports "not installed" on a device where it is
+    installed and working. On Android 14+ Health Connect is part of the
+    platform and this is harmless.
+
+    Declared in the plugin's own manifest so it merges into every consuming
+    app — an app author should not have to know this.
+  -->
+  <queries>
+    <package android:name="com.google.android.apps.healthdata" />
+  </queries>
 </manifest>

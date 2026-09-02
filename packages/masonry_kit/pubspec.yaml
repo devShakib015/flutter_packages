@@ -3,7 +3,7 @@ description: >-
   A masonry grid whose layout is computed once and never revised, so several
   grids can share one CustomScrollView without the view jumping backwards.
 
-version: 0.2.0
+version: 0.3.0
 repository: https://github.com/devShakib015/flutter_packages
 issue_tracker: https://github.com/devShakib015/flutter_packages/issues
 documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/masonry_kit

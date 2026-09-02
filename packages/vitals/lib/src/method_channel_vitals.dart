@@ -45,8 +45,13 @@ class MethodChannelVitals implements Vitals {
     }
     return switch (e.code) {
       'unavailable' => HealthDataUnavailableException(text),
-      'unsupportedOnAndroid' || 'unknownType' || 'unwritable' =>
-        UnsupportedVitalTypeException(e.details?.toString() ?? '?', text),
+      'unsupportedOnAndroid' ||
+      'unknownType' ||
+      'unwritable' ||
+      'unsupportedAggregate' => UnsupportedVitalTypeException(
+        e.details?.toString() ?? '?',
+        text,
+      ),
       'write' => VitalsWriteException(text),
       _ => VitalsPlatformException(text, code: e.code),
     };

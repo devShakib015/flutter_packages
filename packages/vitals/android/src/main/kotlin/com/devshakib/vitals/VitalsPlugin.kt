@@ -81,6 +81,7 @@ class VitalsPlugin :
   }
 
   override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+    abandonPendingPermissions("The plugin was detached before the permission screen answered.")
     channel.setMethodCallHandler(null)
     scope.cancel()
   }
@@ -92,6 +93,7 @@ class VitalsPlugin :
   }
 
   override fun onDetachedFromActivity() {
+    abandonPendingPermissions("The activity went away before the permission screen answered.")
     binding?.removeActivityResultListener(this)
     activity = null
     binding = null
@@ -100,7 +102,13 @@ class VitalsPlugin :
   override fun onReattachedToActivityForConfigChanges(b: ActivityPluginBinding) =
     onAttachedToActivity(b)
 
-  override fun onDetachedFromActivityForConfigChanges() = onDetachedFromActivity()
+  override fun onDetachedFromActivityForConfigChanges() {
+    // A config change re-attaches, so the pending request is still live —
+    // deliberately not abandoned here.
+    binding?.removeActivityResultListener(this)
+    activity = null
+    binding = null
+  }
 
   // ---------------------------------------------------------------- mapping
 
@@ -201,9 +209,30 @@ class VitalsPlugin :
     }
 
     pendingPermissionResult = result
-    val contract = PermissionController.createRequestPermissionResultContract()
-    val intent: Intent = contract.createIntent(host, requestedPermissions)
-    host.startActivityForResult(intent, PERMISSION_REQUEST_CODE)
+    try {
+      val contract = PermissionController.createRequestPermissionResultContract()
+      val intent: Intent = contract.createIntent(host, requestedPermissions)
+      host.startActivityForResult(intent, PERMISSION_REQUEST_CODE)
+    } catch (e: Exception) {
+      // If the launch itself fails there will never be an activity result, so
+      // nothing would ever clear this and every later request would return
+      // "already in progress" forever. Answer the caller and reset.
+      pendingPermissionResult = null
+      requestedPermissions = emptySet()
+      fail(result, "unavailable", "Could not open the Health Connect permission screen: " + e.message)
+    }
+  }
+
+  /// Resolves a permission request that can no longer complete.
+  ///
+  /// Detaching from the activity or the engine means the result will never
+  /// arrive. Without this the Dart future hangs for the life of the app and
+  /// every later request is refused as already in progress.
+  private fun abandonPendingPermissions(why: String) {
+    val pending = pendingPermissionResult ?: return
+    pendingPermissionResult = null
+    requestedPermissions = emptySet()
+    fail(pending, "cancelled", why)
   }
 
   override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
@@ -236,6 +265,35 @@ class VitalsPlugin :
 
   // ---------------------------------------------------------------- reading
 
+  /**
+   * Every record in the range, following pageToken to the end.
+   *
+   * Health Connect caps a single response at 1000 records and hands back a
+   * pageToken for the rest. Reading the first page only meant a month of
+   * step data came back quietly truncated, and a delete only removed the
+   * first thousand matches.
+   */
+  private suspend fun readAll(
+    klass: KClass<out Record>,
+    from: Instant,
+    to: Instant,
+  ): List<Record> {
+    val all = ArrayList<Record>()
+    var token: String? = null
+    do {
+      val page = client!!.readRecords(
+        ReadRecordsRequest(
+          recordType = klass,
+          timeRangeFilter = TimeRangeFilter.between(from, to),
+          pageToken = token,
+        )
+      )
+      all.addAll(page.records)
+      token = page.pageToken
+    } while (token != null)
+    return all
+  }
+
   private fun read(call: MethodCall, result: MethodChannel.Result) {
     val id = call.argument<String>("type") ?: return result.error(
       "unknownType", "A type is required.", null
@@ -248,13 +306,8 @@ class VitalsPlugin :
     val limit = call.argument<Number>("limit")?.toInt()
 
     guard(result) {
-      val response = client!!.readRecords(
-        ReadRecordsRequest(
-          recordType = klass,
-          timeRangeFilter = TimeRangeFilter.between(from, to),
-        )
-      )
-      var encoded = response.records.mapNotNull { encode(it, id) }
+      val records = readAll(klass, from, to)
+      var encoded = records.mapNotNull { encode(it, id) }
       if (limit != null && encoded.size > limit) {
         encoded = encoded.takeLast(limit)
       }
@@ -375,14 +428,9 @@ class VitalsPlugin :
     val aggregate = call.argument<String>("aggregate") ?: "sum"
 
     guard(result) {
-      val response = client!!.readRecords(
-        ReadRecordsRequest(
-          recordType = klass,
-          timeRangeFilter = TimeRangeFilter.between(from, to),
-        )
-      )
+      val records = readAll(klass, from, to)
       val zone = ZoneId.systemDefault()
-      val points = response.records.mapNotNull { record ->
+      val points = records.mapNotNull { record ->
         val map = encode(record, id) ?: return@mapNotNull null
         val value = map["value"] as? Double ?: return@mapNotNull null
         (map["start"] as Long) to value
@@ -417,7 +465,13 @@ class VitalsPlugin :
    * diastolic in one record, so writing either alone would mean inventing the
    * other. It is reported unsupported instead.
    */
-  private fun buildRecord(id: String, value: Double, from: Instant, to: Instant): Record? {
+  private fun buildRecord(id: String, value: Double, from: Instant, rawTo: Instant): Record? {
+    // Health Connect rejects an interval record whose end is not after its
+    // start, and the Dart API writes some interval quantities — water, most
+    // obviously — at a single instant. A zero-length window there is a
+    // legitimate "this happened at this moment", so widen it rather than
+    // failing the write.
+    val to = if (rawTo.isAfter(from)) rawTo else from.plusMillis(1)
     val meta = Metadata.manualEntry()
     // Named arguments throughout: these constructors take long positional
     // lists with optional fields in the middle, and getting one wrong compiles
@@ -520,9 +574,7 @@ class VitalsPlugin :
       // Count first: deleteRecords reports nothing, and the Dart contract
       // promises how many went. Health Connect only ever removes this app's
       // own records, which matches what the contract says.
-      val existing = client!!.readRecords(
-        ReadRecordsRequest(recordType = klass, timeRangeFilter = TimeRangeFilter.between(from, to))
-      ).records.size
+      val existing = readAll(klass, from, to).size
       client!!.deleteRecords(klass, TimeRangeFilter.between(from, to))
       withContext(Dispatchers.Main) { result.success(existing) }
     }

@@ -315,6 +315,19 @@ public class VitalsPlugin: NSObject, FlutterPlugin {
     let cumulative = type.aggregationStyle == .cumulative
     let options: HKStatisticsOptions
     if cumulative {
+      // A cumulative type has exactly one meaningful per-bucket aggregate:
+      // the sum. Asking for an average of daily steps used to return the
+      // sum labelled "average" — a wrong number with a confident name.
+      // Refuse instead, so the caller finds out at the call site.
+      guard aggregate == "sum" else {
+        return fail(
+          result,
+          "unsupportedAggregate",
+          "\(id) is a cumulative type, so only 'sum' is meaningful per "
+            + "bucket. Asked for '\(aggregate)'. Reduce the summed buckets "
+            + "yourself if you want a figure across them."
+        )
+      }
       options = .cumulativeSum
     } else {
       switch aggregate {
