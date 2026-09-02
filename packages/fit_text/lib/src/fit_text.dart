@@ -78,6 +78,13 @@ class FitText extends SingleChildRenderObjectWidget {
   /// Sizes on nested spans are respected relative to nothing — the fitted size
   /// is applied to the root style, so give nested spans relative emphasis
   /// (weight, colour) rather than absolute `fontSize` values.
+  /// Fits a rich span.
+  ///
+  /// [span] must not contain a [WidgetSpan], or any other placeholder: fitting
+  /// works by measuring the span at candidate sizes, and a placeholder has no
+  /// size until the surrounding render object has laid its child out. A
+  /// placeholder used to throw from deep inside `TextPainter` with nothing
+  /// naming `FitText.rich` as the cause.
   const FitText.rich(
     InlineSpan span, {
     super.key,
@@ -150,6 +157,11 @@ class FitText extends SingleChildRenderObjectWidget {
   final bool softWrap;
 
   /// What to do when the text does not fit even at [minFontSize].
+  ///
+  /// [TextOverflow.fade] is treated as [TextOverflow.clip]: the text is
+  /// contained, but the trailing gradient `RenderParagraph` draws is not
+  /// implemented here. It used to be a complete no-op, which let overflowing
+  /// text paint across whatever sat beside it.
   final TextOverflow overflow;
 
   /// Accessibility text scaling. Defaults to the ambient [MediaQuery].

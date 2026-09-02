@@ -1,3 +1,29 @@
+## 0.2.0
+
+An audit of every package in this repo found five defects here, two of which
+broke things this package specifically promises.
+
+### Fixed
+
+- **A `GestureDetector` around a `FitText` never fired.** `RenderFitText` did
+  not implement `hitTestSelf`, so the box reported no hit and every wrapping
+  gesture detector — and every `TextSpan.recognizer` inside a `FitText.rich` —
+  was silently dead. `RenderParagraph` implements it; this did not.
+- **`IntrinsicHeight` around a baseline-aligned `Row` threw in debug.**
+  `computeDryBaseline` was not overridden, so the framework fell back to a real
+  layout to answer a dry baseline query and asserted. Working inside
+  `IntrinsicHeight` is the headline reason this package exists —
+  `auto_size_text` cannot — so the one combination it was built for was broken.
+- **`TextOverflow.fade` was a complete no-op.** Text that did not fit at
+  `minFontSize` painted straight over its neighbours. It is now treated as
+  `clip`, which contains it; the trailing gradient is still not implemented,
+  and the dartdoc says so rather than implying otherwise.
+- **A `WidgetSpan` in `FitText.rich` threw from inside `TextPainter`** with
+  nothing naming `FitText` as the cause. Fitting measures the span at candidate
+  sizes and a placeholder has no size until its child is laid out, so this
+  cannot work — it is an assertion that says so now, and the constructor
+  documents it.
+
 ## 0.1.3
 
 Documentation only — no API changes.

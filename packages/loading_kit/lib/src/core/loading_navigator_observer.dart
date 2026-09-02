@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 
 import 'loading_controller.dart';
@@ -31,7 +32,25 @@ class LoadingNavigatorObserver extends NavigatorObserver {
       controller ?? (Loading.isInstalled ? Loading.instance : null);
 
   void _clear() {
-    unawaited(_target?.dismissAll(immediate: true, onlyNavigationScoped: true));
+    // Under the pages API, didPush lands inside the build phase — Navigator
+    // updates its routes while building — and dismissAll mutates a
+    // ValueNotifier the overlay listens to, so clearing inline threw
+    // "setState() or markNeedsBuild() called during build". Deferring to
+    // after the frame keeps the behaviour and drops the crash. Runs inline
+    // when nothing is building, so an imperative push still clears promptly.
+    final SchedulerPhase phase = SchedulerBinding.instance.schedulerPhase;
+    if (phase == SchedulerPhase.idle ||
+        phase == SchedulerPhase.postFrameCallbacks) {
+      unawaited(
+        _target?.dismissAll(immediate: true, onlyNavigationScoped: true),
+      );
+      return;
+    }
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      unawaited(
+        _target?.dismissAll(immediate: true, onlyNavigationScoped: true),
+      );
+    });
   }
 
   @override

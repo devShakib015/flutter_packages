@@ -3,7 +3,7 @@ description: >-
   A blocking-async overlay that never flickers. Wrap any Future in one call:
   delayed reveal, minimum display time, reference counting, cancellation,
   and themed presets.
-version: 0.3.1
+version: 0.3.2
 repository: https://github.com/devShakib015/flutter_packages
 issue_tracker: https://github.com/devShakib015/flutter_packages/issues
 documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/loading_kit

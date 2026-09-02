@@ -42,7 +42,7 @@ rather than from having more spinner shapes.
 
 ```yaml
 dependencies:
-  loading_kit: ^0.1.0
+  loading_kit: ^0.3.2
 ```
 
 ## Setup
@@ -231,7 +231,7 @@ LoadingKit.builder(
   style: LoadingStyle.cupertino.copyWith(
     indicatorColor: brand.teal,
     cardRadius: BorderRadius.circular(20),
-    scrimBlur: 12,
+    backdropBlur: 12,
   ),
 )
 ```

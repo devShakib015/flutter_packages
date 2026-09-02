@@ -38,7 +38,15 @@ class RenderFitText extends RenderBox
     TextHeightBehavior? textHeightBehavior,
     FitTextGroup? group,
     bool wrapWords = true,
-  }) : _text = text,
+  }) : assert(
+         !_hasPlaceholder(text),
+         'FitText.rich cannot fit a span containing a WidgetSpan. Fitting '
+         'works by measuring the span at candidate sizes, and a placeholder '
+         'has no size until its child has been laid out. Without this the '
+         'failure surfaced from inside TextPainter, naming neither FitText '
+         'nor the span.',
+       ),
+       _text = text,
        _group = group,
        _wrapWords = wrapWords,
        _minFontSize = minFontSize,
@@ -105,8 +113,26 @@ class RenderFitText extends RenderBox
   /// The span to lay out.
   set text(InlineSpan value) {
     if (_text == value) return;
+    assert(
+      !_hasPlaceholder(value),
+      'FitText.rich cannot fit a span containing a WidgetSpan. Fitting works '
+      'by measuring the span at candidate sizes, and a placeholder has no '
+      'size until its child has been laid out.',
+    );
     _text = value;
     markNeedsLayout();
+  }
+
+  static bool _hasPlaceholder(InlineSpan span) {
+    bool found = false;
+    span.visitChildren((InlineSpan child) {
+      if (child is PlaceholderSpan) {
+        found = true;
+        return false;
+      }
+      return true;
+    });
+    return found;
   }
 
   /// Smallest size the text may shrink to.
@@ -372,6 +398,23 @@ class RenderFitText extends RenderBox
   }
 
   @override
+  double? computeDryBaseline(
+    BoxConstraints constraints,
+    TextBaseline baseline,
+  ) {
+    // Without this the framework falls back to a real layout to answer a dry
+    // baseline query and asserts — so an IntrinsicHeight around a Row with
+    // CrossAxisAlignment.baseline containing a FitText threw in debug, which
+    // is the very combination this package exists to make work.
+    final (double fontSize, bool overflowed) = _bestFit(constraints);
+    if (overflowed && child != null) {
+      return child!.getDryBaseline(constraints, baseline);
+    }
+    _layoutAt(fontSize, constraints);
+    return _painter.computeDistanceToActualBaseline(baseline);
+  }
+
+  @override
   void performLayout() {
     final (double natural, bool overflowed) = _bestFit(constraints);
     _didOverflow = overflowed;
@@ -413,7 +456,12 @@ class RenderFitText extends RenderBox
       context.paintChild(child!, offset);
       return;
     }
-    if (_overflow == TextOverflow.clip || _overflow == TextOverflow.ellipsis) {
+    // fade is treated as clip: the gradient shader is not implemented, but
+    // containing the text is strictly better than letting it paint across
+    // whatever sits next to it.
+    if (_overflow == TextOverflow.clip ||
+        _overflow == TextOverflow.ellipsis ||
+        _overflow == TextOverflow.fade) {
       if (_didOverflow) {
         context.pushClipRect(
           needsCompositing,
@@ -427,6 +475,9 @@ class RenderFitText extends RenderBox
     }
     _painter.paint(context.canvas, offset);
   }
+
+  @override
+  bool hitTestSelf(Offset position) => !_showingReplacement;
 
   @override
   bool hitTestChildren(BoxHitTestResult result, {required Offset position}) {

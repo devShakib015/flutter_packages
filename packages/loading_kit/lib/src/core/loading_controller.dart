@@ -100,6 +100,15 @@ class LoadingController extends ValueNotifier<LoadingState> {
       dismissible: dismissible,
     )..dismissOnNavigation = dismissOnNavigation;
 
+    if (dismissible) {
+      // Without this the flag rendered a tap target that did nothing: the
+      // scrim calls cancelTopmost(), which looks for an operation carrying an
+      // onCancel, and only run()/runTask() ever set one. A plain show() had
+      // none — so the tap either did nothing at all, or found some unrelated
+      // in-flight operation further down the stack and cancelled that instead.
+      operation.onCancel = () => unawaited(retire(operation));
+    }
+
     _operations.add(operation);
 
     if (effective.delay <= Duration.zero) {

@@ -36,7 +36,7 @@ tree, so the difference is verified rather than asserted.
 
 ```yaml
 dependencies:
-  fit_text: ^0.1.0
+  fit_text: ^0.2.0
 ```
 
 ## Usage

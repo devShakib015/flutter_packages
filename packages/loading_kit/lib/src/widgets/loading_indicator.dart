@@ -82,6 +82,15 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
     with TickerProviderStateMixin {
   late final AnimationController _spin = AnimationController(vsync: this);
   late final AnimationController _morph = AnimationController(vsync: this);
+
+  /// The terminal status the current morph belongs to.
+  ///
+  /// The painter derives its colour and glyph from the status it is given, so
+  /// once the overlay flipped back to busy while the morph was still running
+  /// out, an error cross recoloured itself into a green success tick on its
+  /// way off the screen. Holding the terminal identity for the length of the
+  /// morph keeps the glyph honest.
+  LoadingStatus? _lastTerminal;
   late final AnimationController _progress = AnimationController(vsync: this);
 
   Animation<double>? _progressAnimation;
@@ -123,6 +132,7 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
     _progress.duration = motion.progressDuration;
 
     if (widget.status.isTerminal) {
+      _lastTerminal = widget.status;
       if (_morph.isDismissed) _morph.value = 1;
       _spin.stop();
     } else if (!_spin.isAnimating || changed) {
@@ -136,6 +146,7 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
 
     if (widget.status != old.status) {
       if (widget.status.isTerminal) {
+        _lastTerminal = widget.status;
         // The spin stops the moment it settles, so a finished overlay is not
         // still burning a ticker while it waits to fade out.
         _spin.stop();
@@ -188,7 +199,9 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
               style: widget.indicatorStyle ?? resolved.indicatorStyle,
               spin: _spin.value,
               morph: _morph.value,
-              status: widget.status,
+              status: !widget.status.isTerminal && _morph.value > 0
+                  ? (_lastTerminal ?? widget.status)
+                  : widget.status,
               progress: _progressAnimation?.value,
               color: widget.color ?? resolved.indicatorColor,
               trackColor: widget.trackColor ?? resolved.trackColor,

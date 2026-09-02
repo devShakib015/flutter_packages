@@ -1,3 +1,38 @@
+## 0.3.2
+
+An audit of every package in this repo found five defects here. This package
+has the thinnest test coverage in the repo — 4,379 lines of library against 36
+tests — and it showed.
+
+### Fixed
+
+- **A nested `LoadingHost` permanently killed the global `Loading` facade.**
+  Attachment was a single field, so a nested host replaced the root on mount
+  and set the facade to null on unmount — after which every `Loading.show()`
+  anywhere in the app threw `LoadingHostMissing`, even though the root host was
+  still mounted. One modal with its own host poisoned the whole app.
+  Attachment is a stack now: innermost wins while mounted, and unmounting hands
+  the facade back.
+- **`show(dismissible: true)` rendered a scrim that did nothing.** The scrim
+  calls `cancelTopmost()`, which looks for an operation carrying an `onCancel`
+  — and only `run`/`runTask` ever set one. So a tap did nothing, or found some
+  unrelated operation further down the stack and cancelled *that*. A dismissible
+  `show` now carries its own cancel.
+- **A route push while loading crashed under the pages API.**
+  `LoadingNavigatorObserver` cleared synchronously inside `didPush`, which the
+  pages API runs during the build phase, and clearing mutates a notifier the
+  overlay listens to — "setState() called during build". It defers past the
+  frame when something is building, and still runs inline when nothing is.
+- **An error cross turned into a green success tick as it animated away.** The
+  painter takes its glyph and colour from the current status, so flipping back
+  to busy mid-morph recoloured the outgoing glyph. The terminal identity is now
+  held for the length of the morph.
+- **The README told you to install a version that excludes this one.** The
+  install block pinned `^0.1.0` — which resolves to `>=0.1.0 <0.2.0` — so
+  anyone copying it landed on 0.1.x and missed the 0.3.0 breaking change
+  entirely. Its only token-override snippet also passed `scrimBlur:`, which is
+  not a parameter; the field is `backdropBlur`.
+
 ## 0.3.1
 
 Documentation only — no API changes.

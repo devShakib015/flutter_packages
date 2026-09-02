@@ -23,15 +23,27 @@ import 'loading_timing.dart';
 /// your own [LoadingController] where a context is available, since a scoped
 /// controller is trivially testable and a global one is shared state.
 abstract final class Loading {
-  static LoadingController? _instance;
+  /// Hosts in mount order. The innermost one wins while it is mounted, and
+  /// unmounting it hands the facade back rather than destroying it.
+  ///
+  /// A plain field held only the newest host, so a nested [LoadingHost] — a
+  /// modal route with its own, say — replaced the root on mount and set the
+  /// facade to null on unmount. Every later `Loading.show()` in the app then
+  /// threw [LoadingHostMissing] even though the root host was still there.
+  static final List<LoadingController> _stack = <LoadingController>[];
+
+  static LoadingController? get _instance =>
+      _stack.isEmpty ? null : _stack.last;
 
   /// Registers [controller] as the global target. Called by the host.
-  static void attach(LoadingController controller) => _instance = controller;
-
-  /// Unregisters [controller] if it is the current global target.
-  static void detach(LoadingController controller) {
-    if (identical(_instance, controller)) _instance = null;
+  static void attach(LoadingController controller) {
+    _stack
+      ..remove(controller)
+      ..add(controller);
   }
+
+  /// Unregisters [controller], handing the facade back to the host beneath it.
+  static void detach(LoadingController controller) => _stack.remove(controller);
 
   /// Whether a host is installed.
   static bool get isInstalled => _instance != null;
