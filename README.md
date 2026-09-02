@@ -1,7 +1,12 @@
 # devShakib Flutter packages
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22255262.svg)](https://doi.org/10.5281/zenodo.22255262)
+
 Open-source Flutter packages published to pub.dev. A Dart pub workspace — one
 lockfile, one `.dart_tool`, members resolved by path.
+
+Every tagged release is archived on Zenodo and gets its own DOI; the badge
+above points at the concept DOI, which always resolves to the latest version.
 
 | Package | Description |
 | --- | --- |
