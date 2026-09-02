@@ -36,7 +36,7 @@ Running both packages through one harness, dragging forward 45 times:
 | --- | --- | --- |
 | one | no backward jumps | no backward jumps |
 | **two** | **2 jumps, worst 3,400px** | none |
-| **four** | **3 jumps, worst 2,200px** | none |
+| **four** | **3 jumps, worst 2,350px** | none |
 
 Both panels below are dragged by the same finger, the same distance, at the
 same moment. The left one gets thrown back into the first grid:

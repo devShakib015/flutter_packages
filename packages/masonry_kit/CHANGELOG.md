@@ -1,3 +1,14 @@
+## 0.3.2
+
+The README's four-grid figure said "worst 2,200px". Re-measured on Flutter
+3.47.1 it is **2,350px**. The two-grid figure (2 jumps, 3,400px) reproduces
+exactly.
+
+Noting honestly: the scrollbar-drift table further down the README (3,928 /
+1,340 / 77px) is from a one-off measurement and is not pinned by any test, so
+unlike the jump figures it could drift without failing anything. Pinning it is
+the next job here.
+
 ## 0.3.1
 
 No code changes. This release exists because the package was almost impossible
