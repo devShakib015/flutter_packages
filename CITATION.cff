@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using these metadata."
+title: "flutter_packages — twelve Dart and Flutter packages"
+abstract: >-
+  Source for twelve Dart and Flutter packages published to pub.dev under the jumyn.com publisher, each scoring 160/160 pub points: woo_client, loading_kit, fit_text, masonry_kit, anchored_list, vitals, roomplan, ar_quick_look, cross_tab, file_system_access, apple_foundation_models and apple_intelligence. Every package is MIT licensed and carries its own LICENSE file.
+type: software
+authors:
+  - given-names: "K M Shahriar"
+    family-names: "Hossain"
+    orcid: "https://orcid.org/0009-0004-5489-9717"
+repository-code: "https://github.com/devShakib015/flutter_packages"
+url: "https://pub.dev/publishers/jumyn.com/packages"
+license: MIT
+keywords:
+  - "apple-intelligence"
+  - "dart"
+  - "flutter"
+  - "flutter-package"
+  - "flutter-plugin"
+  - "health-connect"
+  - "healthkit"
+  - "listview"
+  - "loading"
+  - "on-device-ai"
+  - "pub-dev"
+  - "scrolling"
