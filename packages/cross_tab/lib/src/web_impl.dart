@@ -29,16 +29,37 @@ import 'types.dart';
 /// });
 /// ```
 class CrossTab {
-  CrossTab._(this.name, this._heartbeat) {
+  CrossTab._(this.name, this._heartbeat)
+    : _graceUntil = DateTime.now().add(_heartbeat) {
     _channel = web.BroadcastChannel(name);
     _channel.onmessage = ((web.MessageEvent event) {
       _receive(event.data);
     }).toJS;
     _announce('hello');
+    // A tab that has just opened has not heard from anyone yet, so it cannot
+    // know whether it is alone or joining a crowd. Leadership stays null for
+    // one heartbeat; this settles it for a tab that really is alone.
+    Timer(_heartbeat, () {
+      if (!_closed) _emitPresence();
+    });
     _timer = Timer.periodic(_heartbeat, (_) {
       _announce('beat');
       _prune();
     });
+    // A hidden tab's timers are throttled hard — browsers clamp them to about
+    // a minute — so a backgrounded tab stops beating and everyone else prunes
+    // it while it still believes it leads. Two leaders is exactly the thing
+    // this class exists to prevent. Beating on the visibility edge, and
+    // refusing to prune on the first tick back, closes the window.
+    _visibility = ((web.Event _) {
+      if (_closed) return;
+      _announce('beat');
+      if (!web.document.hidden) {
+        _skipNextPrune = true;
+        _emitPresence();
+      }
+    }).toJS;
+    web.document.addEventListener('visibilitychange', _visibility);
     // A tab closed by the user, rather than by calling close(), still owes the
     // others a goodbye — otherwise they wait a full timeout to notice.
     _unload = ((web.Event _) => close()).toJS;
@@ -68,6 +89,14 @@ class CrossTab {
   late final web.BroadcastChannel _channel;
   late final Timer _timer;
   late final JSFunction _unload;
+  late final JSFunction _visibility;
+
+  /// Leadership stays unresolved until this instant unless a peer speaks up.
+  final DateTime _graceUntil;
+
+  /// Set when this tab has just become visible again; the next prune round is
+  /// skipped because everyone's timers were throttled while it was hidden.
+  bool _skipNextPrune = false;
   final int _bornAt = DateTime.now().microsecondsSinceEpoch;
 
   final Map<String, _Peer> _peers = <String, _Peer>{};
@@ -88,9 +117,29 @@ class CrossTab {
   ///
   /// Emits the current state immediately on subscription, so a listener does
   /// not have to wait for the next change to learn where it stands.
-  Stream<TabPresence> get presence async* {
-    yield current;
-    yield* _presence.stream;
+  Stream<TabPresence> get presence {
+    // Not an async* generator. The prelude `yield current` suspends until the
+    // consumer takes it, and until then nothing is subscribed to the
+    // controller — so a consumer that awaits between events could miss its own
+    // demotion entirely. Replaying through onListen keeps the subscription
+    // live from the first moment.
+    late final StreamController<TabPresence> out;
+    StreamSubscription<TabPresence>? sub;
+    out = StreamController<TabPresence>.broadcast(
+      onListen: () {
+        out.add(current);
+        sub ??= _presence.stream.listen(
+          out.add,
+          onError: out.addError,
+          onDone: out.close,
+        );
+      },
+      onCancel: () async {
+        await sub?.cancel();
+        sub = null;
+      },
+    );
+    return out.stream;
   }
 
   /// Who is open right now, and who leads.
@@ -107,7 +156,27 @@ class CrossTab {
     if (_closed) {
       throw StateError('This CrossTab has been closed.');
     }
-    _post(<String, Object?>{'t': 'msg', 'id': id, 'born': _bornAt, 'd': data});
+    // The envelope is JSON-encoded, so the payload has to be JSON-encodable.
+    // Letting jsonEncode fail on its own produced "Converting object to an
+    // encodable object failed" from somewhere deep in the post, naming a
+    // type but not the field or the fact that this is a CrossTab constraint.
+    try {
+      _post(<String, Object?>{
+        't': 'msg',
+        'id': id,
+        'born': _bornAt,
+        'd': data,
+      });
+    } on JsonUnsupportedObjectError catch (e) {
+      throw ArgumentError.value(
+        data,
+        'data',
+        'CrossTab payloads are JSON-encoded, so every value must be a String, '
+            'num, bool, null, List or Map of the same. '
+            '${e.unsupportedObject.runtimeType} is not. Convert it first — a '
+            'DateTime as an ISO string, for instance.',
+      );
+    }
   }
 
   /// Leaves the channel, telling the other tabs so they do not wait for a
@@ -118,6 +187,7 @@ class CrossTab {
     _post(<String, Object?>{'t': 'bye', 'id': id, 'born': _bornAt});
     _timer.cancel();
     web.window.removeEventListener('pagehide', _unload);
+    web.document.removeEventListener('visibilitychange', _visibility);
     _channel.close();
     _messages.close();
     _presence.close();
@@ -132,6 +202,12 @@ class CrossTab {
   /// total and identical on every tab, which is what matters: they must all
   /// reach the same conclusion without talking about it further.
   String? _electedLeader() {
+    // Null while this tab has heard from nobody and has not yet waited a full
+    // heartbeat: "electing", not "me". Returning itself immediately meant two
+    // tabs opened together both reported isLeader true for a beat, and
+    // whatever the leader is supposed to do ran twice.
+    if (_peers.isEmpty && DateTime.now().isBefore(_graceUntil)) return null;
+
     String bestId = id;
     int bestBorn = _bornAt;
     for (final MapEntry<String, _Peer> e in _peers.entries) {
@@ -194,6 +270,12 @@ class CrossTab {
   /// Drops tabs that have missed three beats — a crash or a killed process
   /// never sends a goodbye.
   void _prune() {
+    if (_skipNextPrune) {
+      // Just came back from hidden: everyone's clocks have been throttled, so
+      // one round of staleness here means nothing.
+      _skipNextPrune = false;
+      return;
+    }
     final DateTime cutoff = DateTime.now().subtract(_heartbeat * 3);
     final List<String> gone = <String>[
       for (final MapEntry<String, _Peer> e in _peers.entries)

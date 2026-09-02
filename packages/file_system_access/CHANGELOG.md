@@ -1,3 +1,31 @@
+## 0.2.0
+
+An audit of every package in this repo found five defects here, one of them in
+the first snippet of the README.
+
+### Fixed
+
+- **A failed read threw something you could not catch.** `readBytes`,
+  `readText` and the directory paths translated nothing, so a browser
+  rejection crossed into Dart as a raw `DOMException` — invisible to
+  `on FileSystemAccessException`, which is the error contract this package
+  exists to provide. Every browser rejection now goes through one translator.
+- **The README's flagship snippet printed null.** It recalled
+  `'last-document'` without ever remembering it. The `remember` call is there
+  now.
+- **A failing close replaced the real write error.** `await stream.close()` sat
+  in a `finally`, so when a write failed the close failed too and its bare
+  `TypeError` was what surfaced — the caller never learned the disk was full or
+  the permission had lapsed. Whichever failure came first is kept.
+- **Recalling the wrong kind returned a wrong-typed handle.** File and
+  directory handles are extension types over the same JS object, so the cast
+  always succeeded and only broke later somewhere unrelated. Both now check
+  `kind` and return null on a mismatch.
+- **An aborted IndexedDB transaction hung forever.** `_done` listened for
+  complete and error but not abort, so a quota failure or a tab closing
+  mid-write left `remember` and `forget` awaiting a future nobody would
+  complete.
+
 ## 0.1.1
 
 - `PermissionDeniedException` is now actually thrown. It was exported from

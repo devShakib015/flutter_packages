@@ -43,8 +43,16 @@ class CrossTab {
   bool get isLeader => true;
 
   /// Goes nowhere, and says so by doing nothing.
-  void send(Map<String, Object?> data) {}
+  void send(Map<String, Object?> data) {
+    // Same contract as the web implementation, so code that misuses it fails
+    // in a test on the VM rather than only in a browser.
+    if (_closed) {
+      throw StateError('This CrossTab has been closed.');
+    }
+  }
 
   /// Nothing to close.
-  void close() {}
+  void close() => _closed = true;
+
+  bool _closed = false;
 }

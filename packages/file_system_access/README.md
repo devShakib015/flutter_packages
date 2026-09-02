@@ -6,6 +6,9 @@ Real files on Flutter Web.
 final file = await FileSystemAccess.saveFile(suggestedName: 'notes.txt');
 await file?.writeText('saved into the file the user picked');
 
+// Handles are structured cloneable, so one can be kept across reloads.
+if (file != null) await FileSystemAccess.remember('last-document', file);
+
 // Later, after a full page reload:
 final again = await FileSystemAccess.recallFile('last-document');
 print(await again?.readText());   // the same file, still there

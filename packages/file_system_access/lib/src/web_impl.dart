@@ -27,15 +27,23 @@ class FileHandle {
 
   /// Reads the whole file.
   Future<Uint8List> readBytes() async {
-    final web.File file = await native.getFile().toDart;
-    final JSArrayBuffer buffer = await file.arrayBuffer().toDart;
-    return buffer.toDart.asUint8List();
+    try {
+      final web.File file = await native.getFile().toDart;
+      final JSArrayBuffer buffer = await file.arrayBuffer().toDart;
+      return buffer.toDart.asUint8List();
+    } catch (e) {
+      _fail(e, 'Reading "$name"');
+    }
   }
 
   /// Reads the whole file as UTF-8 text.
   Future<String> readText() async {
-    final web.File file = await native.getFile().toDart;
-    return (await file.text().toDart).toDart;
+    try {
+      final web.File file = await native.getFile().toDart;
+      return (await file.text().toDart).toDart;
+    } catch (e) {
+      _fail(e, 'Reading "$name"');
+    }
   }
 
   /// Overwrites the file in place.
@@ -43,25 +51,36 @@ class FileHandle {
   /// This is the part a download cannot do. The user picked this file once;
   /// saving again does not ask them, and does not leave a `document (3).txt`
   /// behind.
-  Future<void> writeBytes(Uint8List bytes) async {
-    final web.FileSystemWritableFileStream stream = await _open();
-    try {
-      await stream.write(bytes.toJS).toDart;
-    } finally {
-      // Nothing reaches disk until the stream closes, so this must happen
-      // even if the write threw.
-      await stream.close().toDart;
-    }
-  }
+  Future<void> writeBytes(Uint8List bytes) async =>
+      _writeThrough(await _open(), bytes.toJS);
 
   /// Overwrites the file in place with UTF-8 text.
-  Future<void> writeText(String text) async {
-    final web.FileSystemWritableFileStream stream = await _open();
+  Future<void> writeText(String text) async =>
+      _writeThrough(await _open(), text.toJS);
+
+  /// Writes and closes, keeping whichever failure came first.
+  ///
+  /// Nothing reaches disk until the stream closes, so the close has to happen
+  /// even when the write threw — but doing it in a `finally` meant a failing
+  /// close overwrote the real error with a bare `TypeError` from the closed
+  /// stream, and the caller never learned that the disk was full or the
+  /// permission had lapsed.
+  Future<void> _writeThrough(
+    web.FileSystemWritableFileStream stream,
+    JSAny data,
+  ) async {
+    Object? failure;
     try {
-      await stream.write(text.toJS).toDart;
-    } finally {
-      await stream.close().toDart;
+      await stream.write(data).toDart;
+    } catch (e) {
+      failure = e;
     }
+    try {
+      await stream.close().toDart;
+    } catch (e) {
+      failure ??= e;
+    }
+    if (failure != null) _fail(failure, 'Writing to "$name"');
   }
 
   /// Opens the writable stream, translating the browser's refusal.
@@ -368,6 +387,11 @@ class FileSystemAccess {
   static Future<FileHandle?> recallFile(String key) async {
     final JSAny? value = await _read(key);
     if (value == null) return null;
+    // A handle knows what it is, and the cast alone does not: these are
+    // extension types over the same JS object, so casting a directory handle
+    // to a file handle succeeds and only fails much later, somewhere
+    // confusing.
+    if ((value as FsHandle).kind != 'file') return null;
     return FileHandle.fromNative(value as web.FileSystemFileHandle);
   }
 
@@ -375,6 +399,7 @@ class FileSystemAccess {
   static Future<DirectoryHandle?> recallDirectory(String key) async {
     final JSAny? value = await _read(key);
     if (value == null) return null;
+    if ((value as FsHandle).kind != 'directory') return null;
     return DirectoryHandle.fromNative(value as web.FileSystemDirectoryHandle);
   }
 
@@ -426,12 +451,24 @@ class FileSystemAccess {
   static Future<void> _done(web.IDBTransaction tx) {
     final Completer<void> done = Completer<void>();
     tx.oncomplete = (web.Event _) {
-      done.complete();
+      if (!done.isCompleted) done.complete();
     }.toJS;
     tx.onerror = (web.Event _) {
-      done.completeError(
-        const FileSystemFailure('The handle store rejected the write.'),
-      );
+      if (!done.isCompleted) {
+        done.completeError(
+          const FileSystemFailure('The handle store rejected the write.'),
+        );
+      }
+    }.toJS;
+    // An aborted transaction fires neither of the above — a quota failure or
+    // the tab going away mid-write left remember() and forget() awaiting a
+    // future nobody would ever complete.
+    tx.onabort = (web.Event _) {
+      if (!done.isCompleted) {
+        done.completeError(
+          const FileSystemFailure('The handle store transaction was aborted.'),
+        );
+      }
     }.toJS;
     return done.future;
   }
@@ -457,6 +494,23 @@ class FileSystemAccess {
   /// A cancelled picker throws AbortError, which is not a failure — the user
   /// simply changed their mind.
   static bool _isAbort(Object error) => error.toString().contains('AbortError');
+}
+
+/// Turns a browser rejection into this package's own exception type.
+///
+/// Every path that touches the File System Access API has to go through this.
+/// A raw `DOMException` crossing into Dart is not catchable by
+/// `on FileSystemAccessException`, which is the whole contract this package
+/// offers — so an untranslated read looked like it could not fail at all and
+/// then threw something nobody could catch.
+Never _fail(Object error, String what) {
+  if (_isNotAllowed(error)) {
+    throw PermissionDeniedException(
+      '$what was refused. Call requestPermission() from a user gesture, then '
+      'try again.',
+    );
+  }
+  throw FileSystemFailure('$what failed: $error');
 }
 
 /// Whether the browser refused for permission reasons.

@@ -3,7 +3,12 @@ class TabMessage {
   /// Creates a message.
   const TabMessage({required this.data, required this.from});
 
-  /// The payload, exactly as the sender passed it.
+  /// The payload, as JSON round-tripping produced it.
+  ///
+  /// Not identical to what the sender passed: the envelope is JSON-encoded,
+  /// so what arrives is whatever `jsonDecode` builds. A nested map comes back
+  /// as `Map<String, dynamic>` rather than the type you sent, and a `DateTime`
+  /// or a custom object never makes the trip at all — see `CrossTab.send`.
   final Map<String, Object?> data;
 
   /// Which tab sent it. Stable for the life of that tab.
