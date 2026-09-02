@@ -2,7 +2,7 @@ name: roomplan
 description: >-
   Scan a room with Apple's RoomPlan and get walls, doors, windows and furniture with real dimensions, a USDZ model, and a floor-plan widget.
 
-version: 0.2.0
+version: 0.3.0
 repository: https://github.com/devShakib015/flutter_packages
 issue_tracker: https://github.com/devShakib015/flutter_packages/issues
 documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/roomplan

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -34,7 +33,7 @@ class RoomScanController extends ChangeNotifier {
 
   /// Whether this device can scan at all, and why not if it cannot.
   static Future<RoomScanSupport> support() async {
-    if (kIsWeb || !Platform.isIOS) {
+    if (!RoomScanView.isSupportedPlatform) {
       return const RoomScanSupport(
         supported: false,
         reason: RoomScanUnsupportedReason.osTooOld,
@@ -130,7 +129,14 @@ class RoomScanView extends StatefulWidget {
 
   /// Whether this platform could host the view at all. Says nothing about
   /// LiDAR; use [RoomScanController.support] for that.
-  static bool get isSupportedPlatform => !kIsWeb && Platform.isIOS;
+  /// Whether this platform could host a scan at all.
+  ///
+  /// Uses [defaultTargetPlatform] rather than `Platform.isIOS`: importing
+  /// `dart:io` here made the whole package impossible to compile for web,
+  /// which the `kIsWeb` guards were written to allow. It also lets a widget
+  /// test drive the fallback path with `debugDefaultTargetPlatformOverride`.
+  static bool get isSupportedPlatform =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
 
   @override
   State<RoomScanView> createState() => _RoomScanViewState();
@@ -138,6 +144,30 @@ class RoomScanView extends StatefulWidget {
 
 class _RoomScanViewState extends State<RoomScanView> {
   static const String _viewType = 'dev.shakib/roomplan/scan';
+
+  /// Null until the device has been asked. RoomPlan needs LiDAR, and the
+  /// platform check alone cannot see that — an iPhone without it used to get
+  /// a black UiKitView where the dartdoc promised [RoomScanView.fallback].
+  bool? _supported;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!RoomScanView.isSupportedPlatform) {
+      _supported = false;
+      return;
+    }
+    unawaited(
+      RoomScanController.support().then(
+        (RoomScanSupport s) {
+          if (mounted) setState(() => _supported = s.supported);
+        },
+        onError: (_) {
+          if (mounted) setState(() => _supported = false);
+        },
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -147,7 +177,12 @@ class _RoomScanViewState extends State<RoomScanView> {
 
   @override
   Widget build(BuildContext context) {
-    if (!RoomScanView.isSupportedPlatform) {
+    if (!RoomScanView.isSupportedPlatform || _supported == false) {
+      return widget.fallback ?? const SizedBox.shrink();
+    }
+    // Still asking. Showing the fallback beats flashing a black rectangle for
+    // a frame and then replacing it.
+    if (_supported == null) {
       return widget.fallback ?? const SizedBox.shrink();
     }
     return UiKitView(

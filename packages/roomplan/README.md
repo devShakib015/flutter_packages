@@ -27,6 +27,23 @@ controller.rooms.listen((room) {
 test suite — a real scan needs LiDAR, and this package does not illustrate
 itself with hardware it has not run on.*
 
+## Setup
+
+RoomPlan uses the camera, so the **host app** must declare why. Without this
+iOS terminates the app the instant a scan starts — not a permission dialog, a
+crash.
+
+Add to `ios/Runner/Info.plist`:
+
+```xml
+<key>NSCameraUsageDescription</key>
+<string>Scanning a room uses the camera and the LiDAR sensor to measure it.</string>
+```
+
+Requires iOS 16 and a device with LiDAR. `RoomScanController.support()` tells
+you which of those is missing, and `RoomScanView` shows its `fallback` rather
+than a black rectangle when the device cannot scan.
+
 ## Seeing the room
 
 A `CapturedRoom` is geometry: transforms and extents in metres. Useful, but not

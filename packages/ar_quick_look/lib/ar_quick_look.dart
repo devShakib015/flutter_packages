@@ -3,6 +3,7 @@ library;
 
 export 'src/ar_quick_look.dart'
     show
+        AlreadyPresentingException,
         ArQuickLook,
         ArQuickLookException,
         FileNotFoundException,

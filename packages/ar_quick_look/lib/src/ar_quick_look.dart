@@ -36,6 +36,16 @@ class UnsupportedFileException extends ArQuickLookException {
   const UnsupportedFileException(super.message);
 }
 
+/// A preview is already on screen.
+///
+/// There is one screen, so there is one viewer. Presenting a second while the
+/// first is up used to deallocate the first: the open viewer went blank and
+/// its Dart future never completed.
+class AlreadyPresentingException extends ArQuickLookException {
+  /// Creates the exception.
+  const AlreadyPresentingException(super.message);
+}
+
 /// Nothing to present from — no view controller was available.
 class NoHostException extends ArQuickLookException {
   /// Creates the exception.
@@ -128,6 +138,7 @@ class ArQuickLook {
         'notFound' => FileNotFoundException(e.message ?? e.code),
         'unsupportedFile' => UnsupportedFileException(e.message ?? e.code),
         'noHost' => NoHostException(e.message ?? e.code),
+        'alreadyPresenting' => AlreadyPresentingException(e.message ?? e.code),
         _ => UnsupportedFileException(e.message ?? e.code),
       };
     }
@@ -169,22 +180,54 @@ class ArQuickLook {
   /// Exposed because the same problem appears whenever something outside
   /// Flutter needs a path — sharing a model, handing it to another app — and
   /// solving it once here is better than everyone solving it again.
+  ///
+  /// The copy is reused if it is already there, so the asset is read once.
+  /// That cache lives in the temporary directory and can outlive an app
+  /// update, so a build that ships a *changed* model under the same key
+  /// should pass `refresh: true` once.
   static Future<String> materializeAsset(
     String assetKey, {
     AssetBundle? bundle,
+    bool refresh = false,
   }) async {
+    // Namespaced by the whole asset key, not its basename: two assets called
+    // model.usdz in different folders used to land on the same temp path and
+    // serve each other's bytes — two products, one model. The file keeps its
+    // original name inside that directory, so Quick Look still sees a .usdz.
+    final String slot = assetKey.replaceAll(RegExp(r'[^A-Za-z0-9]+'), '_');
     final Directory dir = Directory(
-      '${Directory.systemTemp.path}/ar_quick_look',
+      '${Directory.systemTemp.path}/ar_quick_look/$slot',
     );
     if (!dir.existsSync()) dir.createSync(recursive: true);
     final File file = File('${dir.path}/${assetKey.split('/').last}');
-    if (file.existsSync() && file.lengthSync() > 0) return file.path;
 
-    final ByteData data = await (bundle ?? rootBundle).load(assetKey);
-    await file.writeAsBytes(
+    if (!refresh && file.existsSync() && file.lengthSync() > 0) {
+      return file.path;
+    }
+
+    final ByteData data;
+    try {
+      data = await (bundle ?? rootBundle).load(assetKey);
+    } catch (e) {
+      // rootBundle throws a raw FlutterError for a key that is not declared
+      // in pubspec.yaml — which escaped the sealed hierarchy entirely, so the
+      // commonest setup mistake this package has was not catchable as one of
+      // its own.
+      throw FileNotFoundException(
+        'No asset "$assetKey". Declare it under `assets:` in your '
+        'pubspec.yaml, or check the spelling. ($e)',
+      );
+    }
+
+    // Written beside and renamed. Writing in place meant a write that died
+    // half way left a short file that the length check above then trusted
+    // forever.
+    final File partial = File('${file.path}.part');
+    await partial.writeAsBytes(
       data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
       flush: true,
     );
+    await partial.rename(file.path);
     return file.path;
   }
 }

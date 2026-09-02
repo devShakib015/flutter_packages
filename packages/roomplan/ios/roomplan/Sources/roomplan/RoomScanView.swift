@@ -119,6 +119,11 @@ final class RoomScanView: NSObject, FlutterPlatformView {
     /// what turns a raw scan into squared-off walls with real dimensions.
     func captureView(shouldPresent roomDataForProcessing: CapturedRoomData,
                      error: Error?) -> Bool {
+      // RoomPlan ends the session itself when the user finishes, or when it
+      // gives up. Nothing cleared isRunning on that path, so the next Start
+      // hit `guard !isRunning` and returned success without starting
+      // anything — the preview just sat there.
+      isRunning = false
       if let error {
         emit(["type": "error", "message": error.localizedDescription])
         return false
@@ -127,6 +132,7 @@ final class RoomScanView: NSObject, FlutterPlatformView {
     }
 
     func captureView(didPresent processedResult: CapturedRoom, error: Error?) {
+      isRunning = false
       if let error {
         emit(["type": "error", "message": error.localizedDescription])
         return

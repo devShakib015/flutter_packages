@@ -1,3 +1,36 @@
+## 0.3.0
+
+An audit of every package in this repo found five defects here, including one
+that crashed the host app on the first scan.
+
+### Fixed
+
+- **Starting a scan terminated the app.** RoomPlan uses the camera, and iOS
+  kills a process that touches it without `NSCameraUsageDescription` — not a
+  permission dialog, a crash. The key was absent from the example and
+  undocumented in the README. Both fixed, with a Setup section that says the
+  host app must declare it.
+- **`import 'dart:io'` made the package impossible to compile for web,** while
+  the `kIsWeb` guards claimed it was safe there. Replaced with
+  `defaultTargetPlatform`, which also lets a widget test drive the fallback.
+- **An iPhone without LiDAR got a black rectangle instead of `fallback`.** The
+  view checked the platform but never the device, so it built a `UiKitView`
+  RoomPlan could not fill — contradicting its own dartdoc. It asks
+  `RoomScanController.support()` now and shows `fallback` when the answer is
+  no.
+- **A second scan silently did nothing.** RoomPlan ends the session itself when
+  the user finishes, and nothing cleared the native `isRunning` flag on that
+  path — so the next Start hit its guard and returned success without starting
+  anything. Cleared in both delegate callbacks.
+- **A floor plan never redrew when its style changed.** `FloorPlanStyle` had
+  identity equality, so `shouldRepaint` could not see a difference and a theme
+  switch changed nothing on screen. It compares by value now.
+
+### Still true
+
+A real scan remains unverified — it needs LiDAR hardware this project does not
+have. That has been in the README since 0.1.0 and still is.
+
 ## 0.2.0
 
 - `RoomFloorPlan` draws a scan as a top-down floor plan: walls, doors, windows

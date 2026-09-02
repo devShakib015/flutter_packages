@@ -65,12 +65,28 @@ public class ArQuickLookPlugin: NSObject, FlutterPlugin {
       return item
     }
 
-    guard QLPreviewController.canPreview(items[0]) else {
+    // Every item, not just the first: presentAll existence-checks all of them
+    // and the controller opens on initialIndex, so a bad model at any other
+    // position sailed past this and failed inside Quick Look instead.
+    if let bad = zip(paths, items).first(where: { !QLPreviewController.canPreview($0.1) }) {
       return result(
         FlutterError(
           code: "unsupportedFile",
-          message: "Quick Look cannot preview \(paths[0]). USDZ and Reality "
+          message: "Quick Look cannot preview \(bad.0). USDZ and Reality "
             + "files are what AR Quick Look accepts.",
+          details: nil))
+    }
+
+    // A second present() used to overwrite `session`, deallocating the first.
+    // The open viewer went blank — the controller holds its data source
+    // weakly — and the first Dart future never completed. Refusing is the
+    // honest answer: there is one screen.
+    guard session == nil else {
+      return result(
+        FlutterError(
+          code: "alreadyPresenting",
+          message: "A preview is already on screen. Wait for it to close "
+            + "before presenting another.",
           details: nil))
     }
 

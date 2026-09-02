@@ -45,6 +45,32 @@ class FloorPlanStyle {
 
   /// Space left around the plan, in logical pixels.
   final double padding;
+
+  @override
+  bool operator ==(Object other) =>
+      other is FloorPlanStyle &&
+      other.wall == wall &&
+      other.door == door &&
+      other.window == window &&
+      other.opening == opening &&
+      other.object == object &&
+      other.objectOutline == objectOutline &&
+      other.wallThickness == wallThickness &&
+      other.detailThickness == detailThickness &&
+      other.padding == padding;
+
+  @override
+  int get hashCode => Object.hash(
+    wall,
+    door,
+    window,
+    opening,
+    object,
+    objectOutline,
+    wallThickness,
+    detailThickness,
+    padding,
+  );
 }
 
 /// Draws a scanned room as a top-down floor plan.
@@ -212,5 +238,9 @@ class _FloorPlanPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_FloorPlanPainter old) =>
-      old.room != room || old.showObjects != showObjects;
+      old.room != room ||
+      old.showObjects != showObjects ||
+      // Without this a floor plan kept its old colours and stroke widths
+      // forever — switching to a dark theme redrew nothing.
+      old.style != style;
 }
