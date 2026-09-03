@@ -1,3 +1,22 @@
+## 0.3.1
+
+The README claimed "no other Dart package implements it" of the Store API. That
+absolute is false and is now corrected.
+
+`woocommerce` (last published 2020) and its fork `flutter_wp_woocommerce` (2022)
+both define `URL_STORE_API_PATH = '/wp-json/wc/store/'` and call `cart`,
+`cart/items` and `cart/items/{key}`. They are abandoned, but they exist, and the
+claim as written was wrong.
+
+What is actually true, checked by downloading and grepping all six WooCommerce
+archives on pub.dev: `Cart-Token` appears in none of them, so every one depends
+on a cookie session and none works from an app; none implements Store API
+checkout or `select-shipping-rate`. The README now says that instead — narrower,
+verified, and still the reason to use this package from Flutter.
+
+Caught while cross-checking a distribution assessment that had asserted
+`wc/store` appears in zero rival archives. It does not.
+
 ## 0.3.0
 
 An audit of every package in this repo found five defects here. Two of them

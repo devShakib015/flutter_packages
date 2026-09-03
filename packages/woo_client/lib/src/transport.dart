@@ -12,7 +12,7 @@ import 'exceptions.dart';
 ///
 /// A test keeps this in step with the package version. Browsers forbid setting
 /// this header and drop it, so on the web the browser's own is sent instead.
-const String wooUserAgent = 'woo_client/0.3.0 (Dart)';
+const String wooUserAgent = 'woo_client/0.3.1 (Dart)';
 
 /// When to try a failed request again.
 ///

@@ -39,7 +39,16 @@ mistake in a Flutter storefront.
 Anything you ship to a device can be read off that device. A consumer key in a
 Flutter app is your whole store, handed to anyone who downloads it — no amount
 of obfuscation changes that. The Store API exists precisely so you do not need
-one, and **no other Dart package implements it.**
+one.
+
+To be exact about what is and is not new here, because absolutes are easy to
+get wrong: two long-abandoned packages (`woocommerce`, last published 2020, and
+its fork `flutter_wp_woocommerce`, 2022) do call a handful of Store API *cart*
+endpoints. Neither sends a `Cart-Token`, so both depend on a cookie session and
+neither works from an app; neither touches checkout or shipping rates. Across
+every WooCommerce package on pub.dev, `Cart-Token` appears in none of them.
+This is the only one that implements the Store API's session and checkout, and
+therefore the only one usable outside a browser.
 
 If you need admin data in a shipped app, put your own backend in front and use
 `WooCredentials.bearer` against it.
