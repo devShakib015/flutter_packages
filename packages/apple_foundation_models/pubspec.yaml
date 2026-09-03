@@ -2,7 +2,7 @@ name: apple_foundation_models
 description: >-
   Run Apple's on-device language model from Flutter. Streaming, tool calling,
   and schema-constrained structured output — private, offline, and free.
-version: 0.3.1
+version: 0.3.2
 repository: https://github.com/devShakib015/flutter_packages
 issue_tracker: https://github.com/devShakib015/flutter_packages/issues
 documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/apple_foundation_models
@@ -33,7 +33,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  meta: ^1.15.0
 
 dev_dependencies:
   flutter_test:

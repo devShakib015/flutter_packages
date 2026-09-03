@@ -1,3 +1,20 @@
+## 0.3.2
+
+Corrects 0.3.1, which claimed a floor it had not actually been checked against.
+
+0.3.1 added `package:meta` so `Bridge` could carry `@internal`. That constraint
+does not resolve on older SDKs, so the package would not have installed at the
+floor its own changelog advertised — and the check that was supposed to catch
+this reported success because the analyzer never ran at all. The verification
+now proves the analyzer executed before trusting a zero error count.
+
+`@internal` is gone, and with it the dependency. `Bridge` lives under `lib/src/`
+and the barrel never exports it, so it was already unreachable; the annotation
+bought nothing and cost a resolution failure.
+
+Genuinely type-checked against Flutter 3.16.9 / Dart 3.2.6 this time, against a
+declared floor of Flutter 3.24.
+
 ## 0.3.1
 
 No behaviour changes. `sdk: ^3.13.0` meant Dart 3.13, which ships only with

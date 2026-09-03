@@ -1,8 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:meta/meta.dart';
 
 import 'availability.dart';
 import 'exceptions.dart';
@@ -12,7 +10,11 @@ import 'tool.dart';
 ///
 /// Everything crossing the channel funnels through here so that error mapping
 /// and tool dispatch exist in exactly one place.
-@internal
+///
+/// Not annotated `@internal`: this lives under `lib/src/` and the barrel never
+/// exports it, so it is already unreachable. The annotation only bought a
+/// dependency on `package:meta`, whose constraint then blocked resolution on
+/// older SDKs.
 abstract final class Bridge {
   static const MethodChannel _method = MethodChannel(
     'dev.shakib/apple_foundation_models',
