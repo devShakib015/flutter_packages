@@ -21,9 +21,9 @@ the end.*
 ## Why this exists
 
 `apple_foundation_models` gave Flutter Apple's on-device *language* model. This
-is the other half. At the time of writing there is no Flutter binding for Apple
-Intelligence image generation at all — a pub.dev search for Image Playground
-returns nothing.
+is the other half. Every other Apple Intelligence package on pub.dev is
+text-only; the most-installed of them, `flutter_local_ai`, still lists image
+generation as "Planned" in its own support table.
 
 ## Streaming is the point
 

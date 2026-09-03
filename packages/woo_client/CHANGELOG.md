@@ -1,3 +1,20 @@
+## 0.3.2
+
+0.3.1 removed one false absolute and introduced two. It claimed `Cart-Token`
+appears in no other WooCommerce package on pub.dev, and that this is the only
+one implementing Store API session and checkout. Both are false.
+
+`woocommerce_plugin` 2.0.0 — published 2026-03-27, five months before this
+package — sets its base URL to `/wp-json/wc/store/v1` in eleven places, sets a
+`Cart-Token` header in thirteen, ships `processCheckout()`, and calls
+`/cart/select-shipping-rate`. The 0.3.1 check grepped six archives and that was
+not one of them. The method was right and the sample was too small.
+
+The README now names it, and states the difference that does survive checking:
+`woocommerce_plugin` requires `username` and `password` in its only
+constructor, so the credential is compiled into the binary whichever endpoint
+is called. `WooStore(baseUrl: ...)` takes none.
+
 ## 0.3.1
 
 The README claimed "no other Dart package implements it" of the Store API. That

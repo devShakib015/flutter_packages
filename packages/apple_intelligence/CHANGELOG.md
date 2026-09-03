@@ -1,3 +1,14 @@
+## 0.3.2
+
+README only. The introduction proved "no Flutter binding for Apple Intelligence
+image generation" by saying a pub.dev search for Image Playground returns
+nothing. That search now returns this package, so the sentence refuted itself.
+
+The claim still holds; it now rests on something that stays true. Every other
+Apple Intelligence package on pub.dev is text-only, and the most installed of
+them, `flutter_local_ai`, lists image generation as "Planned" in its own
+support table.
+
 ## 0.3.1
 
 No behaviour changes. `sdk: ^3.13.0` meant Dart 3.13, which ships only with

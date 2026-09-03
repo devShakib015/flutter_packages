@@ -41,14 +41,18 @@ Flutter app is your whole store, handed to anyone who downloads it — no amount
 of obfuscation changes that. The Store API exists precisely so you do not need
 one.
 
-To be exact about what is and is not new here, because absolutes are easy to
-get wrong: two long-abandoned packages (`woocommerce`, last published 2020, and
-its fork `flutter_wp_woocommerce`, 2022) do call a handful of Store API *cart*
-endpoints. Neither sends a `Cart-Token`, so both depend on a cookie session and
-neither works from an app; neither touches checkout or shipping rates. Across
-every WooCommerce package on pub.dev, `Cart-Token` appears in none of them.
-This is the only one that implements the Store API's session and checkout, and
-therefore the only one usable outside a browser.
+To be exact about what is and is not new here. `woocommerce_plugin` (2026)
+also implements the Store API properly — cart, checkout, shipping rates and
+`Cart-Token` sessions. Two long-abandoned packages (`woocommerce`, 2020, and
+its fork `flutter_wp_woocommerce`, 2022) call a handful of cart endpoints
+without a `Cart-Token`, so both depend on a cookie session and neither works
+from an app.
+
+What is different here is the credential model. `woocommerce_plugin` requires
+`username` and `password` in its only constructor, so the key is compiled into
+your binary whichever endpoint you end up calling. `WooStore(baseUrl: ...)`
+takes no credential at all, and the storefront type is separate from the admin
+one, so there is nothing to leak.
 
 If you need admin data in a shipped app, put your own backend in front and use
 `WooCredentials.bearer` against it.
