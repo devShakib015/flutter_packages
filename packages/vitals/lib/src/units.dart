@@ -236,7 +236,7 @@ class Concentration implements Comparable<Concentration> {
   /// The conversion factor is glucose-specific, which is why this type is
   /// named for the measurement rather than being a general concentration.
   const Concentration.milligramsPerDecilitre(double mgdl)
-    : millimolesPerLitre = mgdl / 18.0182;
+      : millimolesPerLitre = mgdl / 18.0182;
 
   /// The canonical value.
   final double millimolesPerLitre;

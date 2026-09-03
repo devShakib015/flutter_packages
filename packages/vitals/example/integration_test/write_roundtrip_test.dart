@@ -17,8 +17,8 @@ void main() {
     final Vitals vitals = Vitals.instance;
     expect(await vitals.isAvailable(), isTrue);
 
-    final Map<VitalType<VitalSample>, WriteAccess> access = await vitals
-        .writeAccess(<VitalType<VitalSample>>{VitalType.water});
+    final Map<VitalType<VitalSample>, WriteAccess> access =
+        await vitals.writeAccess(<VitalType<VitalSample>>{VitalType.water});
     // ignore: avoid_print
     print('  write access for water: ${access[VitalType.water]}');
     if (access[VitalType.water] != WriteAccess.granted) {

@@ -69,22 +69,22 @@ class Scene {
 
   /// Reads a scene out of the capture file.
   static Scene fromJson(Map<String, dynamic> json) => Scene(
-    json['prompt'] as String,
-    <Frame>[
-      for (final dynamic f in json['frames'] as List<dynamic>)
-        Frame((f as Map<String, dynamic>)['t'] as int, f['s'] as String),
-    ],
-    toolArgs: json['toolArgs'] as String?,
-    toolResult: json['toolResult'] as String?,
-  );
+        json['prompt'] as String,
+        <Frame>[
+          for (final dynamic f in json['frames'] as List<dynamic>)
+            Frame((f as Map<String, dynamic>)['t'] as int, f['s'] as String),
+        ],
+        toolArgs: json['toolArgs'] as String?,
+        toolResult: json['toolResult'] as String?,
+      );
 }
 
 void main() {
   late Map<String, Scene> scenes;
 
   setUpAll(() async {
-    final Uint8List bytes = File('tool/fonts/InterVariable.ttf')
-        .readAsBytesSync();
+    final Uint8List bytes =
+        File('tool/fonts/InterVariable.ttf').readAsBytesSync();
     await ui.loadFontFromList(bytes, fontFamily: 'Inter');
 
     final Map<String, dynamic> raw = jsonDecode(

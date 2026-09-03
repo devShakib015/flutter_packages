@@ -75,26 +75,26 @@ class VitalType<T extends VitalSample> {
   /// Distance covered walking or running.
   static const VitalType<LengthSample> distanceWalkingRunning =
       VitalType<LengthSample>._(
-        'distanceWalkingRunning',
-        LengthSample.decode,
-        defaultAggregate: VitalAggregate.sum,
-      );
+    'distanceWalkingRunning',
+    LengthSample.decode,
+    defaultAggregate: VitalAggregate.sum,
+  );
 
   /// Energy burned through activity, above resting.
   static const VitalType<EnergySample> activeEnergyBurned =
       VitalType<EnergySample>._(
-        'activeEnergyBurned',
-        EnergySample.decode,
-        defaultAggregate: VitalAggregate.sum,
-      );
+    'activeEnergyBurned',
+    EnergySample.decode,
+    defaultAggregate: VitalAggregate.sum,
+  );
 
   /// Energy burned at rest.
   static const VitalType<EnergySample> basalEnergyBurned =
       VitalType<EnergySample>._(
-        'basalEnergyBurned',
-        EnergySample.decode,
-        defaultAggregate: VitalAggregate.sum,
-      );
+    'basalEnergyBurned',
+    EnergySample.decode,
+    defaultAggregate: VitalAggregate.sum,
+  );
 
   // --------------------------------------------------------------- vitals
 
@@ -122,42 +122,42 @@ class VitalType<T extends VitalSample> {
   /// Blood oxygen saturation.
   static const VitalType<PercentSample> oxygenSaturation =
       VitalType<PercentSample>._(
-        'oxygenSaturation',
-        PercentSample.decode,
-        defaultAggregate: VitalAggregate.average,
-      );
+    'oxygenSaturation',
+    PercentSample.decode,
+    defaultAggregate: VitalAggregate.average,
+  );
 
   /// Body temperature.
   static const VitalType<TemperatureSample> bodyTemperature =
       VitalType<TemperatureSample>._(
-        'bodyTemperature',
-        TemperatureSample.decode,
-        defaultAggregate: VitalAggregate.average,
-      );
+    'bodyTemperature',
+    TemperatureSample.decode,
+    defaultAggregate: VitalAggregate.average,
+  );
 
   /// Systolic blood pressure.
   static const VitalType<PressureSample> bloodPressureSystolic =
       VitalType<PressureSample>._(
-        'bloodPressureSystolic',
-        PressureSample.decode,
-        defaultAggregate: VitalAggregate.average,
-      );
+    'bloodPressureSystolic',
+    PressureSample.decode,
+    defaultAggregate: VitalAggregate.average,
+  );
 
   /// Diastolic blood pressure.
   static const VitalType<PressureSample> bloodPressureDiastolic =
       VitalType<PressureSample>._(
-        'bloodPressureDiastolic',
-        PressureSample.decode,
-        defaultAggregate: VitalAggregate.average,
-      );
+    'bloodPressureDiastolic',
+    PressureSample.decode,
+    defaultAggregate: VitalAggregate.average,
+  );
 
   /// Blood glucose concentration.
   static const VitalType<ConcentrationSample> bloodGlucose =
       VitalType<ConcentrationSample>._(
-        'bloodGlucose',
-        ConcentrationSample.decode,
-        defaultAggregate: VitalAggregate.average,
-      );
+    'bloodGlucose',
+    ConcentrationSample.decode,
+    defaultAggregate: VitalAggregate.average,
+  );
 
   // ----------------------------------------------------------------- body
 
@@ -178,10 +178,10 @@ class VitalType<T extends VitalSample> {
   /// Body fat, as a fraction.
   static const VitalType<PercentSample> bodyFatPercentage =
       VitalType<PercentSample>._(
-        'bodyFatPercentage',
-        PercentSample.decode,
-        defaultAggregate: VitalAggregate.latest,
-      );
+    'bodyFatPercentage',
+    PercentSample.decode,
+    defaultAggregate: VitalAggregate.latest,
+  );
 
   /// Height.
   static const VitalType<LengthSample> height = VitalType<LengthSample>._(
@@ -202,10 +202,10 @@ class VitalType<T extends VitalSample> {
   /// Time spent in a mindfulness session.
   static const VitalType<DurationSample> mindfulSession =
       VitalType<DurationSample>._(
-        'mindfulSession',
-        DurationSample.decode,
-        defaultAggregate: VitalAggregate.sum,
-      );
+    'mindfulSession',
+    DurationSample.decode,
+    defaultAggregate: VitalAggregate.sum,
+  );
 
   /// Sleep, broken into stages.
   static const VitalType<SleepSample> sleep = VitalType<SleepSample>._(

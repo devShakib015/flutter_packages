@@ -32,11 +32,11 @@ void main() {
   });
 
   testWidgets('read access is answerable here, unlike iOS', (_) async {
-    final Map<VitalType<VitalSample>, bool>? access = await vitals
-        .readAccessOnAndroid(<VitalType<VitalSample>>{
-          VitalType.steps,
-          VitalType.water,
-        });
+    final Map<VitalType<VitalSample>, bool>? access =
+        await vitals.readAccessOnAndroid(<VitalType<VitalSample>>{
+      VitalType.steps,
+      VitalType.water,
+    });
     expect(
       access,
       isNotNull,
@@ -47,8 +47,8 @@ void main() {
   });
 
   testWidgets('write access is reported per type', (_) async {
-    final Map<VitalType<VitalSample>, WriteAccess> access = await vitals
-        .writeAccess(<VitalType<VitalSample>>{VitalType.water});
+    final Map<VitalType<VitalSample>, WriteAccess> access =
+        await vitals.writeAccess(<VitalType<VitalSample>>{VitalType.water});
     expect(access[VitalType.water], WriteAccess.granted);
   });
 

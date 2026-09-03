@@ -46,10 +46,10 @@ final class TopKSampling extends SamplingMode {
 
   @override
   Map<String, Object?> toJson() => <String, Object?>{
-    'mode': 'topK',
-    'k': k,
-    if (seed != null) 'seed': seed,
-  };
+        'mode': 'topK',
+        'k': k,
+        if (seed != null) 'seed': seed,
+      };
 }
 
 /// Nucleus sampling. See [SamplingMode.topP].
@@ -66,10 +66,10 @@ final class TopPSampling extends SamplingMode {
 
   @override
   Map<String, Object?> toJson() => <String, Object?>{
-    'mode': 'topP',
-    'threshold': threshold,
-    if (seed != null) 'seed': seed,
-  };
+        'mode': 'topP',
+        'threshold': threshold,
+        if (seed != null) 'seed': seed,
+      };
 }
 
 /// Per-request generation settings.
@@ -88,14 +88,14 @@ class GenerationOptions {
     this.sampling,
     this.temperature,
     this.maximumResponseTokens,
-  }) : assert(
-         temperature == null || temperature >= 0,
-         'temperature must not be negative',
-       ),
-       assert(
-         maximumResponseTokens == null || maximumResponseTokens > 0,
-         'maximumResponseTokens must be positive',
-       );
+  })  : assert(
+          temperature == null || temperature >= 0,
+          'temperature must not be negative',
+        ),
+        assert(
+          maximumResponseTokens == null || maximumResponseTokens > 0,
+          'maximumResponseTokens must be positive',
+        );
 
   /// Deterministic settings, for extraction and classification.
   static const GenerationOptions deterministic = GenerationOptions(
@@ -115,11 +115,11 @@ class GenerationOptions {
 
   /// Wire representation.
   Map<String, Object?> toJson() => <String, Object?>{
-    if (sampling != null) 'sampling': sampling!.toJson(),
-    if (temperature != null) 'temperature': temperature,
-    if (maximumResponseTokens != null)
-      'maximumResponseTokens': maximumResponseTokens,
-  };
+        if (sampling != null) 'sampling': sampling!.toJson(),
+        if (temperature != null) 'temperature': temperature,
+        if (maximumResponseTokens != null)
+          'maximumResponseTokens': maximumResponseTokens,
+      };
 
   @override
   bool operator ==(Object other) =>

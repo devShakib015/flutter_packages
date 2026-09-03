@@ -92,67 +92,64 @@ class _DemoPageState extends State<DemoPage> {
   }
 
   Future<void> _respond() => _guard(() async {
-    final String reply = await _session!.respond(_prompt.text);
-    if (mounted) setState(() => _output = reply);
-  });
+        final String reply = await _session!.respond(_prompt.text);
+        if (mounted) setState(() => _output = reply);
+      });
 
   Future<void> _stream() => _guard(() async {
-    final Completer<void> done = Completer<void>();
-    // Each event is the whole response so far — assign, never append.
-    _streaming = _session!
-        .stream(_prompt.text)
-        .listen(
-          (String text) => setState(() => _output = text),
-          onDone: done.complete,
-          onError: done.completeError,
-          cancelOnError: true,
-        );
-    await done.future;
-  });
+        final Completer<void> done = Completer<void>();
+        // Each event is the whole response so far — assign, never append.
+        _streaming = _session!.stream(_prompt.text).listen(
+              (String text) => setState(() => _output = text),
+              onDone: done.complete,
+              onError: done.completeError,
+              cancelOnError: true,
+            );
+        await done.future;
+      });
 
   Future<void> _triage() => _guard(() async {
-    final Schema schema = Schema.object(name: 'Triage', <String, Schema>{
-      'priority': Schema.oneOf(<String>['low', 'medium', 'high']),
-      'summary': Schema.string(description: 'one short line'),
-      'tags': Schema.array(Schema.string(), maxItems: 3),
-    });
-    final Map<String, Object?> result = await _session!.respondAs(
-      'Triage this bug report: ${_prompt.text}',
-      schema: schema,
-      options: GenerationOptions.deterministic,
-    );
-    if (mounted) setState(() => _structured = result);
-  });
+        final Schema schema = Schema.object(name: 'Triage', <String, Schema>{
+          'priority': Schema.oneOf(<String>['low', 'medium', 'high']),
+          'summary': Schema.string(description: 'one short line'),
+          'tags': Schema.array(Schema.string(), maxItems: 3),
+        });
+        final Map<String, Object?> result = await _session!.respondAs(
+          'Triage this bug report: ${_prompt.text}',
+          schema: schema,
+          options: GenerationOptions.deterministic,
+        );
+        if (mounted) setState(() => _structured = result);
+      });
 
   Future<void> _tool() => _guard(() async {
-    setState(() => _toolLog = '');
-    final LanguageModelSession tooled = await LanguageModelSession.create(
-      instructions: 'Use the provided tools instead of guessing.',
-      tools: <LanguageModelTool>[
-        LanguageModelTool(
-          name: 'getWeather',
-          description:
-              'Current weather for a city. Always call this '
-              'rather than guessing the weather.',
-          parameters: Schema.object(<String, Schema>{
-            'city': Schema.string(description: 'city name'),
-          }),
-          handler: (Map<String, Object?> args) {
-            setState(() => _toolLog = 'Dart ran getWeather($args)');
-            return '18 degrees Celsius and raining';
-          },
-        ),
-      ],
-    );
-    try {
-      final String reply = await tooled.respond(
-        'Should I take an umbrella in Dhaka right now?',
-      );
-      if (mounted) setState(() => _output = reply);
-    } finally {
-      await tooled.dispose();
-    }
-  });
+        setState(() => _toolLog = '');
+        final LanguageModelSession tooled = await LanguageModelSession.create(
+          instructions: 'Use the provided tools instead of guessing.',
+          tools: <LanguageModelTool>[
+            LanguageModelTool(
+              name: 'getWeather',
+              description: 'Current weather for a city. Always call this '
+                  'rather than guessing the weather.',
+              parameters: Schema.object(<String, Schema>{
+                'city': Schema.string(description: 'city name'),
+              }),
+              handler: (Map<String, Object?> args) {
+                setState(() => _toolLog = 'Dart ran getWeather($args)');
+                return '18 degrees Celsius and raining';
+              },
+            ),
+          ],
+        );
+        try {
+          final String reply = await tooled.respond(
+            'Should I take an umbrella in Dhaka right now?',
+          );
+          if (mounted) setState(() => _output = reply);
+        } finally {
+          await tooled.dispose();
+        }
+      });
 
   @override
   Widget build(BuildContext context) {
@@ -248,9 +245,8 @@ class _AvailabilityCard extends StatelessWidget {
     final String title = ok
         ? 'The on-device model is ready'
         : (availability as ModelUnavailable).explanation;
-    final String? remedy = ok
-        ? null
-        : (availability as ModelUnavailable).remedy;
+    final String? remedy =
+        ok ? null : (availability as ModelUnavailable).remedy;
 
     return Container(
       padding: const EdgeInsets.all(16),

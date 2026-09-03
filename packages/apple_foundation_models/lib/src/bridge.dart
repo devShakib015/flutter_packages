@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:meta/meta.dart';
 
 import 'availability.dart';
 import 'exceptions.dart';
@@ -124,11 +125,11 @@ abstract final class Bridge {
       'concurrentRequests' => ConcurrentRequestException(text),
       'unsupportedGuide' || 'schema' => SchemaException(text),
       'toolThrew' => ToolCallException(
-        (details is Map && details['tool'] is String)
-            ? details['tool']! as String
-            : 'unknown',
-        text,
-      ),
+          (details is Map && details['tool'] is String)
+              ? details['tool']! as String
+              : 'unknown',
+          text,
+        ),
       _ => FoundationModelsPlatformException(text, code: code),
     };
   }
@@ -148,8 +149,8 @@ abstract final class Bridge {
 
   /// Casts a wire map to a Dart map with string keys.
   static Map<String, Object?> asStringMap(Object? value) => <String, Object?>{
-    for (final MapEntry<Object?, Object?> e
-        in ((value as Map<Object?, Object?>?) ?? const {}).entries)
-      e.key.toString(): e.value,
-  };
+        for (final MapEntry<Object?, Object?> e
+            in ((value as Map<Object?, Object?>?) ?? const {}).entries)
+          e.key.toString(): e.value,
+      };
 }

@@ -118,10 +118,11 @@ class FakeVitals implements Vitals {
   @override
   Future<Map<VitalType<VitalSample>, WriteAccess>> writeAccess(
     Set<VitalType<VitalSample>> types,
-  ) async => <VitalType<VitalSample>, WriteAccess>{
-    for (final VitalType<VitalSample> t in types)
-      t: _writeAccess[t.id] ?? WriteAccess.notDetermined,
-  };
+  ) async =>
+      <VitalType<VitalSample>, WriteAccess>{
+        for (final VitalType<VitalSample> t in types)
+          t: _writeAccess[t.id] ?? WriteAccess.notDetermined,
+      };
 
   @override
   Future<Map<VitalType<VitalSample>, bool>?> readAccessOnAndroid(
@@ -157,7 +158,8 @@ class FakeVitals implements Vitals {
     VitalType<VitalSample> type, {
     required DateTime from,
     required DateTime to,
-  }) async => (await read(type, from: from, to: to, limit: 1)).isNotEmpty;
+  }) async =>
+      (await read(type, from: from, to: to, limit: 1)).isNotEmpty;
 
   @override
   Future<List<VitalStatistic>> statistics(
@@ -204,23 +206,23 @@ class FakeVitals implements Vitals {
 
   /// Snaps to the start of the bucket containing [t], in local time.
   static DateTime _floor(DateTime t, VitalBucket bucket) => switch (bucket) {
-    VitalBucket.hourly => DateTime(t.year, t.month, t.day, t.hour),
-    VitalBucket.daily => DateTime(t.year, t.month, t.day),
-    VitalBucket.weekly => DateTime(
-      t.year,
-      t.month,
-      t.day,
-    ).subtract(Duration(days: t.weekday - DateTime.monday)),
-    VitalBucket.monthly => DateTime(t.year, t.month),
-  };
+        VitalBucket.hourly => DateTime(t.year, t.month, t.day, t.hour),
+        VitalBucket.daily => DateTime(t.year, t.month, t.day),
+        VitalBucket.weekly => DateTime(
+            t.year,
+            t.month,
+            t.day,
+          ).subtract(Duration(days: t.weekday - DateTime.monday)),
+        VitalBucket.monthly => DateTime(t.year, t.month),
+      };
 
   /// Steps one bucket forward, honouring month lengths and DST.
   static DateTime _advance(DateTime t, VitalBucket bucket) => switch (bucket) {
-    VitalBucket.hourly => DateTime(t.year, t.month, t.day, t.hour + 1),
-    VitalBucket.daily => DateTime(t.year, t.month, t.day + 1),
-    VitalBucket.weekly => DateTime(t.year, t.month, t.day + 7),
-    VitalBucket.monthly => DateTime(t.year, t.month + 1),
-  };
+        VitalBucket.hourly => DateTime(t.year, t.month, t.day, t.hour + 1),
+        VitalBucket.daily => DateTime(t.year, t.month, t.day + 1),
+        VitalBucket.weekly => DateTime(t.year, t.month, t.day + 7),
+        VitalBucket.monthly => DateTime(t.year, t.month + 1),
+      };
 
   // -------------------------------------------------------------- writes
 
@@ -242,20 +244,22 @@ class FakeVitals implements Vitals {
     int count, {
     required DateTime from,
     required DateTime to,
-  }) async => _record(
-    type,
-    CountSample(count: count, start: from, end: to, source: _self),
-  );
+  }) async =>
+      _record(
+        type,
+        CountSample(count: count, start: from, end: to, source: _self),
+      );
 
   @override
   Future<void> writeMass(
     VitalType<MassSample> type,
     Mass value, {
     required DateTime at,
-  }) async => _record(
-    type,
-    MassSample(value: value, start: at, end: at, source: _self),
-  );
+  }) async =>
+      _record(
+        type,
+        MassSample(value: value, start: at, end: at, source: _self),
+      );
 
   @override
   Future<void> writeLength(
@@ -263,10 +267,11 @@ class FakeVitals implements Vitals {
     Length value, {
     required DateTime from,
     required DateTime to,
-  }) async => _record(
-    type,
-    LengthSample(value: value, start: from, end: to, source: _self),
-  );
+  }) async =>
+      _record(
+        type,
+        LengthSample(value: value, start: from, end: to, source: _self),
+      );
 
   @override
   Future<void> writeEnergy(
@@ -274,40 +279,44 @@ class FakeVitals implements Vitals {
     Energy value, {
     required DateTime from,
     required DateTime to,
-  }) async => _record(
-    type,
-    EnergySample(value: value, start: from, end: to, source: _self),
-  );
+  }) async =>
+      _record(
+        type,
+        EnergySample(value: value, start: from, end: to, source: _self),
+      );
 
   @override
   Future<void> writeRate(
     VitalType<RateSample> type,
     double perMinute, {
     required DateTime at,
-  }) async => _record(
-    type,
-    RateSample(perMinute: perMinute, start: at, end: at, source: _self),
-  );
+  }) async =>
+      _record(
+        type,
+        RateSample(perMinute: perMinute, start: at, end: at, source: _self),
+      );
 
   @override
   Future<void> writePercent(
     VitalType<PercentSample> type,
     double fraction, {
     required DateTime at,
-  }) async => _record(
-    type,
-    PercentSample(fraction: fraction, start: at, end: at, source: _self),
-  );
+  }) async =>
+      _record(
+        type,
+        PercentSample(fraction: fraction, start: at, end: at, source: _self),
+      );
 
   @override
   Future<void> writeVolume(
     VitalType<VolumeSample> type,
     Volume value, {
     required DateTime at,
-  }) async => _record(
-    type,
-    VolumeSample(value: value, start: at, end: at, source: _self),
-  );
+  }) async =>
+      _record(
+        type,
+        VolumeSample(value: value, start: at, end: at, source: _self),
+      );
 
   @override
   Future<int> delete(

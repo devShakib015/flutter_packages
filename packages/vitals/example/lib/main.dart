@@ -49,8 +49,8 @@ class _DemoPageState extends State<DemoPage> {
   void initState() {
     super.initState();
     _vitals.isAvailable().then(
-      (bool ok) => mounted ? setState(() => _available = ok) : null,
-    );
+          (bool ok) => mounted ? setState(() => _available = ok) : null,
+        );
   }
 
   Future<void> _request() async {
@@ -84,8 +84,7 @@ class _DemoPageState extends State<DemoPage> {
       );
       if (!mounted) return;
       setState(
-        () => _status =
-            'Wrote 250 ml. Read back ${back.length} sample(s), '
+        () => _status = 'Wrote 250 ml. Read back ${back.length} sample(s), '
             '${total.round()} ml total.',
       );
     } on VitalsException catch (e) {
@@ -113,7 +112,7 @@ class _DemoPageState extends State<DemoPage> {
       _steps = stats;
       _status = stats.every((VitalStatistic s) => !s.hasData)
           ? 'No step data. Either permission was refused or there is none — '
-                'iOS cannot tell you which.'
+              'iOS cannot tell you which.'
           : 'Loaded ${stats.length} days.';
     });
   }

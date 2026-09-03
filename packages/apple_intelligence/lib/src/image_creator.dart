@@ -38,8 +38,8 @@ class ImageCreator {
 
   /// What this device can do.
   static Future<ImageGenerationAvailability> availability() async {
-    final Map<Object?, Object?>? reply = await Bridge.method
-        .invokeMethod<Map<Object?, Object?>>('availability');
+    final Map<Object?, Object?>? reply =
+        await Bridge.method.invokeMethod<Map<Object?, Object?>>('availability');
     return ImageGenerationAvailability.fromMap(
       reply ?? const <Object?, Object?>{},
     );

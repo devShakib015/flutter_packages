@@ -48,10 +48,11 @@ class MethodChannelVitals implements Vitals {
       'unsupportedOnAndroid' ||
       'unknownType' ||
       'unwritable' ||
-      'unsupportedAggregate' => UnsupportedVitalTypeException(
-        e.details?.toString() ?? '?',
-        text,
-      ),
+      'unsupportedAggregate' =>
+        UnsupportedVitalTypeException(
+          e.details?.toString() ?? '?',
+          text,
+        ),
       'write' => VitalsWriteException(text),
       _ => VitalsPlatformException(text, code: e.code),
     };
@@ -60,9 +61,9 @@ class MethodChannelVitals implements Vitals {
   static int _ms(DateTime t) => t.toUtc().millisecondsSinceEpoch;
 
   Map<String, Object?> _range(DateTime from, DateTime to) => <String, Object?>{
-    'from': _ms(from),
-    'to': _ms(to),
-  };
+        'from': _ms(from),
+        'to': _ms(to),
+      };
 
   @override
   Future<bool> isAvailable() async =>
@@ -91,10 +92,10 @@ class MethodChannelVitals implements Vitals {
   }
 
   static WriteAccess _writeAccessFrom(String? raw) => switch (raw) {
-    'granted' => WriteAccess.granted,
-    'denied' => WriteAccess.denied,
-    _ => WriteAccess.notDetermined,
-  };
+        'granted' => WriteAccess.granted,
+        'denied' => WriteAccess.denied,
+        _ => WriteAccess.notDetermined,
+      };
 
   @override
   Future<Map<VitalType<VitalSample>, bool>?> readAccessOnAndroid(
@@ -123,7 +124,11 @@ class MethodChannelVitals implements Vitals {
   }) async {
     final List<Object?>? raw = await _invoke<List<Object?>>(
       'read',
-      <String, Object?>{'type': type.id, ..._range(from, to), 'limit': ?limit},
+      <String, Object?>{
+        'type': type.id,
+        ..._range(from, to),
+        if (limit != null) 'limit': limit,
+      },
     );
     if (raw == null) return <T>[];
     return <T>[
@@ -137,7 +142,8 @@ class MethodChannelVitals implements Vitals {
     VitalType<VitalSample> type, {
     required DateTime from,
     required DateTime to,
-  }) async => (await read(type, from: from, to: to, limit: 1)).isNotEmpty;
+  }) async =>
+      (await read(type, from: from, to: to, limit: 1)).isNotEmpty;
 
   @override
   Future<List<VitalStatistic>> statistics(
@@ -186,14 +192,16 @@ class MethodChannelVitals implements Vitals {
     int count, {
     required DateTime from,
     required DateTime to,
-  }) => _write(type, count.toDouble(), from, to);
+  }) =>
+      _write(type, count.toDouble(), from, to);
 
   @override
   Future<void> writeMass(
     VitalType<MassSample> type,
     Mass value, {
     required DateTime at,
-  }) => _write(type, value.kilograms, at, at);
+  }) =>
+      _write(type, value.kilograms, at, at);
 
   @override
   Future<void> writeLength(
@@ -201,7 +209,8 @@ class MethodChannelVitals implements Vitals {
     Length value, {
     required DateTime from,
     required DateTime to,
-  }) => _write(type, value.metres, from, to);
+  }) =>
+      _write(type, value.metres, from, to);
 
   @override
   Future<void> writeEnergy(
@@ -209,28 +218,32 @@ class MethodChannelVitals implements Vitals {
     Energy value, {
     required DateTime from,
     required DateTime to,
-  }) => _write(type, value.kilocalories, from, to);
+  }) =>
+      _write(type, value.kilocalories, from, to);
 
   @override
   Future<void> writeRate(
     VitalType<RateSample> type,
     double perMinute, {
     required DateTime at,
-  }) => _write(type, perMinute, at, at);
+  }) =>
+      _write(type, perMinute, at, at);
 
   @override
   Future<void> writePercent(
     VitalType<PercentSample> type,
     double fraction, {
     required DateTime at,
-  }) => _write(type, fraction, at, at);
+  }) =>
+      _write(type, fraction, at, at);
 
   @override
   Future<void> writeVolume(
     VitalType<VolumeSample> type,
     Volume value, {
     required DateTime at,
-  }) => _write(type, value.litres, at, at);
+  }) =>
+      _write(type, value.litres, at, at);
 
   @override
   Future<int> delete(

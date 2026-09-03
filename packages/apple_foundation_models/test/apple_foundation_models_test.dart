@@ -26,9 +26,12 @@ void main() {
         'type': 'string',
         'description': 'a name',
       });
-      expect(Schema.integer().toJson(), <String, Object?>{
-        'type': 'integer',
-      }, reason: 'null fields are stripped rather than sent as null');
+      expect(
+          Schema.integer().toJson(),
+          <String, Object?>{
+            'type': 'integer',
+          },
+          reason: 'null fields are stripped rather than sent as null');
     });
 
     test('objects mark optional properties', () {
@@ -310,11 +313,11 @@ void main() {
     test('rejects duplicate tool names before reaching the platform', () async {
       mock((MethodCall call) async => 1);
       LanguageModelTool tool(String name) => LanguageModelTool(
-        name: name,
-        description: 'x',
-        parameters: Schema.object(<String, Schema>{'a': Schema.string()}),
-        handler: (_) => 'ok',
-      );
+            name: name,
+            description: 'x',
+            parameters: Schema.object(<String, Schema>{'a': Schema.string()}),
+            handler: (_) => 'ok',
+          );
       await expectLater(
         LanguageModelSession.create(
           tools: <LanguageModelTool>[tool('dup'), tool('dup')],

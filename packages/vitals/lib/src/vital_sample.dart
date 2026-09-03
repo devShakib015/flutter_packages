@@ -19,10 +19,10 @@ class VitalSource {
 
   /// Reads a source off the platform channel.
   factory VitalSource.fromMap(Map<Object?, Object?> map) => VitalSource(
-    name: map['name'] as String? ?? 'unknown',
-    bundleId: map['bundleId'] as String?,
-    device: map['device'] as String?,
-  );
+        name: map['name'] as String? ?? 'unknown',
+        bundleId: map['bundleId'] as String?,
+        device: map['device'] as String?,
+      );
 
   @override
   bool operator ==(Object other) =>
@@ -89,9 +89,9 @@ class _Common {
 
   static _Common of(Map<Object?, Object?> m) {
     DateTime at(Object? v) => DateTime.fromMillisecondsSinceEpoch(
-      (v as num?)?.toInt() ?? 0,
-      isUtc: true,
-    ).toLocal();
+          (v as num?)?.toInt() ?? 0,
+          isUtc: true,
+        ).toLocal();
     return _Common(
       at(m['start']),
       at(m['end'] ?? m['start']),

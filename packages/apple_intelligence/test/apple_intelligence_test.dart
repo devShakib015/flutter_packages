@@ -304,15 +304,15 @@ void main() {
       );
       for (final (String code, GenerationRefusal reason)
           in <(String, GenerationRefusal)>[
-            ('unsupportedLanguage', GenerationRefusal.unsupportedLanguage),
-            ('unsupportedInputImage', GenerationRefusal.unsupportedInputImage),
-            ('faceTooSmall', GenerationRefusal.faceTooSmall),
-            (
-              'conceptsRequirePersonIdentity',
-              GenerationRefusal.conceptsRequirePersonIdentity,
-            ),
-            ('backgroundForbidden', GenerationRefusal.backgroundForbidden),
-          ]) {
+        ('unsupportedLanguage', GenerationRefusal.unsupportedLanguage),
+        ('unsupportedInputImage', GenerationRefusal.unsupportedInputImage),
+        ('faceTooSmall', GenerationRefusal.faceTooSmall),
+        (
+          'conceptsRequirePersonIdentity',
+          GenerationRefusal.conceptsRequirePersonIdentity,
+        ),
+        ('backgroundForbidden', GenerationRefusal.backgroundForbidden),
+      ]) {
         final AppleIntelligenceException e = exceptionFor(code, 'x');
         expect(e, isA<GenerationRefusedException>(), reason: code);
         expect((e as GenerationRefusedException).reason, reason);

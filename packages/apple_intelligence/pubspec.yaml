@@ -2,7 +2,7 @@ name: apple_intelligence
 description: >-
   Apple Intelligence for Flutter: on-device image generation streamed as it is made, plus a native text field with Writing Tools and Genmoji.
 
-version: 0.3.0
+version: 0.3.1
 repository: https://github.com/devShakib015/flutter_packages
 issue_tracker: https://github.com/devShakib015/flutter_packages/issues
 documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/apple_intelligence
@@ -21,8 +21,8 @@ topics:
   - macos
 
 environment:
-  sdk: ^3.13.0
-  flutter: '>=3.32.0'
+  sdk: ^3.5.0
+  flutter: '>=3.24.0'
 
 dependencies:
   flutter:

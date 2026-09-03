@@ -223,11 +223,11 @@ class LanguageModelSession {
     bool includeSchemaInPrompt = true,
   }) {
     return streamAs(
-          prompt,
-          schema: schema,
-          options: options,
-          includeSchemaInPrompt: includeSchemaInPrompt,
-        )
+      prompt,
+      schema: schema,
+      options: options,
+      includeSchemaInPrompt: includeSchemaInPrompt,
+    )
         .map<T?>((Map<String, Object?> json) {
           if (json.isEmpty) return null;
           try {
@@ -311,30 +311,30 @@ class LanguageModelSession {
       onListen: () async {
         subscription = Bridge.events
             .where(
-              (Map<Object?, Object?> e) =>
-                  (e['requestId'] as num?)?.toInt() == requestId,
-            )
+          (Map<Object?, Object?> e) =>
+              (e['requestId'] as num?)?.toInt() == requestId,
+        )
             .listen((Map<Object?, Object?> event) async {
-              switch (event['type']) {
-                case 'delta':
-                  if (!controller.isClosed) controller.add(decode(event));
-                case 'done':
-                  await stop();
-                  if (!controller.isClosed) await controller.close();
-                case 'error':
-                  if (!controller.isClosed) {
-                    controller.addError(
-                      Bridge.translate(
-                        event['code'] as String? ?? 'unknown',
-                        event['message'] as String?,
-                        event['details'],
-                      ),
-                    );
-                  }
-                  await stop();
-                  if (!controller.isClosed) await controller.close();
+          switch (event['type']) {
+            case 'delta':
+              if (!controller.isClosed) controller.add(decode(event));
+            case 'done':
+              await stop();
+              if (!controller.isClosed) await controller.close();
+            case 'error':
+              if (!controller.isClosed) {
+                controller.addError(
+                  Bridge.translate(
+                    event['code'] as String? ?? 'unknown',
+                    event['message'] as String?,
+                    event['details'],
+                  ),
+                );
               }
-            });
+              await stop();
+              if (!controller.isClosed) await controller.close();
+          }
+        });
 
         try {
           await Bridge.invoke<void>(method, <String, Object?>{

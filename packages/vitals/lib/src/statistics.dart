@@ -55,9 +55,9 @@ class VitalStatistic {
     VitalAggregate aggregate,
   ) {
     DateTime at(Object? v) => DateTime.fromMillisecondsSinceEpoch(
-      (v as num?)?.toInt() ?? 0,
-      isUtc: true,
-    ).toLocal();
+          (v as num?)?.toInt() ?? 0,
+          isUtc: true,
+        ).toLocal();
     return VitalStatistic(
       start: at(map['start']),
       end: at(map['end']),

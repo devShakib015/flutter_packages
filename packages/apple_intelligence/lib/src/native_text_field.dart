@@ -65,8 +65,8 @@ class NativeTextController extends ChangeNotifier {
 
   /// What the system granted this particular view.
   Future<TextCapabilities> capabilities() async {
-    final Map<Object?, Object?>? reply = await _require()
-        .invokeMethod<Map<Object?, Object?>>('capabilities');
+    final Map<Object?, Object?>? reply =
+        await _require().invokeMethod<Map<Object?, Object?>>('capabilities');
     return TextCapabilities(
       writingTools: reply?['writingTools'] as bool? ?? false,
       genmoji: reply?['genmoji'] as bool? ?? false,

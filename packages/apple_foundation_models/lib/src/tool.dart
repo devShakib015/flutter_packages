@@ -56,10 +56,10 @@ class LanguageModelTool {
 
   /// Wire representation. The handler stays on the Dart side.
   Map<String, Object?> toJson() => <String, Object?>{
-    'name': name,
-    'description': description,
-    'parameters': parameters.toJson(),
-  };
+        'name': name,
+        'description': description,
+        'parameters': parameters.toJson(),
+      };
 
   @override
   String toString() => 'LanguageModelTool($name)';

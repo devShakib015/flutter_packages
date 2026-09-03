@@ -25,22 +25,23 @@ enum ModelUnavailableReason {
 
   /// A short, user-facing explanation of the state.
   String get explanation => switch (this) {
-    deviceNotEligible => 'This device cannot run Apple Intelligence.',
-    appleIntelligenceNotEnabled => 'Apple Intelligence is turned off.',
-    modelNotReady => 'The on-device model is still being prepared.',
-    osTooOld => 'This system is older than iOS 26 / macOS 26.',
-    unsupportedPlatform =>
-      'Apple Foundation Models only exist on Apple platforms.',
-    unknown => 'The on-device model is unavailable.',
-  };
+        deviceNotEligible => 'This device cannot run Apple Intelligence.',
+        appleIntelligenceNotEnabled => 'Apple Intelligence is turned off.',
+        modelNotReady => 'The on-device model is still being prepared.',
+        osTooOld => 'This system is older than iOS 26 / macOS 26.',
+        unsupportedPlatform =>
+          'Apple Foundation Models only exist on Apple platforms.',
+        unknown => 'The on-device model is unavailable.',
+      };
 
   /// What the user could do about it, or null when nothing will help.
   String? get remedy => switch (this) {
-    appleIntelligenceNotEnabled => 'Turn on Apple Intelligence in Settings.',
-    modelNotReady => 'Stay connected to Wi-Fi and try again shortly.',
-    osTooOld => 'Update to iOS 26 or macOS 26.',
-    deviceNotEligible || unsupportedPlatform || unknown => null,
-  };
+        appleIntelligenceNotEnabled =>
+          'Turn on Apple Intelligence in Settings.',
+        modelNotReady => 'Stay connected to Wi-Fi and try again shortly.',
+        osTooOld => 'Update to iOS 26 or macOS 26.',
+        deviceNotEligible || unsupportedPlatform || unknown => null,
+      };
 
   /// Whether waiting or a user action could plausibly change this.
   ///

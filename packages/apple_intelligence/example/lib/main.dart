@@ -10,14 +10,14 @@ class Demo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-    title: 'apple_intelligence',
-    debugShowCheckedModeBanner: false,
-    theme: ThemeData(
-      colorSchemeSeed: const Color(0xFF4C6FFF),
-      useMaterial3: true,
-    ),
-    home: const DemoPage(),
-  );
+        title: 'apple_intelligence',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorSchemeSeed: const Color(0xFF4C6FFF),
+          useMaterial3: true,
+        ),
+        home: const DemoPage(),
+      );
 }
 
 class DemoPage extends StatelessWidget {
@@ -87,7 +87,7 @@ class _TextDemoState extends State<_TextDemo> {
                   c == null
                       ? 'Tap Check to ask the view what it was granted'
                       : 'writing tools ${c.writingTools ? "yes" : "no"}'
-                            '   ·   genmoji ${c.genmoji ? "yes" : "no"}',
+                          '   ·   genmoji ${c.genmoji ? "yes" : "no"}',
                   style: Theme.of(context).textTheme.labelMedium,
                 ),
               ),
@@ -166,16 +166,15 @@ class _DemoPageState extends State<_ImageDemo> {
       _images.clear();
       _status = 'generating…';
     });
-    _run =
-        ImageCreator.generate(
-          concepts: <ImageConcept>[ImageConcept.text(_prompt.text)],
-          style: _style,
-          limit: 4,
-        ).listen(
-          (GeneratedImage image) => setState(() => _images.add(image)),
-          onError: (Object e) => setState(() => _status = '$e'),
-          onDone: () => setState(() => _status = '${_images.length} image(s)'),
-        );
+    _run = ImageCreator.generate(
+      concepts: <ImageConcept>[ImageConcept.text(_prompt.text)],
+      style: _style,
+      limit: 4,
+    ).listen(
+      (GeneratedImage image) => setState(() => _images.add(image)),
+      onError: (Object e) => setState(() => _status = '$e'),
+      onDone: () => setState(() => _status = '${_images.length} image(s)'),
+    );
   }
 
   Future<void> _sheet() async {
@@ -241,10 +240,10 @@ class _DemoPageState extends State<_ImageDemo> {
                 : GridView.builder(
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 10,
-                          crossAxisSpacing: 10,
-                        ),
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
+                    ),
                     itemCount: _images.length,
                     itemBuilder: (BuildContext c, int i) => ClipRRect(
                       borderRadius: BorderRadius.circular(12),

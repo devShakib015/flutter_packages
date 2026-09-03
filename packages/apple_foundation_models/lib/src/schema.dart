@@ -71,9 +71,9 @@ class Schema {
 
   /// A boolean.
   factory Schema.boolean({String? description}) => Schema._(<String, Object?>{
-    'type': 'boolean',
-    'description': description,
-  });
+        'type': 'boolean',
+        'description': description,
+      });
 
   /// One of a fixed set of strings.
   ///
@@ -94,7 +94,7 @@ class Schema {
       'type': 'enum',
       'values': List<String>.unmodifiable(values),
       'description': description,
-      'name': ?name,
+      if (name != null) 'name': name,
     });
   }
 

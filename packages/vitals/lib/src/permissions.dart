@@ -63,16 +63,16 @@ class PermissionRequest {
 
   /// Every type mentioned.
   Set<VitalType<VitalSample>> get all => <VitalType<VitalSample>>{
-    ...read,
-    ...write,
-  };
+        ...read,
+        ...write,
+      };
 
   /// Whether anything was actually requested.
   bool get isEmpty => read.isEmpty && write.isEmpty;
 
   /// Wire representation.
   Map<String, Object?> toJson() => <String, Object?>{
-    'read': read.map((VitalType<VitalSample> t) => t.id).toList(),
-    'write': write.map((VitalType<VitalSample> t) => t.id).toList(),
-  };
+        'read': read.map((VitalType<VitalSample> t) => t.id).toList(),
+        'write': write.map((VitalType<VitalSample> t) => t.id).toList(),
+      };
 }

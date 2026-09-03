@@ -37,9 +37,8 @@ void main() {
 
   group('type registry', () {
     test('ids are unique and resolvable', () {
-      final Set<String> ids = VitalType.all
-          .map((VitalType<VitalSample> t) => t.id)
-          .toSet();
+      final Set<String> ids =
+          VitalType.all.map((VitalType<VitalSample> t) => t.id).toSet();
       expect(ids, hasLength(VitalType.all.length), reason: 'duplicate id');
       for (final VitalType<VitalSample> type in VitalType.all) {
         expect(VitalType.byId(type.id), same(type));
@@ -227,12 +226,15 @@ void main() {
         to: DateTime(2026, 4, 5),
         bucket: VitalBucket.monthly,
       );
-      expect(stats.map((VitalStatistic s) => s.start).toList(), <DateTime>[
-        DateTime(2026),
-        DateTime(2026, 2),
-        DateTime(2026, 3),
-        DateTime(2026, 4),
-      ], reason: 'buckets snap to calendar months, not 30-day blocks');
+      expect(
+          stats.map((VitalStatistic s) => s.start).toList(),
+          <DateTime>[
+            DateTime(2026),
+            DateTime(2026, 2),
+            DateTime(2026, 3),
+            DateTime(2026, 4),
+          ],
+          reason: 'buckets snap to calendar months, not 30-day blocks');
     });
   });
 
@@ -265,11 +267,11 @@ void main() {
     test('write access is reported per type', () async {
       final FakeVitals vitals = FakeVitals();
       vitals.setWriteAccess(VitalType.bodyMass, WriteAccess.denied);
-      final Map<VitalType<VitalSample>, WriteAccess> access = await vitals
-          .writeAccess(<VitalType<VitalSample>>{
-            VitalType.bodyMass,
-            VitalType.steps,
-          });
+      final Map<VitalType<VitalSample>, WriteAccess> access =
+          await vitals.writeAccess(<VitalType<VitalSample>>{
+        VitalType.bodyMass,
+        VitalType.steps,
+      });
       expect(access[VitalType.bodyMass], WriteAccess.denied);
       expect(access[VitalType.steps], WriteAccess.notDetermined);
     });

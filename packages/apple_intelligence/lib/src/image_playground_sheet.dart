@@ -35,10 +35,9 @@ class ImagePlaygroundSheet {
           'concepts': concepts.map((ImageConcept c) => c.toMap()).toList(),
           if (style != null) 'style': style.wireName,
           if (allowedStyles != null)
-            'allowedStyles': allowedStyles
-                .map((ImageStyle s) => s.wireName)
-                .toList(),
-          'sourceImagePath': ?sourceImagePath,
+            'allowedStyles':
+                allowedStyles.map((ImageStyle s) => s.wireName).toList(),
+          if (sourceImagePath != null) 'sourceImagePath': sourceImagePath,
         },
       );
     } on PlatformException catch (e) {

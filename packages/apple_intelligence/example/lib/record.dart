@@ -16,8 +16,7 @@ import 'package:apple_intelligence/apple_intelligence.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
-const String kOut =
-    '/private/tmp/claude-501/-Users-devshakib-Projects/'
+const String kOut = '/private/tmp/claude-501/-Users-devshakib-Projects/'
     '422a40fb-c07d-49d0-9ec0-e5bf2bdb790d/scratchpad/ai_frames';
 
 final GlobalKey _stage = GlobalKey();
@@ -82,16 +81,14 @@ class _RecorderState extends State<Recorder> {
       )) {
         setState(() {
           _images.add(image);
-          _caption =
-              'image ${_images.length} of 4 arrived at '
+          _caption = 'image ${_images.length} of 4 arrived at '
               '${(_clock.elapsedMilliseconds / 1000).toStringAsFixed(1)}s';
         });
         await _settleAndSnap();
       }
       setState(() {
         _done = true;
-        _caption =
-            'all four in '
+        _caption = 'all four in '
             '${(_clock.elapsedMilliseconds / 1000).toStringAsFixed(1)}s — '
             'each shown the moment it landed';
       });
@@ -201,10 +198,10 @@ class _RecorderState extends State<Recorder> {
                     physics: const NeverScrollableScrollPhysics(),
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 10,
-                          crossAxisSpacing: 10,
-                        ),
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
+                    ),
                     itemCount: 4,
                     itemBuilder: (BuildContext c, int i) {
                       final bool has = i < _images.length;

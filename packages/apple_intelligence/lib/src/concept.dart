@@ -7,7 +7,9 @@
 /// or a message thread practical.
 class ImageConcept {
   /// Names a concept directly, e.g. `'a fox reading a map'`.
-  const ImageConcept.text(this.text) : title = null, extract = false;
+  const ImageConcept.text(this.text)
+      : title = null,
+        extract = false;
 
   /// Asks the system to find the concepts in [text] itself.
   ///
@@ -25,10 +27,10 @@ class ImageConcept {
 
   /// Wire form for the platform channel.
   Map<String, Object?> toMap() => <String, Object?>{
-    'text': text,
-    if (title != null) 'title': title,
-    'extract': extract,
-  };
+        'text': text,
+        if (title != null) 'title': title,
+        'extract': extract,
+      };
 
   @override
   String toString() => extract

@@ -32,11 +32,11 @@ void main() {
   });
 
   testWidgets('write access is reported, and starts undetermined', (_) async {
-    final Map<VitalType<VitalSample>, WriteAccess> access = await vitals
-        .writeAccess(<VitalType<VitalSample>>{
-          VitalType.water,
-          VitalType.bodyMass,
-        });
+    final Map<VitalType<VitalSample>, WriteAccess> access =
+        await vitals.writeAccess(<VitalType<VitalSample>>{
+      VitalType.water,
+      VitalType.bodyMass,
+    });
     expect(access.keys, hasLength(2));
     for (final WriteAccess value in access.values) {
       expect(value, isA<WriteAccess>());

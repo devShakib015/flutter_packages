@@ -72,9 +72,8 @@ void main() {
   });
 
   testWidgets('stream emits cumulative snapshots, not deltas', (_) async {
-    final List<String> snapshots = await session
-        .stream('Count to five in words.')
-        .toList();
+    final List<String> snapshots =
+        await session.stream('Count to five in words.').toList();
 
     expect(snapshots, isNotEmpty);
     expect(snapshots.last.trim(), isNotEmpty);
@@ -93,9 +92,8 @@ void main() {
       'steps': Schema.array(Schema.string(), maxItems: 3),
     });
 
-    final List<Map<String, Object?>> snapshots = await session
-        .streamAs('How to boil an egg.', schema: schema)
-        .toList();
+    final List<Map<String, Object?>> snapshots =
+        await session.streamAs('How to boil an egg.', schema: schema).toList();
 
     expect(snapshots, isNotEmpty);
     expect(snapshots.last['title'], isA<String>());
@@ -110,8 +108,7 @@ void main() {
       tools: <LanguageModelTool>[
         LanguageModelTool(
           name: 'getWeather',
-          description:
-              'Current weather for a city. Always call this rather '
+          description: 'Current weather for a city. Always call this rather '
               'than guessing the weather.',
           parameters: Schema.object(<String, Schema>{
             'city': Schema.string(description: 'city name'),
@@ -318,11 +315,11 @@ void main() {
 
   testWidgets('duplicate tool names are rejected up front', (_) async {
     LanguageModelTool tool(String name) => LanguageModelTool(
-      name: name,
-      description: 'x',
-      parameters: Schema.object(<String, Schema>{'a': Schema.string()}),
-      handler: (_) => 'ok',
-    );
+          name: name,
+          description: 'x',
+          parameters: Schema.object(<String, Schema>{'a': Schema.string()}),
+          handler: (_) => 'ok',
+        );
     await expectLater(
       LanguageModelSession.create(
         tools: <LanguageModelTool>[tool('same'), tool('same')],

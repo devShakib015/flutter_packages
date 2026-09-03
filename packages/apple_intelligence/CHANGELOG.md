@@ -1,3 +1,11 @@
+## 0.3.1
+
+No behaviour changes. `sdk: ^3.13.0` meant Dart 3.13, which ships only with
+**Flutter 3.47** — released three weeks ago — so this package refused to resolve
+for anyone on an older SDK. One null-aware element (Dart 3.8) was all that
+required it; rewritten, the floor is now `^3.5.0` / Flutter 3.24 and verified by
+type-checking against Flutter 3.16.9.
+
 ## 0.3.0
 
 An audit of every package in this repo found six defects here.

@@ -64,26 +64,27 @@ AppleIntelligenceException exceptionFor(String code, String message) =>
     switch (code) {
       'osTooOld' => OsTooOldException(message),
       'notSupported' ||
-      'unavailable' => GenerationUnavailableException(message),
+      'unavailable' =>
+        GenerationUnavailableException(message),
       'unsupportedLanguage' => GenerationRefusedException(
-        message,
-        GenerationRefusal.unsupportedLanguage,
-      ),
+          message,
+          GenerationRefusal.unsupportedLanguage,
+        ),
       'unsupportedInputImage' => GenerationRefusedException(
-        message,
-        GenerationRefusal.unsupportedInputImage,
-      ),
+          message,
+          GenerationRefusal.unsupportedInputImage,
+        ),
       'faceTooSmall' => GenerationRefusedException(
-        message,
-        GenerationRefusal.faceTooSmall,
-      ),
+          message,
+          GenerationRefusal.faceTooSmall,
+        ),
       'conceptsRequirePersonIdentity' => GenerationRefusedException(
-        message,
-        GenerationRefusal.conceptsRequirePersonIdentity,
-      ),
+          message,
+          GenerationRefusal.conceptsRequirePersonIdentity,
+        ),
       'backgroundForbidden' => GenerationRefusedException(
-        message,
-        GenerationRefusal.backgroundForbidden,
-      ),
+          message,
+          GenerationRefusal.backgroundForbidden,
+        ),
       _ => GenerationFailedException(message),
     };
