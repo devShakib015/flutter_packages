@@ -11,6 +11,13 @@ import 'pip_window.dart';
 /// and tears both down together.
 class DocumentPipImpl {
   static _WebPipWindow? _current;
+  static final Set<int> _pipViewIds = <int>{};
+
+  /// The views this package opened.
+  ///
+  /// Exact, rather than inferred from view ids: an app may add page-level
+  /// views of its own, and guessing would render the pop-out into one of them.
+  static Set<int> get popOutViewIds => Set<int>.unmodifiable(_pipViewIds);
 
   /// Whether this browser has the API at all.
   static bool get isSupported => documentPictureInPicture != null;
@@ -60,19 +67,39 @@ class DocumentPipImpl {
 
     if (copyStyles) _copyStyles(pip.document);
 
-    // A blank window has no layout of its own, so the host is stretched to
-    // fill it and the body's default margin removed. Without this the Flutter
-    // view measures zero and paints nothing.
+    // A blank window has no layout of its own, so the host is given one and
+    // the body's default margin removed. Without this the Flutter view
+    // measures zero and paints nothing.
+    pip.document.documentElement?.setAttribute('style', 'height:100%');
     pip.document.body!.setAttribute(
       'style',
       'margin:0;padding:0;height:100%;overflow:hidden',
     );
     final web.HTMLDivElement host =
         pip.document.createElement('div') as web.HTMLDivElement;
-    host.setAttribute('style', 'position:absolute;inset:0');
+    // Explicit pixels rather than `inset:0`, and set *before* the element is
+    // in the tree: Flutter puts a ResizeObserver on its host, and a host whose
+    // size is still resolving makes that observer fire inside its own
+    // callback, which the browser reports as "ResizeObserver loop completed
+    // with undelivered notifications" in the console of anyone using this.
+    host.setAttribute(
+      'style',
+      'display:block;position:absolute;left:0;top:0;'
+          'width:${pip.innerWidth}px;height:${pip.innerHeight}px',
+    );
     pip.document.body!.appendChild(host);
 
+    // The window is resizable, so the host has to follow it.
+    pip.addEventListener(
+      'resize',
+      ((web.Event _) {
+        host.style.width = '${pip.innerWidth}px';
+        host.style.height = '${pip.innerHeight}px';
+      }).toJS,
+    );
+
     final int viewId = app.addView(AddViewOptions(hostElement: host));
+    _pipViewIds.add(viewId);
     final _WebPipWindow handle = _WebPipWindow(viewId, pip, app);
     _current = handle;
     return handle;
@@ -85,6 +112,12 @@ class DocumentPipImpl {
   /// own into the head, so most of this matters for surrounding HTML rather
   /// than the canvas, but fonts declared on the page are the exception and
   /// they matter a lot.
+  static void _forget(_WebPipWindow w) {
+    _pipViewIds.remove(w.viewId);
+    // Otherwise the static keeps a dead window, and its document, alive.
+    if (identical(_current, w)) _current = null;
+  }
+
   static void _copyStyles(web.Document target) {
     final web.StyleSheetList sheets = web.document.styleSheets;
     for (int i = 0; i < sheets.length; i++) {
@@ -104,7 +137,9 @@ class DocumentPipImpl {
         // a Google Fonts <link> still applies in the new window.
         final web.Element? owner = sheet.ownerNode as web.Element?;
         if (owner != null) {
-          target.head!.appendChild(owner.cloneNode(true));
+          // importNode, not cloneNode: a clone still belongs to the source
+          // document, and adopting it explicitly is what the DOM spec asks for.
+          target.head!.appendChild(target.importNode(owner, true));
         }
       }
     }
@@ -156,6 +191,7 @@ class _WebPipWindow implements PipWindow {
       // The window may already be gone; nothing to detach from.
     }
     _app.removeView(viewId);
+    DocumentPipImpl._forget(this);
     if (!_closed.isCompleted) _closed.complete();
   }
 }

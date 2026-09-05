@@ -24,4 +24,7 @@ class DocumentPipImpl {
 
   /// Always null: nothing is ever open.
   static PipWindow? get current => null;
+
+  /// Always empty: no window was ever opened, so no view came from one.
+  static Set<int> get popOutViewIds => const <int>{};
 }

@@ -35,6 +35,14 @@ abstract final class DocumentPip {
   /// second one closes the first — and this is how you notice.
   static PipWindow? get current => DocumentPipImpl.current;
 
+  /// The Flutter views this package opened, by id.
+  ///
+  /// `DocumentPipApp` uses this to tell a pop-out from the page. Reach for it
+  /// directly only if you are building your own `ViewCollection` — and prefer
+  /// it to comparing view ids, because an app may add page-level views of its
+  /// own and any ordering assumption breaks the moment it does.
+  static Set<int> get popOutViewIds => DocumentPipImpl.popOutViewIds;
+
   /// Opens the window.
   ///
   /// Must be called while handling a real user gesture — a click, a tap, a key

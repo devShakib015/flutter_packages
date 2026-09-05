@@ -103,4 +103,38 @@ void main() {
       expect(find.text('page'), findsOneWidget);
     });
   });
+
+  group('defects found in the pre-release audit', () {
+    test('a view is only a pop-out if this package opened it', () {
+      // Shipped in no release, caught before one. DocumentPipApp used to take
+      // the LOWEST view id to be the page, which is wrong for any app with
+      // more than one page-level view: add-to-app, or several Flutter hosts
+      // on one page. Every host but the lowest would have rendered the mini
+      // player into the main area.
+      expect(DocumentPip.popOutViewIds, isEmpty);
+    });
+
+    testWidgets('with no pop-out open, every view gets main', (
+      WidgetTester tester,
+    ) async {
+      // The consequence of the fix: a view this package did not open is the
+      // page, whatever its id happens to be.
+      await tester.pumpWidget(
+        DocumentPipApp(
+          main: (BuildContext c) => const Directionality(
+            textDirection: TextDirection.ltr,
+            child: Text('page'),
+          ),
+          popOut: (BuildContext c) => const Directionality(
+            textDirection: TextDirection.ltr,
+            child: Text('floating'),
+          ),
+        ),
+        wrapWithView: false,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('page'), findsOneWidget);
+      expect(find.text('floating'), findsNothing);
+    });
+  });
 }

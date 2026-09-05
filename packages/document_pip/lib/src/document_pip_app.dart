@@ -2,6 +2,8 @@ import 'dart:ui' show FlutterView;
 
 import 'package:flutter/widgets.dart';
 
+import 'document_pip.dart';
+
 /// The root of an app that can pop widgets out into their own window.
 ///
 /// Multi-view Flutter has no single root: the engine hands you a set of views
@@ -68,12 +70,11 @@ class _DocumentPipAppState extends State<DocumentPipApp>
         .toList(growable: false);
     if (views.isEmpty) return const ViewCollection(views: <Widget>[]);
 
-    // Lowest id is the page. Ids are handed out in ascending order and the
-    // page's view is added first, so this holds even after windows have opened
-    // and closed and the numbering has gaps.
-    final int pageViewId = views
-        .map((FlutterView v) => v.viewId)
-        .reduce((int a, int b) => a < b ? a : b);
+    // Asked, not inferred. An earlier version took the lowest view id to be
+    // the page, which is wrong for any app that adds page-level views of its
+    // own — add-to-app, or several Flutter hosts on one page — because every
+    // host but the lowest would then render the pop-out.
+    final Set<int> popOuts = DocumentPip.popOutViewIds;
 
     return ViewCollection(
       views: <Widget>[
@@ -82,7 +83,8 @@ class _DocumentPipAppState extends State<DocumentPipApp>
             key: ValueKey<int>(view.viewId),
             view: view,
             child: Builder(
-              builder: view.viewId == pageViewId ? widget.main : widget.popOut,
+              builder:
+                  popOuts.contains(view.viewId) ? widget.popOut : widget.main,
             ),
           ),
       ],

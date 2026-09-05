@@ -146,6 +146,13 @@ and `height` as a request.
 
 **No nested pop-outs.** One window, browser-wide, is the platform's rule.
 
+**One console warning per window.** Chrome logs `ResizeObserver loop completed
+with undelivered notifications` when a window opens. It comes from Flutter's
+own observer on a newly added view host, not from this package — a
+picture-in-picture window built with identical markup but no Flutter view logs
+nothing. It means notifications were deferred a frame, not lost, and nothing
+here can suppress it.
+
 ---
 
 Not affiliated with Google or the Flutter team.
