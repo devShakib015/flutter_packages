@@ -136,8 +136,7 @@ class _ToastChipState extends State<_ToastChip>
             color: style.cardColor,
             // Falls back to a toned-down card radius: a chip wants a tighter
             // corner than a full card, but should still feel related to it.
-            borderRadius:
-                style.toast.radius ??
+            borderRadius: style.toast.radius ??
                 BorderRadius.circular(
                   style.cardRadius.topLeft.x.clamp(12.0, 22.0),
                 ),

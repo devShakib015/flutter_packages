@@ -116,12 +116,12 @@ void main() {
           style: LoadingStyle.material.copyWith(
             indicatorBuilder: (BuildContext context, LoadingIndicatorSpec s) =>
                 SizedBox.square(
-                  dimension: s.size,
-                  child: ColoredBox(
-                    color: s.statusColor,
-                    child: const Text('mine'),
-                  ),
-                ),
+              dimension: s.size,
+              child: ColoredBox(
+                color: s.statusColor,
+                child: const Text('mine'),
+              ),
+            ),
           ),
         ),
       );
@@ -182,21 +182,21 @@ void main() {
       WidgetTester tester,
     ) async {
       Widget app({required bool loading}) => MaterialApp(
-        home: Scaffold(
-          body: Center(
-            child: SizedBox(
-              width: 300,
-              height: 200,
-              child: LoadingBarrier(
-                loading: loading,
-                message: 'Saving…',
-                timing: timing,
-                child: const Center(child: Text('form')),
+            home: Scaffold(
+              body: Center(
+                child: SizedBox(
+                  width: 300,
+                  height: 200,
+                  child: LoadingBarrier(
+                    loading: loading,
+                    message: 'Saving…',
+                    timing: timing,
+                    child: const Center(child: Text('form')),
+                  ),
+                ),
               ),
             ),
-          ),
-        ),
-      );
+          );
 
       await tester.pumpWidget(app(loading: false));
       expect(find.byType(LoadingCard), findsNothing);
@@ -226,14 +226,14 @@ void main() {
       WidgetTester tester,
     ) async {
       Widget app({required bool loading}) => MaterialApp(
-        home: Scaffold(
-          body: LoadingBarrier(
-            loading: loading,
-            timing: timing,
-            child: const Center(child: Text('form')),
-          ),
-        ),
-      );
+            home: Scaffold(
+              body: LoadingBarrier(
+                loading: loading,
+                timing: timing,
+                child: const Center(child: Text('form')),
+              ),
+            ),
+          );
 
       await tester.pumpWidget(app(loading: false));
       await tester.pumpWidget(app(loading: true));

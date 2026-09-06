@@ -214,23 +214,19 @@ class _GalleryPageState extends State<GalleryPage> {
             value: widget.custom,
             onChanged: widget.onCustom,
           ),
-
           const _SectionTitle('The anti-flicker guarantee'),
           _Tile(
             title: 'Fast operation — 80ms',
-            subtitle:
-                'Resolves inside the reveal delay, so nothing paints at '
+            subtitle: 'Resolves inside the reveal delay, so nothing paints at '
                 'all. This is the whole point.',
             onTap: () => Loading.run(() => _wait(80)),
           ),
           _Tile(
             title: 'Borderline operation — 200ms',
-            subtitle:
-                'Crosses the delay, so it paints — then is held for the '
+            subtitle: 'Crosses the delay, so it paints — then is held for the '
                 'minimum window instead of blinking out.',
             onTap: () => Loading.run(() => _wait(200)),
           ),
-
           const _SectionTitle('Everyday'),
           _Tile(
             title: 'Plain load',
@@ -248,8 +244,7 @@ class _GalleryPageState extends State<GalleryPage> {
           ),
           _Tile(
             title: 'Error feedback',
-            subtitle:
-                'Same form, settling into a cross. The throw still '
+            subtitle: 'Same form, settling into a cross. The throw still '
                 'reaches your catch block.',
             onTap: () async {
               try {
@@ -266,7 +261,6 @@ class _GalleryPageState extends State<GalleryPage> {
               }
             },
           ),
-
           const _SectionTitle('Toasts — nothing is blocked'),
           _Tile(
             title: 'Plain toast',
@@ -285,12 +279,10 @@ class _GalleryPageState extends State<GalleryPage> {
               );
             },
           ),
-
           const _SectionTitle('Progress and cancellation'),
           _Tile(
             title: 'Determinate upload',
-            subtitle:
-                'Coarse jumps are interpolated into continuous motion. '
+            subtitle: 'Coarse jumps are interpolated into continuous motion. '
                 'Switch the determinate form above to see it as a bar.',
             onTap: () => Loading.runTask<void>(
               (LoadingTask task) async {
@@ -306,8 +298,7 @@ class _GalleryPageState extends State<GalleryPage> {
           ),
           _Tile(
             title: 'Cancellable job',
-            subtitle:
-                'Cancel appears after 1.5s, so quick runs never offer '
+            subtitle: 'Cancel appears after 1.5s, so quick runs never offer '
                 'one.',
             onTap: () async {
               final ScaffoldMessengerState messenger = ScaffoldMessenger.of(
@@ -348,7 +339,6 @@ class _GalleryPageState extends State<GalleryPage> {
               }
             },
           ),
-
           const _SectionTitle('Scoped to one widget'),
           _BarrierDemo(
             busy: _barrierBusy,
@@ -358,12 +348,10 @@ class _GalleryPageState extends State<GalleryPage> {
               if (mounted) setState(() => _barrierBusy = false);
             },
           ),
-
           const _SectionTitle('Correctness'),
           _Tile(
             title: 'Three concurrent requests',
-            subtitle:
-                'Reference counted — the overlay waits for the last one, '
+            subtitle: 'Reference counted — the overlay waits for the last one, '
                 'not the first.',
             onTap: () async {
               await Future.wait<void>(<Future<void>>[
@@ -386,7 +374,6 @@ class _GalleryPageState extends State<GalleryPage> {
               await handle.success('Done');
             },
           ),
-
           const _SectionTitle('The indicator on its own'),
           const _IndicatorRow(),
         ],
@@ -567,10 +554,10 @@ class _SectionTitle extends StatelessWidget {
       child: Text(
         text.toUpperCase(),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          letterSpacing: 1.4,
-          fontWeight: FontWeight.w700,
-          color: Theme.of(context).colorScheme.primary,
-        ),
+              letterSpacing: 1.4,
+              fontWeight: FontWeight.w700,
+              color: Theme.of(context).colorScheme.primary,
+            ),
       ),
     );
   }

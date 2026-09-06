@@ -46,10 +46,10 @@ class LoadingIndicatorSpec {
 
   /// The colour matching the current [status].
   Color get statusColor => switch (status) {
-    LoadingStatus.busy => color,
-    LoadingStatus.success => successColor,
-    LoadingStatus.error => errorColor,
-  };
+        LoadingStatus.busy => color,
+        LoadingStatus.success => successColor,
+        LoadingStatus.error => errorColor,
+      };
 }
 
 /// Replaces the built-in indicator with a widget of your own.

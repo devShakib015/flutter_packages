@@ -345,9 +345,8 @@ class LoadingIndicatorPainter extends CustomPainter {
     double phase,
     Color color,
   ) {
-    final Path path = status == LoadingStatus.error
-        ? _buildCross(size)
-        : _buildCheck(size);
+    final Path path =
+        status == LoadingStatus.error ? _buildCross(size) : _buildCheck(size);
     final Paint paint = _strokePaint(color);
     final double scale = 0.92 + 0.08 * Curves.easeOutBack.transform(phase);
 

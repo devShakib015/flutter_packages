@@ -1,3 +1,20 @@
+## 0.3.3
+
+Widened the SDK constraint, which was wrong rather than merely strict.
+
+The pubspec declared `sdk: ^3.13.0` next to `flutter: '>=3.32.0'`. Dart 3.13
+ships with Flutter 3.47, so the two disagreed: the Flutter line advertised 3.32
+while the Dart line quietly refused anything below 3.47. Anyone on a Flutter
+between those saw a resolution failure that the stated support range said
+should not happen.
+
+The real floor is `Color.withValues()`, which arrived in Flutter 3.27 and is
+used throughout the theming. So the constraint is now **Flutter 3.27 / Dart
+3.6**, verified by analysing `lib/` against a real 3.27.0 SDK rather than
+inferred from the source.
+
+No code changes.
+
 ## 0.3.2
 
 An audit of every package in this repo found five defects here. This package

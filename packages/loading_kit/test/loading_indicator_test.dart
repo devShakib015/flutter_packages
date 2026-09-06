@@ -7,19 +7,18 @@ import 'package:loading_kit/src/painting/loading_indicator_painter.dart';
 void main() {
   LoadingIndicatorPainter painterOf(WidgetTester tester) {
     return tester
-            .widget<CustomPaint>(
-              find.descendant(
-                of: find.byType(LoadingIndicator),
-                matching: find.byType(CustomPaint),
-              ),
-            )
-            .painter!
-        as LoadingIndicatorPainter;
+        .widget<CustomPaint>(
+          find.descendant(
+            of: find.byType(LoadingIndicator),
+            matching: find.byType(CustomPaint),
+          ),
+        )
+        .painter! as LoadingIndicatorPainter;
   }
 
   Widget host(Widget child) => MaterialApp(
-    home: Material(child: Center(child: child)),
-  );
+        home: Material(child: Center(child: child)),
+      );
 
   testWidgets('the indeterminate arc advances between frames', (
     WidgetTester tester,

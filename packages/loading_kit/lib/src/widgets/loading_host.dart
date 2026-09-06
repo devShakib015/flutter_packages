@@ -179,14 +179,14 @@ abstract final class LoadingKit {
     Alignment toastAlignment = Alignment.bottomCenter,
   }) {
     return (BuildContext context, Widget? child) => LoadingHost(
-      controller: controller,
-      style: style,
-      timing: timing,
-      cancelLabel: cancelLabel,
-      busySemanticsLabel: busySemanticsLabel,
-      registerGlobal: registerGlobal,
-      trapFocus: trapFocus,
-      child: child ?? const SizedBox.shrink(),
-    );
+          controller: controller,
+          style: style,
+          timing: timing,
+          cancelLabel: cancelLabel,
+          busySemanticsLabel: busySemanticsLabel,
+          registerGlobal: registerGlobal,
+          trapFocus: trapFocus,
+          child: child ?? const SizedBox.shrink(),
+        );
   }
 }

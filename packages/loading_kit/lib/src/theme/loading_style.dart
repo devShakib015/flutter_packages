@@ -363,14 +363,14 @@ class LoadingStyle {
       LoadingPreset.minimal => _minimal(scheme, dark),
       LoadingPreset.neon => _neon(scheme, dark),
       LoadingPreset.material ||
-      LoadingPreset.adaptive => _material(scheme, dark),
+      LoadingPreset.adaptive =>
+        _material(scheme, dark),
     };
   }
 
   static ResolvedLoadingStyle _cupertino(ColorScheme scheme, bool dark) {
-    final Color onCard = dark
-        ? const Color(0xFFF2F2F7)
-        : const Color(0xFF1C1C1E);
+    final Color onCard =
+        dark ? const Color(0xFFF2F2F7) : const Color(0xFF1C1C1E);
     return ResolvedLoadingStyle(
       scrimColor: const Color(0xFF000000).withValues(alpha: dark ? 0.38 : 0.20),
       backdropBlur: 0,
@@ -378,9 +378,8 @@ class LoadingStyle {
       cardColor: dark
           ? const Color(0xFF1C1C1E).withValues(alpha: 0.96)
           : const Color(0xFFF7F7FA).withValues(alpha: 0.98),
-      cardBorderColor: dark
-          ? const Color(0xFFFFFFFF).withValues(alpha: 0.08)
-          : null,
+      cardBorderColor:
+          dark ? const Color(0xFFFFFFFF).withValues(alpha: 0.08) : null,
       cardBorderWidth: 1,
       cardRadius: const BorderRadius.all(Radius.circular(16)),
       cardShadow: <BoxShadow>[

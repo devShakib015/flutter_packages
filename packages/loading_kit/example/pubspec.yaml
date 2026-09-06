@@ -5,7 +5,9 @@ version: 1.0.0
 resolution: workspace
 
 environment:
-  sdk: ^3.13.0
+  # Matches the package's own floor, so the example formats and analyses
+  # under the same language version.
+  sdk: ^3.6.0
   flutter: '>=3.32.0'
 
 dependencies:

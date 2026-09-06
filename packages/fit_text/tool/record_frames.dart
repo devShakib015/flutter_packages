@@ -28,8 +28,8 @@ const String _line = 'The quick brown fox jumps over the lazy dog';
 
 void main() {
   setUpAll(() async {
-    final Uint8List bytes = File('tool/fonts/InterVariable.ttf')
-        .readAsBytesSync();
+    final Uint8List bytes =
+        File('tool/fonts/InterVariable.ttf').readAsBytesSync();
     await ui.loadFontFromList(bytes, fontFamily: 'Inter');
   });
 

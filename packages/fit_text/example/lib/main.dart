@@ -67,7 +67,6 @@ class _DemoPageState extends State<DemoPage> {
             divisions: 68,
             onChanged: (double v) => setState(() => _width = v),
           ),
-
           const _Heading('One shared size across a row'),
           const Text(
             'Without a group each label picks its own size and they mismatch. '
@@ -96,7 +95,6 @@ class _DemoPageState extends State<DemoPage> {
                 ),
             ],
           ),
-
           const _Heading('Where LayoutBuilder-based sizing throws'),
           const Text(
             'IntrinsicHeight and Table both measure children before laying them '
@@ -199,10 +197,10 @@ class _Heading extends StatelessWidget {
       child: Text(
         text.toUpperCase(),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          letterSpacing: 1.3,
-          fontWeight: FontWeight.w700,
-          color: Theme.of(context).colorScheme.primary,
-        ),
+              letterSpacing: 1.3,
+              fontWeight: FontWeight.w700,
+              color: Theme.of(context).colorScheme.primary,
+            ),
       ),
     );
   }

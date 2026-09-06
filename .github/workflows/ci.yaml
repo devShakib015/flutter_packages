@@ -62,41 +62,65 @@ jobs:
           done
 
   # `channel: stable` only ever tests the newest Flutter, so a declared floor is
-  # never exercised. document_pip claims '>=3.32.0' for a specific reason —
-  # requestViewFocusChange was a no-op stub before it — and that claim rested on
-  # one run on one laptop until this job existed.
+  # never exercised. Each of these claims a different one for a specific reason,
+  # and until this job existed every claim rested on one run on one laptop.
   floor:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # requestViewFocusChange existed from 3.24 but was a no-op stub
+          # until 3.32, so a lower floor would compile and silently misbehave.
+          - package: document_pip
+            flutter: '3.32.0'
+            tests: 'yes'
+          # Only version-sensitive API is TextScaler, in Flutter since 3.12.
+          - package: fit_text
+            flutter: '3.24.0'
+            tests: 'no'
+          # Color.withValues() arrived in Flutter 3.27.
+          - package: loading_kit
+            flutter: '3.27.0'
+            tests: 'no'
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: 3.32.0
+          flutter-version: ${{ matrix.flutter }}
           channel: stable
-      - name: document_pip on Flutter 3.32.0, its declared floor
+      - name: ${{ matrix.package }} on Flutter ${{ matrix.flutter }}, its declared floor
         run: |
           set -euo pipefail
-          # Out of the workspace on purpose: sibling packages declare Dart
-          # ^3.13, which the 3.32 SDK cannot satisfy, so resolving in place
-          # would fail for a reason that has nothing to do with this package.
-          # The layout is mirrored so the analysis_options include still points
-          # at the repo's shared rules.
+          # Out of the workspace on purpose: sibling packages declare a newer
+          # Dart than these SDKs ship, so resolving in place would fail for a
+          # reason that has nothing to do with the package under test. The
+          # layout is mirrored so the analysis_options include still resolves.
           mkdir -p /tmp/floor/packages
-          cp -R packages/document_pip /tmp/floor/packages/
+          cp -R "packages/${{ matrix.package }}" /tmp/floor/packages/
           cp analysis_options.yaml /tmp/floor/analysis_options.yaml
-          cd /tmp/floor/packages/document_pip
-          # The example is dropped because its own pubspec cannot resolve out
-          # here — which also removes example/web/, so the one test that asserts
-          # those files ship is skipped with it. That test is about the tarball,
-          # not about the SDK, and the verify job already runs it on stable
-          # along with a real web build of the example.
+          cd "/tmp/floor/packages/${{ matrix.package }}"
           rm -rf example
           sed -i '/^resolution: workspace$/d' pubspec.yaml
           flutter --version
+          if [ "${{ matrix.tests }}" = "no" ]; then
+            # flutter_lints 6 needs a newer Dart than these floors allow. It is
+            # a dev dependency, so it is not in a consumer's solve at all — what
+            # the constraint promises is that lib/ COMPILES here, so drop the
+            # lint tooling and its config and check exactly that.
+            sed -i '/flutter_lints:/d' pubspec.yaml
+            : > analysis_options.yaml
+            rm -rf test
+          fi
           flutter pub get
           flutter analyze --no-pub
-          flutter test $(ls test/*.dart | grep -v bootstrap_snippet_test)
+          if [ "${{ matrix.tests }}" = "yes" ]; then
+            # example/web/ went with the example above, so the one test that
+            # asserts those files ship cannot run here. It is about the tarball,
+            # not the SDK, and verify already runs it on stable.
+            flutter test $(ls test/*.dart | grep -v bootstrap_snippet_test)
+          fi
 
   # Native code needs a real toolchain. The on-device model itself needs Apple
   # Intelligence hardware that hosted runners do not have, so this compiles the

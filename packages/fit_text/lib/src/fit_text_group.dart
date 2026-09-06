@@ -52,9 +52,8 @@ class FitTextGroup {
   }
 
   void _recompute() {
-    final double? next = _natural.values.isEmpty
-        ? null
-        : _natural.values.reduce(math.min);
+    final double? next =
+        _natural.values.isEmpty ? null : _natural.values.reduce(math.min);
     if (next == _resolved) return;
     _resolved = next;
 

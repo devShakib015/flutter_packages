@@ -126,10 +126,10 @@ class _LoadingProgressBarState extends State<LoadingProgressBar>
   }
 
   Color get _activeColor => switch (widget.status) {
-    LoadingStatus.busy => widget.color,
-    LoadingStatus.success => widget.successColor ?? widget.color,
-    LoadingStatus.error => widget.errorColor ?? widget.color,
-  };
+        LoadingStatus.busy => widget.color,
+        LoadingStatus.success => widget.successColor ?? widget.color,
+        LoadingStatus.error => widget.errorColor ?? widget.color,
+      };
 
   @override
   Widget build(BuildContext context) {

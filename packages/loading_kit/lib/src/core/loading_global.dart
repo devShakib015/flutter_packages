@@ -74,14 +74,15 @@ abstract final class Loading {
     LoadingTiming? timing,
     bool dismissible = false,
     bool dismissOnNavigation = true,
-  }) => instance.show(
-    message: message,
-    detail: detail,
-    progress: progress,
-    timing: timing,
-    dismissible: dismissible,
-    dismissOnNavigation: dismissOnNavigation,
-  );
+  }) =>
+      instance.show(
+        message: message,
+        detail: detail,
+        progress: progress,
+        timing: timing,
+        dismissible: dismissible,
+        dismissOnNavigation: dismissOnNavigation,
+      );
 
   /// Runs [task] behind the overlay. See [LoadingController.run].
   static Future<T> run<T>(
@@ -95,18 +96,19 @@ abstract final class Loading {
     LoadingTiming? timing,
     bool dismissible = false,
     bool awaitFeedback = true,
-  }) => instance.run<T>(
-    task,
-    message: message,
-    detail: detail,
-    progress: progress,
-    successMessage: successMessage,
-    errorMessage: errorMessage,
-    timeout: timeout,
-    timing: timing,
-    dismissible: dismissible,
-    awaitFeedback: awaitFeedback,
-  );
+  }) =>
+      instance.run<T>(
+        task,
+        message: message,
+        detail: detail,
+        progress: progress,
+        successMessage: successMessage,
+        errorMessage: errorMessage,
+        timeout: timeout,
+        timing: timing,
+        dismissible: dismissible,
+        awaitFeedback: awaitFeedback,
+      );
 
   /// Runs [body] with progress and cancellation. See
   /// [LoadingController.runTask].
@@ -122,19 +124,20 @@ abstract final class Loading {
     LoadingTiming? timing,
     bool dismissible = false,
     bool awaitFeedback = true,
-  }) => instance.runTask<T>(
-    body,
-    message: message,
-    detail: detail,
-    progress: progress,
-    successMessage: successMessage,
-    errorMessage: errorMessage,
-    timeout: timeout,
-    cancelAfter: cancelAfter,
-    timing: timing,
-    dismissible: dismissible,
-    awaitFeedback: awaitFeedback,
-  );
+  }) =>
+      instance.runTask<T>(
+        body,
+        message: message,
+        detail: detail,
+        progress: progress,
+        successMessage: successMessage,
+        errorMessage: errorMessage,
+        timeout: timeout,
+        cancelAfter: cancelAfter,
+        timing: timing,
+        dismissible: dismissible,
+        awaitFeedback: awaitFeedback,
+      );
 
   /// Shows a transient, non-blocking message.
   ///
@@ -146,36 +149,39 @@ abstract final class Loading {
     String? detail,
     LoadingStatus? status,
     Duration? duration,
-  }) => instance.toast(
-    message,
-    detail: detail,
-    status: status,
-    duration: duration,
-  );
+  }) =>
+      instance.toast(
+        message,
+        detail: detail,
+        status: status,
+        duration: duration,
+      );
 
   /// A toast carrying a check mark.
   static Object toastSuccess(
     String message, {
     String? detail,
     Duration? duration,
-  }) => instance.toast(
-    message,
-    detail: detail,
-    status: LoadingStatus.success,
-    duration: duration,
-  );
+  }) =>
+      instance.toast(
+        message,
+        detail: detail,
+        status: LoadingStatus.success,
+        duration: duration,
+      );
 
   /// A toast carrying a cross.
   static Object toastError(
     String message, {
     String? detail,
     Duration? duration,
-  }) => instance.toast(
-    message,
-    detail: detail,
-    status: LoadingStatus.error,
-    duration: duration,
-  );
+  }) =>
+      instance.toast(
+        message,
+        detail: detail,
+        status: LoadingStatus.error,
+        duration: duration,
+      );
 
   /// Starts the exit transition for one toast.
   static void dismissToast(Object id) => _instance?.dismissToast(id);

@@ -46,10 +46,10 @@ class LoadingHandle {
 
   /// Sets determinate progress, or null to return to an indeterminate spin.
   set progress(double? value) => _controller.updateOperation(
-    _operation,
-    progress: value,
-    setProgress: true,
-  );
+        _operation,
+        progress: value,
+        setProgress: true,
+      );
 
   /// Replaces the primary message.
   set message(String? value) =>
@@ -83,17 +83,17 @@ class LoadingHandle {
   /// If the operation never became visible, no check mark is shown — a fast
   /// success stays silent rather than flashing.
   Future<void> success([String? message]) => _controller.retire(
-    _operation,
-    status: LoadingStatus.success,
-    message: message,
-  );
+        _operation,
+        status: LoadingStatus.success,
+        message: message,
+      );
 
   /// Settles into a cross, holds, then dismisses.
   Future<void> error([String? message]) => _controller.retire(
-    _operation,
-    status: LoadingStatus.error,
-    message: message,
-  );
+        _operation,
+        status: LoadingStatus.error,
+        message: message,
+      );
 
   /// Dismisses with no terminal feedback, respecting the minimum-visible rule.
   Future<void> dismiss() => _controller.retire(_operation);

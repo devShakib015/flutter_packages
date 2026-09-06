@@ -30,8 +30,8 @@ final GlobalKey _stageKey = GlobalKey();
 
 void main() {
   setUpAll(() async {
-    final Uint8List bytes = File('tool/fonts/InterVariable.ttf')
-        .readAsBytesSync();
+    final Uint8List bytes =
+        File('tool/fonts/InterVariable.ttf').readAsBytesSync();
     await ui.loadFontFromList(bytes, fontFamily: 'Inter');
   });
 
@@ -188,10 +188,10 @@ Future<ui.Image> _captureStage(WidgetTester tester) {
 }
 
 ThemeData _theme(bool dark) => ThemeData(
-  colorSchemeSeed: const Color(0xFF4C6FFF),
-  brightness: dark ? Brightness.dark : Brightness.light,
-  fontFamily: 'Inter',
-);
+      colorSchemeSeed: const Color(0xFF4C6FFF),
+      brightness: dark ? Brightness.dark : Brightness.light,
+      fontFamily: 'Inter',
+    );
 
 /// A stand-in app screen, so the overlay has something real to sit over.
 class _FakeScreen extends StatelessWidget {

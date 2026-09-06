@@ -38,35 +38,35 @@ class RenderFitText extends RenderBox
     TextHeightBehavior? textHeightBehavior,
     FitTextGroup? group,
     bool wrapWords = true,
-  }) : assert(
-         !_hasPlaceholder(text),
-         'FitText.rich cannot fit a span containing a WidgetSpan. Fitting '
-         'works by measuring the span at candidate sizes, and a placeholder '
-         'has no size until its child has been laid out. Without this the '
-         'failure surfaced from inside TextPainter, naming neither FitText '
-         'nor the span.',
-       ),
-       _text = text,
-       _group = group,
-       _wrapWords = wrapWords,
-       _minFontSize = minFontSize,
-       _maxFontSize = maxFontSize,
-       _stepGranularity = stepGranularity,
-       _presetFontSizes = presetFontSizes,
-       _painter = TextPainter(
-         text: text,
-         textAlign: textAlign,
-         textDirection: textDirection,
-         textScaler: textScaler,
-         maxLines: maxLines,
-         ellipsis: overflow == TextOverflow.ellipsis ? '…' : null,
-         locale: locale,
-         strutStyle: strutStyle,
-         textWidthBasis: textWidthBasis,
-         textHeightBehavior: textHeightBehavior,
-       ),
-       _softWrap = softWrap,
-       _overflow = overflow;
+  })  : assert(
+          !_hasPlaceholder(text),
+          'FitText.rich cannot fit a span containing a WidgetSpan. Fitting '
+          'works by measuring the span at candidate sizes, and a placeholder '
+          'has no size until its child has been laid out. Without this the '
+          'failure surfaced from inside TextPainter, naming neither FitText '
+          'nor the span.',
+        ),
+        _text = text,
+        _group = group,
+        _wrapWords = wrapWords,
+        _minFontSize = minFontSize,
+        _maxFontSize = maxFontSize,
+        _stepGranularity = stepGranularity,
+        _presetFontSizes = presetFontSizes,
+        _painter = TextPainter(
+          text: text,
+          textAlign: textAlign,
+          textDirection: textDirection,
+          textScaler: textScaler,
+          maxLines: maxLines,
+          ellipsis: overflow == TextOverflow.ellipsis ? '…' : null,
+          locale: locale,
+          strutStyle: strutStyle,
+          textWidthBasis: textWidthBasis,
+          textHeightBehavior: textHeightBehavior,
+        ),
+        _softWrap = softWrap,
+        _overflow = overflow;
 
   final TextPainter _painter;
   InlineSpan _text;

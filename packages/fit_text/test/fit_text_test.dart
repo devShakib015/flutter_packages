@@ -11,15 +11,15 @@ void main() {
   const TextStyle base = TextStyle(fontSize: 14);
 
   Widget box(Widget child, {double width = 200, double? height}) => MaterialApp(
-    home: Scaffold(
-      body: Center(
-        child: DefaultTextStyle(
-          style: base,
-          child: SizedBox(width: width, height: height, child: child),
+        home: Scaffold(
+          body: Center(
+            child: DefaultTextStyle(
+              style: base,
+              child: SizedBox(width: width, height: height, child: child),
+            ),
+          ),
         ),
-      ),
-    ),
-  );
+      );
 
   RenderFitText render(WidgetTester tester) =>
       tester.renderObject<RenderFitText>(find.byType(FitText));
@@ -422,30 +422,30 @@ void main() {
 /// Group behaviour, which is what makes migrating from the incumbent possible.
 void groupTests() {
   Widget row(List<String> labels, {FitTextGroup? group}) => MaterialApp(
-    home: Scaffold(
-      body: DefaultTextStyle(
-        style: const TextStyle(fontSize: 14),
-        child: SizedBox(
-          width: 300,
-          child: Row(
-            children: <Widget>[
-              for (final String label in labels)
-                Expanded(
-                  child: FitText(
-                    label,
-                    key: ValueKey<String>(label),
-                    group: group,
-                    maxLines: 1,
-                    minFontSize: 4,
-                    maxFontSize: 60,
-                  ),
-                ),
-            ],
+        home: Scaffold(
+          body: DefaultTextStyle(
+            style: const TextStyle(fontSize: 14),
+            child: SizedBox(
+              width: 300,
+              child: Row(
+                children: <Widget>[
+                  for (final String label in labels)
+                    Expanded(
+                      child: FitText(
+                        label,
+                        key: ValueKey<String>(label),
+                        group: group,
+                        maxLines: 1,
+                        minFontSize: 4,
+                        maxFontSize: 60,
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
         ),
-      ),
-    ),
-  );
+      );
 
   List<double> sizes(WidgetTester tester) => tester
       .renderObjectList<RenderFitText>(find.byType(FitText))
@@ -507,15 +507,15 @@ void groupTests() {
 /// The two options that were missing for a clean migration.
 void parityTests() {
   Widget box(Widget child, {double width = 200}) => MaterialApp(
-    home: Scaffold(
-      body: Center(
-        child: DefaultTextStyle(
-          style: const TextStyle(fontSize: 14),
-          child: SizedBox(width: width, child: child),
+        home: Scaffold(
+          body: Center(
+            child: DefaultTextStyle(
+              style: const TextStyle(fontSize: 14),
+              child: SizedBox(width: width, child: child),
+            ),
+          ),
         ),
-      ),
-    ),
-  );
+      );
 
   RenderFitText render(WidgetTester tester) =>
       tester.renderObject<RenderFitText>(find.byType(FitText));

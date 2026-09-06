@@ -95,12 +95,12 @@ class LoadingMotion {
 
   @override
   int get hashCode => Object.hash(
-    spinPeriod,
-    morphDuration,
-    progressDuration,
-    barSweepPeriod,
-    crossFadeDuration,
-  );
+        spinPeriod,
+        morphDuration,
+        progressDuration,
+        barSweepPeriod,
+        crossFadeDuration,
+      );
 
   @override
   String toString() => 'LoadingMotion(spinPeriod: $spinPeriod)';

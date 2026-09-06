@@ -61,17 +61,17 @@ class FitText extends SingleChildRenderObjectWidget {
     this.group,
     this.wrapWords = true,
     Widget? overflowReplacement,
-  }) : _data = data,
-       _style = style,
-       _span = null,
-       assert(minFontSize > 0, 'minFontSize must be positive'),
-       assert(
-         minFontSize <= maxFontSize,
-         'minFontSize must not exceed maxFontSize',
-       ),
-       assert(stepGranularity > 0, 'stepGranularity must be positive'),
-       assert(maxLines == null || maxLines > 0, 'maxLines must be positive'),
-       super(child: overflowReplacement);
+  })  : _data = data,
+        _style = style,
+        _span = null,
+        assert(minFontSize > 0, 'minFontSize must be positive'),
+        assert(
+          minFontSize <= maxFontSize,
+          'minFontSize must not exceed maxFontSize',
+        ),
+        assert(stepGranularity > 0, 'stepGranularity must be positive'),
+        assert(maxLines == null || maxLines > 0, 'maxLines must be positive'),
+        super(child: overflowReplacement);
 
   /// Creates auto-fitting text from an [InlineSpan].
   ///
@@ -106,17 +106,17 @@ class FitText extends SingleChildRenderObjectWidget {
     this.group,
     this.wrapWords = true,
     Widget? overflowReplacement,
-  }) : _span = span,
-       _data = null,
-       _style = null,
-       assert(minFontSize > 0, 'minFontSize must be positive'),
-       assert(
-         minFontSize <= maxFontSize,
-         'minFontSize must not exceed maxFontSize',
-       ),
-       assert(stepGranularity > 0, 'stepGranularity must be positive'),
-       assert(maxLines == null || maxLines > 0, 'maxLines must be positive'),
-       super(child: overflowReplacement);
+  })  : _span = span,
+        _data = null,
+        _style = null,
+        assert(minFontSize > 0, 'minFontSize must be positive'),
+        assert(
+          minFontSize <= maxFontSize,
+          'minFontSize must not exceed maxFontSize',
+        ),
+        assert(stepGranularity > 0, 'stepGranularity must be positive'),
+        assert(maxLines == null || maxLines > 0, 'maxLines must be positive'),
+        super(child: overflowReplacement);
 
   // Stored unassembled so both constructors can be const, which matters for a
   // widget destined to appear in a lot of build methods.

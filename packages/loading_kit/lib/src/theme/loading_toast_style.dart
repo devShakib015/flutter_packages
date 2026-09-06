@@ -77,12 +77,12 @@ class LoadingToastStyle {
 
   @override
   int get hashCode => Object.hash(
-    padding,
-    radius,
-    iconSize,
-    iconStroke,
-    iconGap,
-    gap,
-    enterDuration,
-  );
+        padding,
+        radius,
+        iconSize,
+        iconStroke,
+        iconGap,
+        gap,
+        enterDuration,
+      );
 }

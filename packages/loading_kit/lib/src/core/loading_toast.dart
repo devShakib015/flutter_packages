@@ -38,12 +38,12 @@ class LoadingToast {
 
   /// Returns a copy with [dismissing] replaced.
   LoadingToast copyWith({bool? dismissing}) => LoadingToast(
-    id: id,
-    message: message,
-    detail: detail,
-    status: status,
-    dismissing: dismissing ?? this.dismissing,
-  );
+        id: id,
+        message: message,
+        detail: detail,
+        status: status,
+        dismissing: dismissing ?? this.dismissing,
+      );
 
   @override
   bool operator ==(Object other) =>

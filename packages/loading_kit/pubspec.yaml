@@ -3,7 +3,7 @@ description: >-
   A blocking-async overlay that never flickers. Wrap any Future in one call:
   delayed reveal, minimum display time, reference counting, cancellation,
   and themed presets.
-version: 0.3.2
+version: 0.3.3
 repository: https://github.com/devShakib015/flutter_packages
 issue_tracker: https://github.com/devShakib015/flutter_packages/issues
 documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/loading_kit
@@ -30,9 +30,13 @@ topics:
   - async
   - ui
 
+# The two constraints have to agree. Dart ^3.13 means Flutter 3.47, so the
+# old pair promised '>=3.32.0' while actually refusing anything below 3.47.
+# What this package really needs is Color.withValues(), which arrived in Flutter 3.27.
+# Verified by analysing lib/ against a real 3.27.0 SDK.
 environment:
-  sdk: ^3.13.0
-  flutter: '>=3.32.0'
+  sdk: ^3.6.0
+  flutter: '>=3.27.0'
 
 dependencies:
   flutter:
