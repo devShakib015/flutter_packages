@@ -57,10 +57,10 @@ void main() {
   });
 
   void attach() => bridge = PipInputBridge.attach(
-        source: source,
-        target: web.document,
-        viewId: 0,
-      );
+    source: source,
+    target: web.document,
+    viewId: 0,
+  );
 
   web.KeyboardEvent press(
     String type,
@@ -213,8 +213,9 @@ void main() {
       // OPENER's document, so without this arrow keys in a pop-out TextField
       // move the browser caret and Flutter never learns.
       attach();
-      final web.Element host =
-          source.document.createElement('flt-text-editing-host');
+      final web.Element host = source.document.createElement(
+        'flt-text-editing-host',
+      );
       final web.HTMLInputElement input =
           source.document.createElement('input') as web.HTMLInputElement;
       host.appendChild(input);

@@ -79,7 +79,9 @@ class DocumentPipImpl {
       // The stylesheets alone are not enough: `html.dark .card {}` needs the
       // class too, and RTL needs `dir`. A blank window inherits no attributes.
       copyRootAttributes(
-          web.document.documentElement, pip.document.documentElement);
+        web.document.documentElement,
+        pip.document.documentElement,
+      );
       copyRootAttributes(web.document.body, pip.document.body);
     }
 
@@ -128,8 +130,13 @@ class DocumentPipImpl {
       target: web.document,
       viewId: viewId,
     );
-    final _WebPipWindow handle =
-        _WebPipWindow(viewId, pip, app, onResizeRef, input);
+    final _WebPipWindow handle = _WebPipWindow(
+      viewId,
+      pip,
+      app,
+      onResizeRef,
+      input,
+    );
     _current = handle;
     return handle;
   }

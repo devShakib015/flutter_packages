@@ -5,8 +5,8 @@ import 'package:web/web.dart' as web;
 /// `window.documentPictureInPicture`.
 ///
 /// Hand-bound because `package:web` does not ship the Document
-/// Picture-in-Picture API: it is Chromium-only and not in the WebIDL that
-/// package is generated from.
+/// Picture-in-Picture API — it is not in the WebIDL that package is generated
+/// from.
 @JS('documentPictureInPicture')
 external DocumentPictureInPicture? get documentPictureInPicture;
 
@@ -46,8 +46,10 @@ extension type FlutterAppRunner._(JSObject _) implements JSObject {
 /// Options for [FlutterAppRunner.addView].
 extension type AddViewOptions._(JSObject _) implements JSObject {
   /// Creates the options object.
-  external factory AddViewOptions(
-      {web.Element hostElement, JSAny? initialData});
+  external factory AddViewOptions({
+    web.Element hostElement,
+    JSAny? initialData,
+  });
 }
 
 /// Where the app is expected to leave its runner.

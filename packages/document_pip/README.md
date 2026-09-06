@@ -63,8 +63,14 @@ and give `web/index.html` a host to point at:
 </body>
 ```
 
-Forget either and `DocumentPip.open()` throws `DocumentPipNotBootstrapped`,
-whose message is this snippet.
+Forget the bootstrap and `DocumentPip.open()` throws
+`DocumentPipNotBootstrapped`, whose message is this snippet verbatim — a test
+keeps the two identical. Forget `runWidget` and you never get that far: Flutter
+itself refuses to start and names the fix.
+
+Never pass `document.body` as the host. Flutter clears a host element's
+children and sizes the view to 100% of it, so `body` wipes your page — script
+tags included — and then measures zero.
 
 ## Install
 
@@ -75,7 +81,7 @@ flutter pub add document_pip
 ## Opening the window
 
 ```dart
-if (!DocumentPip.isSupported) return;   // Chromium only — see below
+if (!DocumentPip.isSupported) return;   // see browser support below
 
 final window = await DocumentPip.open(
   width: 380,
@@ -142,7 +148,7 @@ when yours is displaced.
 try {
   await DocumentPip.open();
 } on DocumentPipUnsupported {
-  // Firefox, Safari, or not the web at all.
+  // Safari, Firefox for Android, or not the web at all.
 } on DocumentPipNotBootstrapped {
   // The bootstrap above is missing. The message is the snippet.
 } on DocumentPipDenied catch (e) {
@@ -157,14 +163,22 @@ fall-through.
 
 ## What this does not do
 
-**Chromium only.** Document Picture-in-Picture is a Chrome and Edge feature.
-Firefox and Safari have no implementation and none is announced.
-`DocumentPip.isSupported` is false there, and on every non-web platform, so
-gate the control on it rather than showing a button that always fails.
+**Desktop Chromium and Firefox 151+.** Chrome and Edge have had Document
+Picture-in-Picture since 116; Firefox shipped it in 151 on 2026-05-19. Safari
+and Firefox for Android have no implementation, and neither does any non-web
+platform. `DocumentPip.isSupported` is a feature detect, so it is true wherever
+the API exists — gate the control on it rather than showing a button that
+always fails.
+
+**Only Chromium was verified for this release.** Every measurement in this
+README was taken in Chrome 152. Firefox is new to this API and is supported by
+detection alone, so treat it as untested rather than as promised.
 
 **Not video picture-in-picture.** If you want the OS video PiP that Android and
-iOS have, this is the wrong package — try `floating` or `simple_pip_mode`. This
-renders arbitrary widgets, and only on the web.
+iOS have, this is the wrong package — on Android try `floating` or
+`simple_pip_mode`; both are Android-only, and on iOS the system only offers PiP
+for video playback, not arbitrary UI. This renders arbitrary widgets, and only
+on the web.
 
 **The window is the browser's, not yours.** It decides the real size, remembers
 what the user resized it to, and can close it whenever it likes. Treat `width`
@@ -188,6 +202,17 @@ page's. Copy from the page, not from the window.
 **Use a plain `Navigator` in `popOut`.** Route information travels on one
 global channel that writes the page's history, so two `MaterialApp.router`s
 will fight over the URL.
+
+**Browser defaults still fire inside the pop-out.** The bridge asks the engine
+whether Flutter consumed a key and mirrors that back, but on a pure Flutter
+page the engine does not report consumption for most keys — so a shortcut you
+handle in Dart may also do whatever the browser would have done. The pop-out is
+a real browser window and this release does not suppress that.
+
+**Replayed keys reach your page's own listeners too.** Keys are replayed into
+the opener's `<body>` and bubble to `document` and `window`, so a page that
+mixes Flutter with its own markup will see its global shortcuts fire for keys
+typed in the pop-out. Scope those listeners to your own subtree.
 
 **One console warning per window.** Chrome logs `ResizeObserver loop completed
 with undelivered notifications` when a window opens. It comes from Flutter's

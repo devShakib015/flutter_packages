@@ -1,17 +1,38 @@
-# document_pip_example
+# document_pip example
 
-A new Flutter project.
+A player whose mini view pops out into a real, always-on-top browser window.
 
-## Getting Started
+The point of the demo is the shared state. `_Playback` sits **above**
+`DocumentPipApp`, so the page and the floating window read the same object —
+scrub in one and the other moves, because there is only one.
 
-This project is a starting point for a Flutter application.
+## Running it
 
-A few resources to get you started if this is your first Flutter project:
+```bash
+flutter run -d chrome
+```
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+Chrome, Edge, or Firefox 151+. The button disables itself elsewhere.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## The part that is not boilerplate
+
+`web/flutter_bootstrap.js` and `web/index.html` are **hand-written and
+load-bearing**, not generated scaffolding. Do not let `flutter create`
+regenerate them:
+
+- `flutter_bootstrap.js` switches multi-view on and puts the app runner on
+  `window.documentPipApp`. Only that object can add a Flutter view, and
+  `dart:ui_web` exposes the view manager read-only — so a package cannot do
+  this for you.
+- `index.html` provides the sized `<div id="app">` the bootstrap points at.
+  Flutter clears a host element's children and sizes the view to 100% of it,
+  so hosting on a bare `<body>` would wipe the page and then render nothing.
+
+Both files are reproduced in the package README, and `DocumentPip.open()`
+throws with the same snippet if the handover is missing.
+
+## Where to look
+
+`lib/main.dart` — `DocumentPipApp` takes `main:` and `popOut:` builders, and
+`_popOut()` shows the one rule that matters: `DocumentPip.open()` must be the
+first `await` in the gesture handler, or the browser refuses.

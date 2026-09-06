@@ -10,11 +10,11 @@ void main() => runWidget(buildApp());
 
 /// The whole app, exposed so the smoke test can mount the same tree.
 Widget buildApp() => _Playback(
-      child: DocumentPipApp(
-        main: (BuildContext context) => const _Shell(child: PageView2()),
-        popOut: (BuildContext context) => const _Shell(child: MiniPlayer()),
-      ),
-    );
+  child: DocumentPipApp(
+    main: (BuildContext context) => const _Shell(child: PageView2()),
+    popOut: (BuildContext context) => const _Shell(child: MiniPlayer()),
+  ),
+);
 
 /// One clock, shared by every window.
 class _Playback extends StatefulWidget {
@@ -72,14 +72,14 @@ class _Shell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorSchemeSeed: const Color(0xFF3DDC97),
-          brightness: Brightness.dark,
-          useMaterial3: true,
-        ),
-        home: child,
-      );
+    debugShowCheckedModeBanner: false,
+    theme: ThemeData(
+      colorSchemeSeed: const Color(0xFF3DDC97),
+      brightness: Brightness.dark,
+      useMaterial3: true,
+    ),
+    home: child,
+  );
 }
 
 /// The page.
@@ -151,7 +151,7 @@ class _PageView2State extends State<PageView2> {
                 DocumentPip.isSupported
                     ? _status
                     : 'This browser has no Document Picture-in-Picture — '
-                        'Chrome or Edge is needed.',
+                          'Chrome, Edge or Firefox 151+ is needed.',
                 style: Theme.of(context).textTheme.bodySmall,
                 textAlign: TextAlign.center,
               ),

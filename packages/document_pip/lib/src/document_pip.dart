@@ -19,14 +19,20 @@ import 'stub_impl.dart' if (dart.library.js_interop) 'web_impl.dart';
 ///
 /// Rendering into the window is `DocumentPipApp`'s job; this only opens it.
 ///
-/// Chromium only. Firefox and Safari have no implementation, and neither does
-/// any non-web platform, so [isSupported] is false there and [open] throws
+/// Chrome and Edge have had Document Picture-in-Picture since 116, Firefox
+/// since 151. Safari, Firefox for Android and every non-web platform have no
+/// implementation, so [isSupported] is false there and [open] throws
 /// `DocumentPipUnsupported` rather than pretending.
+///
+/// Only Chromium was exercised for this release; Firefox is supported by
+/// feature detection and untested.
 abstract final class DocumentPip {
   /// Whether this browser can open one.
   ///
-  /// False off the web and in Firefox and Safari. Check it before offering the
-  /// control at all — a button that always errors is worse than no button.
+  /// A feature detect, so it is true wherever the API exists — Chrome and Edge
+  /// 116+, Firefox 151+ — and false on Safari, Firefox for Android and off the
+  /// web. Check it before offering the control at all: a button that always
+  /// errors is worse than no button.
   static bool get isSupported => DocumentPipImpl.isSupported;
 
   /// The window currently open, or null.
@@ -76,12 +82,11 @@ abstract final class DocumentPip {
     bool copyStyles = true,
     bool disallowReturnToOpener = false,
     bool preferInitialWindowPlacement = false,
-  }) =>
-      DocumentPipImpl.open(
-        width: width,
-        height: height,
-        copyStyles: copyStyles,
-        disallowReturnToOpener: disallowReturnToOpener,
-        preferInitialWindowPlacement: preferInitialWindowPlacement,
-      );
+  }) => DocumentPipImpl.open(
+    width: width,
+    height: height,
+    copyStyles: copyStyles,
+    disallowReturnToOpener: disallowReturnToOpener,
+    preferInitialWindowPlacement: preferInitialWindowPlacement,
+  );
 }

@@ -49,10 +49,10 @@ void main() {
       // A switch over these is exhaustive, so adding a case later is a compile
       // error rather than a silent fall-through.
       String describe(DocumentPipException e) => switch (e) {
-            DocumentPipUnsupported() => 'unsupported',
-            DocumentPipDenied() => 'denied',
-            DocumentPipNotBootstrapped() => 'not bootstrapped',
-          };
+        DocumentPipUnsupported() => 'unsupported',
+        DocumentPipDenied() => 'denied',
+        DocumentPipNotBootstrapped() => 'not bootstrapped',
+      };
       expect(describe(const DocumentPipUnsupported()), 'unsupported');
       expect(describe(const DocumentPipDenied('x')), 'denied');
       expect(describe(const DocumentPipNotBootstrapped()), 'not bootstrapped');
@@ -213,52 +213,52 @@ void main() {
 
   group('a resize must not rebuild both windows', () {
     testWidgets(
-        'a metrics change that leaves the view set alone rebuilds nothing', (
-      WidgetTester tester,
-    ) async {
-      // didChangeMetrics used to setState unconditionally. It fires on every
-      // frame of a window drag — and this package feeds that loop itself by
-      // resizing the pop-out's host — so dragging either window's edge re-ran
-      // BOTH builders at frame rate. The example hid it by returning const
-      // widgets; a real `MaterialApp(home: Player(...))` pays the whole tree.
-      int mainBuilds = 0;
-      int popOutBuilds = 0;
-      await tester.pumpWidget(
-        DocumentPipApp(
-          main: (BuildContext c) {
-            mainBuilds++;
-            return const Directionality(
-              textDirection: TextDirection.ltr,
-              child: Text('page'),
-            );
-          },
-          popOut: (BuildContext c) {
-            popOutBuilds++;
-            return const SizedBox.shrink();
-          },
-        ),
-        wrapWithView: false,
-      );
-      await tester.pumpAndSettle();
-      expect(mainBuilds, 1);
-      expect(popOutBuilds, 0);
-
-      addTearDown(tester.view.resetPhysicalSize);
-      for (final Size size in const <Size>[
-        Size(900, 700),
-        Size(500, 400),
-        Size(1200, 300),
-      ]) {
-        tester.view.physicalSize = size;
+      'a metrics change that leaves the view set alone rebuilds nothing',
+      (WidgetTester tester) async {
+        // didChangeMetrics used to setState unconditionally. It fires on every
+        // frame of a window drag — and this package feeds that loop itself by
+        // resizing the pop-out's host — so dragging either window's edge re-ran
+        // BOTH builders at frame rate. The example hid it by returning const
+        // widgets; a real `MaterialApp(home: Player(...))` pays the whole tree.
+        int mainBuilds = 0;
+        int popOutBuilds = 0;
+        await tester.pumpWidget(
+          DocumentPipApp(
+            main: (BuildContext c) {
+              mainBuilds++;
+              return const Directionality(
+                textDirection: TextDirection.ltr,
+                child: Text('page'),
+              );
+            },
+            popOut: (BuildContext c) {
+              popOutBuilds++;
+              return const SizedBox.shrink();
+            },
+          ),
+          wrapWithView: false,
+        );
         await tester.pumpAndSettle();
-      }
+        expect(mainBuilds, 1);
+        expect(popOutBuilds, 0);
 
-      // Before the guard this was 4. Each View gives its own subtree a
-      // MediaQuery, so the resize still reaches anything that asked for it.
-      expect(mainBuilds, 1, reason: 'three resizes, no rebuilds');
-      expect(popOutBuilds, 0);
-      expect(find.text('page'), findsOneWidget);
-    });
+        addTearDown(tester.view.resetPhysicalSize);
+        for (final Size size in const <Size>[
+          Size(900, 700),
+          Size(500, 400),
+          Size(1200, 300),
+        ]) {
+          tester.view.physicalSize = size;
+          await tester.pumpAndSettle();
+        }
+
+        // Before the guard this was 4. Each View gives its own subtree a
+        // MediaQuery, so the resize still reaches anything that asked for it.
+        expect(mainBuilds, 1, reason: 'three resizes, no rebuilds');
+        expect(popOutBuilds, 0);
+        expect(find.text('page'), findsOneWidget);
+      },
+    );
 
     // Not automatable, and worth saying so rather than writing a weaker test
     // that looks like proof: the inverse — a metrics change that DOES alter the
@@ -269,14 +269,16 @@ void main() {
   });
 
   group('options', () {
-    test('preferInitialWindowPlacement is on open() and defaults to off',
-        () async {
-      // Off the web this only proves the parameter exists and threads through.
-      // What it actually sends is asserted in the browser test.
-      await expectLater(
-        DocumentPip.open(preferInitialWindowPlacement: true),
-        throwsA(isA<DocumentPipUnsupported>()),
-      );
-    });
+    test(
+      'preferInitialWindowPlacement is on open() and defaults to off',
+      () async {
+        // Off the web this only proves the parameter exists and threads through.
+        // What it actually sends is asserted in the browser test.
+        await expectLater(
+          DocumentPip.open(preferInitialWindowPlacement: true),
+          throwsA(isA<DocumentPipUnsupported>()),
+        );
+      },
+    );
   });
 }

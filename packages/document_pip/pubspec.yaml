@@ -16,9 +16,15 @@ topics:
   - multi-view
   - floating
 
+# Flutter 3.32, not 3.24, for exactly one reason: PlatformDispatcher
+# .requestViewFocusChange exists from 3.24 but its body is a no-op stub until
+# 3.32 (verified in dart:ui at each stable tag). It compiles either way, so a
+# lower floor would build fine and then silently route the pop-out's keys to
+# the page's focus tree. Everything else here works on 3.24 — if the focus call
+# ever goes, the floor can go back down with it.
 environment:
-  sdk: ^3.5.0
-  flutter: '>=3.24.0'
+  sdk: ^3.8.0
+  flutter: '>=3.32.0'
 
 dependencies:
   flutter:

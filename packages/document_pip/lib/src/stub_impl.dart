@@ -17,11 +17,10 @@ class DocumentPipImpl {
     required bool copyStyles,
     required bool disallowReturnToOpener,
     required bool preferInitialWindowPlacement,
-  }) async =>
-      throw const DocumentPipUnsupported(
-        'Document Picture-in-Picture is a browser feature and this is not the '
-        'web. Gate the call on DocumentPip.isSupported.',
-      );
+  }) async => throw const DocumentPipUnsupported(
+    'Document Picture-in-Picture is a browser feature and this is not the '
+    'web. Gate the call on DocumentPip.isSupported.',
+  );
 
   /// Always null: nothing is ever open.
   static PipWindow? get current => null;

@@ -20,7 +20,9 @@ resolution: workspace # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.5.0
+  # Matches the package's own floor, so the example formats and analyses under
+  # the same language version rather than the pre-3.7 formatter.
+  sdk: ^3.8.0
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions

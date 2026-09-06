@@ -32,9 +32,9 @@ class PipInputBridge {
     required web.Window source,
     required web.Document target,
     required int viewId,
-  })  : _source = source,
-        _target = target,
-        _viewId = viewId {
+  }) : _source = source,
+       _target = target,
+       _viewId = viewId {
     // Capture, matching the engine: a page handler that stops propagation
     // should not be able to swallow the replay before it starts.
     _source.addEventListener('keydown', _onKeyRef, true.toJS);
@@ -80,7 +80,11 @@ class PipInputBridge {
     // engine does exactly that, synchronously, when the framework consumed the
     // key — so the return value is a truthful "Flutter handled this", and
     // mirroring it stops the browser acting on the key as well.
-    final bool notPrevented = body.dispatchEvent(_replay(e.type, e.key, e.code,
+    final bool notPrevented = body.dispatchEvent(
+      _replay(
+        e.type,
+        e.key,
+        e.code,
         location: e.location,
         repeat: e.repeat,
         isComposing: e.isComposing,
@@ -93,7 +97,9 @@ class PipInputBridge {
         altGraph: e.getModifierState('AltGraph'),
         capsLock: e.getModifierState('CapsLock'),
         numLock: e.getModifierState('NumLock'),
-        scrollLock: e.getModifierState('ScrollLock')));
+        scrollLock: e.getModifierState('ScrollLock'),
+      ),
+    );
     if (!notPrevented) e.preventDefault();
   }
 
@@ -114,33 +120,32 @@ class PipInputBridge {
     bool capsLock = false,
     bool numLock = false,
     bool scrollLock = false,
-  }) =>
-      web.KeyboardEvent(
-        type,
-        web.KeyboardEventInit(
-          key: key,
-          code: code,
-          location: location,
-          repeat: repeat,
-          isComposing: isComposing,
-          keyCode: keyCode,
-          charCode: charCode,
-          ctrlKey: ctrl,
-          shiftKey: shift,
-          altKey: alt,
-          metaKey: meta,
-          modifierAltGraph: altGraph,
-          modifierCapsLock: capsLock,
-          modifierNumLock: numLock,
-          modifierScrollLock: scrollLock,
-          // Dispatched at <body> so the engine's window-level capture listener
-          // is on the propagation path, and so is anything the app put on the
-          // document. Cancelable, or preventDefault above means nothing.
-          bubbles: true,
-          cancelable: true,
-          composed: true,
-        ),
-      );
+  }) => web.KeyboardEvent(
+    type,
+    web.KeyboardEventInit(
+      key: key,
+      code: code,
+      location: location,
+      repeat: repeat,
+      isComposing: isComposing,
+      keyCode: keyCode,
+      charCode: charCode,
+      ctrlKey: ctrl,
+      shiftKey: shift,
+      altKey: alt,
+      metaKey: meta,
+      modifierAltGraph: altGraph,
+      modifierCapsLock: capsLock,
+      modifierNumLock: numLock,
+      modifierScrollLock: scrollLock,
+      // Dispatched at <body> so the engine's window-level capture listener
+      // is on the propagation path, and so is anything the app put on the
+      // document. Cancelable, or preventDefault above means nothing.
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    ),
+  );
 
   /// Hands Flutter focus to the pop-out's view when the window takes it.
   ///
@@ -179,20 +184,26 @@ class PipInputBridge {
 
   void _releasePressed() {
     if (_pressed.isEmpty) return;
-    final web.HTMLElement? body = _target.body;
-    if (body != null) {
-      _pressed.forEach((String code, String key) {
-        body.dispatchEvent(_replay('keyup', key, code));
-      });
-    }
+    // Copy and clear BEFORE dispatching. Listeners run synchronously, and a
+    // perfectly reasonable one — Escape closing the window — re-enters this
+    // through close() -> dispose(). Iterating the live map would then mutate
+    // it mid-loop and release the same keys twice.
+    final Map<String, String> held = Map<String, String>.of(_pressed);
     _pressed.clear();
+    final web.HTMLElement? body = _target.body;
+    if (body == null) return;
+    held.forEach((String code, String key) {
+      body.dispatchEvent(_replay('keyup', key, code));
+    });
   }
 
   /// Detaches everything and releases any key still held.
   void dispose() {
     if (_disposed) return;
-    _releasePressed();
+    // Set first, so a listener woken by the release below cannot drive any
+    // more forwarding through this bridge on its way out.
     _disposed = true;
+    _releasePressed();
     try {
       _source.removeEventListener('keydown', _onKeyRef, true.toJS);
       _source.removeEventListener('keyup', _onKeyRef, true.toJS);

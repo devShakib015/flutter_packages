@@ -27,13 +27,25 @@ your app.
 - Compiles everywhere through a conditional export; off the web `isSupported`
   is false and `open()` throws rather than failing to build.
 
-Chromium only — Firefox and Safari have no implementation.
+Chrome and Edge 116+, and Firefox 151+ (shipped 2026-05-19). Safari and
+Firefox for Android have no implementation. `isSupported` is a feature detect,
+so it is true wherever the API is — but only Chromium was exercised for this
+release, so Firefox is supported by detection and untested.
+
+**Flutter 3.32 or later**, for one specific reason worth stating because it is
+not the usual "we used a new widget". `PlatformDispatcher.requestViewFocusChange`
+has existed since 3.24, but until 3.32 its body was a no-op stub
+(`// TODO(tugorez): implement this method`), verified by reading `dart:ui` at
+each stable tag. It compiles on 3.24, so a lower floor would install cleanly and
+then silently send the pop-out's key events to the page's focus tree instead —
+a worse failure than the one the bridge fixes. Nothing else here needs 3.32;
+verified by analysing and running the suite against a real 3.32.0 SDK.
 
 ### Audited before release
 
 The lifecycle was driven in a real browser rather than reasoned about, and the
-public surface read against it. Nine defects found and fixed before anyone
-could hit them. The first two are the ones that mattered.
+public surface read against it, twice. Twelve defects found and fixed before
+anyone could hit them. The first two are the ones that mattered.
 
 - **The pop-out froze the moment you switched tabs** — the one situation the
   window exists for. Chromium keeps painting a picture-in-picture opener at
@@ -74,6 +86,26 @@ could hit them. The first two are the ones that mattered.
   never executes an `@TestOn('browser')` file — green CI that proved less than
   it looked like, here and in two other packages. It now runs
   `--platform chrome` wherever such a test exists.
+- **The published example could not run.** `example/web/` is gitignored across
+  this repo as generated scaffolding, which is right everywhere else. Here
+  `flutter_bootstrap.js` and `index.html` are hand-written and load-bearing, so
+  they were untracked in git *and* missing from the tarball — the one package
+  whose hardest step is the bootstrap shipped an example without it.
+- **The bootstrap snippet in the error message told you to wipe your page.** Of
+  the three copies of that snippet, the one a stuck developer actually reaches
+  said `hostElement: document.body`. The engine clears a host element's
+  children and sizes the view to 100% of it, so that empties `<body>` — script
+  tags included — and then measures zero: a blank page and no exception. It was
+  the only copy never shipped and never run. All three are now identical and a
+  test keeps them that way.
+- **Firefox has shipped this since 151** (2026-05-19), and the package asserted
+  in twelve places that it had not, including two runtime strings. The code was
+  right — `isSupported` is a feature detect and already returned true there —
+  so this was purely false prose in the docs of a package whose whole claim is
+  that it measures rather than asserts.
+- **The keyboard bridge could release a key twice** if a forwarded key closed
+  the window, because the teardown iterated the held-key map while dispatching
+  into it. It copies and clears first now.
 - Three doc comments contradicted the code, including one still describing the
   lowest-view-id inference that the first audit had already deleted.
 
@@ -104,7 +136,7 @@ nothing, so it is Flutter's observer on the new host.
 Verified end to end in Chrome 152 rather than assumed: a real click dispatched
 through the browser's input pipeline opens the window, a Flutter view is
 confirmed rendering inside its document, and the whole app was then backgrounded
-to measure whether it kept drawing. Seventeen tests on the VM plus twenty-three
+to measure whether it kept drawing. Twenty tests on the VM plus twenty-three
 in a real browser via `flutter test --platform chrome` — including one that
 asserts the keyboard defect still exists without the bridge, so the workaround
 can be deleted the day Flutter fixes it upstream.

@@ -69,10 +69,10 @@ class _DocumentPipAppState extends State<DocumentPipApp>
   }
 
   static Set<int> _currentViewIds() => <int>{
-        for (final FlutterView view
-            in WidgetsBinding.instance.platformDispatcher.views)
-          view.viewId,
-      };
+    for (final FlutterView view
+        in WidgetsBinding.instance.platformDispatcher.views)
+      view.viewId,
+  };
 
   // A view being added or removed arrives as a metrics change; there is no
   // dedicated callback for it. Without a rebuild the new window renders
@@ -131,7 +131,9 @@ class _DocumentPipAppState extends State<DocumentPipApp>
   @override
   Widget build(BuildContext context) {
     final List<FlutterView> views = WidgetsBinding
-        .instance.platformDispatcher.views
+        .instance
+        .platformDispatcher
+        .views
         .toList(growable: false);
     if (views.isEmpty) return const ViewCollection(views: <Widget>[]);
 
@@ -148,8 +150,9 @@ class _DocumentPipAppState extends State<DocumentPipApp>
             key: ValueKey<int>(view.viewId),
             view: view,
             child: Builder(
-              builder:
-                  popOuts.contains(view.viewId) ? widget.popOut : widget.main,
+              builder: popOuts.contains(view.viewId)
+                  ? widget.popOut
+                  : widget.main,
             ),
           ),
       ],

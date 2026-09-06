@@ -15,16 +15,17 @@ sealed class DocumentPipException implements Exception {
 
 /// The browser cannot do this.
 ///
-/// Document Picture-in-Picture is Chromium-only. Firefox and Safari have no
-/// implementation, and neither does any non-web platform. Check
-/// `DocumentPip.isSupported` and offer something else.
+/// Chrome and Edge have had Document Picture-in-Picture since 116 and Firefox
+/// since 151; Safari, Firefox for Android and every non-web platform have no
+/// implementation. Check `DocumentPip.isSupported` and offer something else.
 class DocumentPipUnsupported extends DocumentPipException {
   /// Creates the exception.
   const DocumentPipUnsupported([
     super.message =
-        'Document Picture-in-Picture is not available here. It is a Chromium '
-            'feature: Chrome and Edge have it, Firefox and Safari do not, and '
-            'neither does any non-web platform. Gate on DocumentPip.isSupported.',
+        'Document Picture-in-Picture is not available here. Chrome and Edge '
+        'have had it since 116 and Firefox since 151; Safari, Firefox for '
+        'Android and every non-web platform do not. Gate on '
+        'DocumentPip.isSupported.',
   ]);
 }
 
@@ -65,11 +66,19 @@ because only it can add a view. Put this in web/flutter_bootstrap.js:
       });
       const app = await engine.runApp();
       window.documentPipApp = app;              // <- document_pip needs this
-      app.addView({ hostElement: document.body });
+      app.addView({ hostElement: document.querySelector('#app') });
     },
   });
 
 In multi-view mode no view is created for you, which is why the page's own
-view is added explicitly on the last line. Then use runWidget(), not runApp().''',
+view is added explicitly on the last line. Give web/index.html a host for it
+to point at -- Flutter sizes a view to 100% of its host and CLEARS that host's
+children, so never pass document.body:
+
+  <body style="margin:0;height:100%">
+    <div id="app" style="position:absolute;inset:0"></div>
+  </body>
+
+Then use runWidget(), not runApp().''',
   ]);
 }

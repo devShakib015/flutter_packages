@@ -14,6 +14,11 @@ packages/*/example/linux/
 packages/*/example/macos/
 packages/*/example/windows/
 packages/*/example/web/
+# ...except document_pip's, which is NOT generated scaffolding: its
+# flutter_bootstrap.js switches multi-view on and hands over the app runner,
+# and its index.html carries the sized #app host those need. Untracked, they
+# were also missing from the published tarball, so the example could not run.
+!packages/document_pip/example/web/
 
 # Tooling
 .idea/

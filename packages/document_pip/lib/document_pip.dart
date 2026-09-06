@@ -23,7 +23,8 @@
 ///  * A bootstrap that switches multi-view on and hands over the app runner.
 ///    `DocumentPipNotBootstrapped` carries the exact snippet.
 ///
-/// Chromium only. Everywhere else `DocumentPip.isSupported` is false.
+/// Chrome and Edge 116+, and Firefox 151+. Everywhere else
+/// `DocumentPip.isSupported` is false.
 library;
 
 export 'src/document_pip.dart' show DocumentPip;

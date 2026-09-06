@@ -35,10 +35,10 @@ void main() {
 
   test('the README error handling compiles and is exhaustive', () {
     String handle(DocumentPipException e) => switch (e) {
-          DocumentPipUnsupported() => 'unsupported',
-          DocumentPipNotBootstrapped() => 'bootstrap',
-          final DocumentPipDenied e => e.message,
-        };
+      DocumentPipUnsupported() => 'unsupported',
+      DocumentPipNotBootstrapped() => 'bootstrap',
+      final DocumentPipDenied e => e.message,
+    };
     expect(handle(const DocumentPipUnsupported()), 'unsupported');
   });
 
