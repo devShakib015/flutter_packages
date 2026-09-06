@@ -16,6 +16,7 @@ class DocumentPipImpl {
     required double height,
     required bool copyStyles,
     required bool disallowReturnToOpener,
+    required bool preferInitialWindowPlacement,
   }) async =>
       throw const DocumentPipUnsupported(
         'Document Picture-in-Picture is a browser feature and this is not the '

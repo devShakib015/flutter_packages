@@ -60,6 +60,13 @@ abstract final class DocumentPip {
   ///
   /// [disallowReturnToOpener] hides the browser's "back to tab" button.
   ///
+  /// [preferInitialWindowPlacement] asks for [width] and [height] rather than
+  /// the geometry the user last left a window at. The browser may remember
+  /// that per origin and reuse it, which is what you want when the same
+  /// mini-player reopens — and not what you want when the next window shows
+  /// something a different shape. Like [width] and [height] it is a hint, not
+  /// a guarantee. Chrome 130 and later.
+  ///
   /// Throws [DocumentPipUnsupported] where the API does not exist,
   /// [DocumentPipNotBootstrapped] when the app runner was never handed over,
   /// and [DocumentPipDenied] when the browser refuses.
@@ -68,11 +75,13 @@ abstract final class DocumentPip {
     double height = 300,
     bool copyStyles = true,
     bool disallowReturnToOpener = false,
+    bool preferInitialWindowPlacement = false,
   }) =>
       DocumentPipImpl.open(
         width: width,
         height: height,
         copyStyles: copyStyles,
         disallowReturnToOpener: disallowReturnToOpener,
+        preferInitialWindowPlacement: preferInitialWindowPlacement,
       );
 }

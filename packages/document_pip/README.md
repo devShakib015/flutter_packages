@@ -82,6 +82,7 @@ final window = await DocumentPip.open(
   height: 210,
   copyStyles: true,             // the new document starts with none
   disallowReturnToOpener: false,
+  preferInitialWindowPlacement: false,  // true to ignore the remembered size
 );
 
 window.viewId;                  // the Flutter view rendering inside it
@@ -101,8 +102,32 @@ onPressed: () async {
 }
 ```
 
-Get that wrong and you get `DocumentPipDenied`, whose message says so — the
-underlying `NotAllowedError` does not.
+Get that wrong and you get `DocumentPipDenied`. Chrome refuses for three
+reasons and calls all of them `NotAllowedError`, so the message lists them and
+quotes Chrome's own text, which is the part that actually discriminates. The
+other common one is calling from inside an iframe.
+
+## It keeps running when you switch tabs
+
+Which is the whole point, and is not free. Chromium keeps painting the page
+that owns a picture-in-picture window even when its tab is in the background —
+but it still reports that page as `hidden`, and Flutter responds to `hidden` by
+switching frames off. Left alone, the floating window freezes the instant you
+look at something else.
+
+`DocumentPipApp` is what stops that, by forcing frames for exactly as long as
+the page is hidden and a window is open. Measured in Chrome 152: **0 frames in
+three seconds before, 311 after.** If you build your own `ViewCollection`
+instead of using this root, you will need to do the same thing.
+
+## The keyboard works in there
+
+Also not free. Flutter binds the keyboard once, to the page's own window, so a
+pop-out is not on the path — `Shortcuts`, `Actions`, `Focus.onKeyEvent`,
+Escape and Tab traversal receive nothing, while plain typing keeps working
+because the browser routes characters to the focused element itself. This
+package replays key and selection events into the opener and hands Flutter
+focus to the pop-out's view when the window takes it.
 
 ## One window, browser-wide
 
@@ -121,7 +146,8 @@ try {
 } on DocumentPipNotBootstrapped {
   // The bootstrap above is missing. The message is the snippet.
 } on DocumentPipDenied catch (e) {
-  // Almost always the user-gesture rule.
+  // The browser said no. Its own reason is in e.message — most often the
+  // user-gesture rule, but an iframe gets refused too.
 }
 ```
 
@@ -145,6 +171,23 @@ what the user resized it to, and can close it whenever it likes. Treat `width`
 and `height` as a request.
 
 **No nested pop-outs.** One window, browser-wide, is the platform's rule.
+
+**Hot restart orphans the window.** Nothing here hooks hot restart, so after
+one the browser's window is still on screen, frozen, while `current` reports
+null. Close it by hand. Development only — a released app never hot restarts.
+
+**The window renders at the page's pixel ratio.** Flutter's web engine keeps
+one display object for the whole app, so dragging the pop-out onto a monitor
+with a different density does not re-rasterise it, and no metrics event fires.
+Not fixable from a package.
+
+**Clipboard fails while the pop-out has focus.** Chrome rejects a clipboard
+read from a document that is not focused, and the engine's clipboard is the
+page's. Copy from the page, not from the window.
+
+**Use a plain `Navigator` in `popOut`.** Route information travels on one
+global channel that writes the page's history, so two `MaterialApp.router`s
+will fight over the URL.
 
 **One console warning per window.** Chrome logs `ResizeObserver loop completed
 with undelivered notifications` when a window opens. It comes from Flutter's

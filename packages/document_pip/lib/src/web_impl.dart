@@ -5,6 +5,7 @@ import 'package:web/web.dart' as web;
 
 import 'exceptions.dart';
 import 'interop.dart';
+import 'pip_input_bridge.dart';
 import 'pip_window.dart';
 
 /// The real implementation: opens the window, gives Flutter a host inside it,
@@ -31,6 +32,7 @@ class DocumentPipImpl {
     required double height,
     required bool copyStyles,
     required bool disallowReturnToOpener,
+    required bool preferInitialWindowPlacement,
   }) async {
     final DocumentPictureInPicture? api = documentPictureInPicture;
     if (api == null) throw const DocumentPipUnsupported();
@@ -50,29 +52,44 @@ class DocumentPipImpl {
               width: width.round(),
               height: height.round(),
               disallowReturnToOpener: disallowReturnToOpener,
+              preferInitialWindowPlacement: preferInitialWindowPlacement,
             ),
           )
           .toDart;
     } catch (e) {
-      // Overwhelmingly the missing user gesture. Say so rather than surfacing
-      // a bare DOMException, because the fix is not obvious from the text.
+      // Do not assert a cause the browser did not give. Chrome refuses for
+      // three different reasons and reports all of them as NotAllowedError, so
+      // the name cannot discriminate — but its message can, and it is in $e.
+      // An earlier version blamed the user gesture unconditionally, which sent
+      // anyone running inside an iframe to go and fix a correct click handler.
       throw DocumentPipDenied(
         'The browser refused to open the window: $e\n\n'
-        'This is nearly always the user-gesture rule — requestWindow may only '
-        'run while handling a real click, tap or key press. Awaiting anything '
-        'first spends the gesture, so call DocumentPip.open() before any other '
-        'await in your handler.',
+        'Chrome refuses for three reasons and its own message above says '
+        'which:\n'
+        '  - No live user gesture. DocumentPip.open() must be the first await '
+        'in a real click, tap or key-press handler; awaiting anything before '
+        'it spends the gesture.\n'
+        '  - The call came from an iframe rather than the top-level page.\n'
+        '  - The call came from inside a picture-in-picture window.',
       );
     }
 
-    if (copyStyles) _copyStyles(pip.document);
+    if (copyStyles) {
+      copyStyleSheets(pip.document);
+      // The stylesheets alone are not enough: `html.dark .card {}` needs the
+      // class too, and RTL needs `dir`. A blank window inherits no attributes.
+      copyRootAttributes(
+          web.document.documentElement, pip.document.documentElement);
+      copyRootAttributes(web.document.body, pip.document.body);
+    }
 
     // A blank window has no layout of its own, so the host is given one and
     // the body's default margin removed. Without this the Flutter view
-    // measures zero and paints nothing.
-    pip.document.documentElement?.setAttribute('style', 'height:100%');
-    pip.document.body!.setAttribute(
-      'style',
+    // measures zero and paints nothing. Merged, not assigned: the opener's
+    // own inline style may have just been copied in above.
+    mergeStyle(pip.document.documentElement, 'height:100%');
+    mergeStyle(
+      pip.document.body,
       'margin:0;padding:0;height:100%;overflow:hidden',
     );
     final web.HTMLDivElement host =
@@ -89,20 +106,71 @@ class DocumentPipImpl {
     );
     pip.document.body!.appendChild(host);
 
-    // The window is resizable, so the host has to follow it.
-    pip.addEventListener(
-      'resize',
-      ((web.Event _) {
-        host.style.width = '${pip.innerWidth}px';
-        host.style.height = '${pip.innerHeight}px';
-      }).toJS,
-    );
+    // The window is resizable, so the host has to follow it. The tear-off is
+    // kept so _teardown can actually detach it: every `.toJS` makes a NEW JS
+    // function, so removing with a second one silently does nothing and the
+    // listener outlives the window it was watching.
+    void onResize(web.Event _) {
+      host.style.width = '${pip.innerWidth}px';
+      host.style.height = '${pip.innerHeight}px';
+    }
+
+    final JSFunction onResizeRef = onResize.toJS;
+    pip.addEventListener('resize', onResizeRef);
 
     final int viewId = app.addView(AddViewOptions(hostElement: host));
     _pipViewIds.add(viewId);
-    final _WebPipWindow handle = _WebPipWindow(viewId, pip, app);
+    // Flutter binds the keyboard to the opener's window, once. Without this
+    // bridge every key event in the pop-out is dropped: no Shortcuts, no
+    // Escape, no Tab traversal. See PipInputBridge.
+    final PipInputBridge input = PipInputBridge.attach(
+      source: pip,
+      target: web.document,
+      viewId: viewId,
+    );
+    final _WebPipWindow handle =
+        _WebPipWindow(viewId, pip, app, onResizeRef, input);
     _current = handle;
     return handle;
+  }
+
+  static void _forget(_WebPipWindow w) {
+    _pipViewIds.remove(w.viewId);
+    // Otherwise the static keeps a dead window, and its document, alive.
+    if (identical(_current, w)) _current = null;
+  }
+
+  /// Appends [css] to whatever inline style [el] already carries.
+  ///
+  /// Not private only so the browser tests can drive it. This library is not
+  /// exported from the barrel, so none of it is public API.
+  static void mergeStyle(web.Element? el, String css) {
+    if (el == null) return;
+    final String existing = (el.getAttribute('style') ?? '').trimRight();
+    final String sep = existing.isEmpty || existing.endsWith(';') ? '' : ';';
+    el.setAttribute('style', '$existing$sep$css');
+  }
+
+  /// Carries the attributes the opener's CSS selects on into the new document.
+  ///
+  /// Copying the stylesheets is only half of it. A theme switcher that sets
+  /// `class="dark"` on `<html>`, an app that keys off `data-density`, or any
+  /// page with `dir="rtl"` gets rules that match nothing without this.
+  static void copyRootAttributes(web.Element? from, web.Element? to) {
+    if (from == null || to == null) return;
+    for (final String name in const <String>['class', 'dir', 'lang']) {
+      final String? value = from.getAttribute(name);
+      if (value != null) to.setAttribute(name, value);
+    }
+    final web.NamedNodeMap attrs = from.attributes;
+    for (int i = 0; i < attrs.length; i++) {
+      final web.Attr attr = attrs.item(i)!;
+      if (attr.name.startsWith('data-')) to.setAttribute(attr.name, attr.value);
+    }
+    // `style` is handled by mergeStyle so the layout reset can be appended
+    // rather than clobbering what was copied.
+    final String? style = from.getAttribute('style');
+    if (style != null) to.setAttribute('style', style);
   }
 
   /// Copies the opener's stylesheets into the new document.
@@ -112,13 +180,7 @@ class DocumentPipImpl {
   /// own into the head, so most of this matters for surrounding HTML rather
   /// than the canvas, but fonts declared on the page are the exception and
   /// they matter a lot.
-  static void _forget(_WebPipWindow w) {
-    _pipViewIds.remove(w.viewId);
-    // Otherwise the static keeps a dead window, and its document, alive.
-    if (identical(_current, w)) _current = null;
-  }
-
-  static void _copyStyles(web.Document target) {
+  static void copyStyleSheets(web.Document target) {
     final web.StyleSheetList sheets = web.document.styleSheets;
     for (int i = 0; i < sheets.length; i++) {
       final web.StyleSheet sheet = sheets.item(i)!;
@@ -147,7 +209,13 @@ class DocumentPipImpl {
 }
 
 class _WebPipWindow implements PipWindow {
-  _WebPipWindow(this.viewId, this._window, this._app) {
+  _WebPipWindow(
+    this.viewId,
+    this._window,
+    this._app,
+    this._onResizeRef,
+    this._input,
+  ) {
     // The user can close the window themselves, and the browser closes it if
     // another one opens — only one exists per browser. Either way the Flutter
     // view has to go, or it renders into a document nobody can see.
@@ -162,6 +230,8 @@ class _WebPipWindow implements PipWindow {
 
   final web.Window _window;
   final FlutterAppRunner _app;
+  final JSFunction _onResizeRef;
+  final PipInputBridge _input;
   final Completer<void> _closed = Completer<void>();
   bool _open = true;
 
@@ -185,13 +255,19 @@ class _WebPipWindow implements PipWindow {
   void _teardown() {
     if (!_open) return;
     _open = false;
+    _input.dispose();
     try {
       _window.removeEventListener('pagehide', _onGoneRef);
+      _window.removeEventListener('resize', _onResizeRef);
     } catch (_) {
       // The window may already be gone; nothing to detach from.
     }
-    _app.removeView(viewId);
+    // Forget first. removeView disposes the view, and the engine's
+    // _onViewDisposedController is a *synchronous* broadcast stream that ends
+    // in invokeOnMetricsChanged — so anything listening for a metrics change
+    // runs inside this call, and would otherwise still see the dead id here.
     DocumentPipImpl._forget(this);
+    _app.removeView(viewId);
     if (!_closed.isCompleted) _closed.complete();
   }
 }

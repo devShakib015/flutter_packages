@@ -28,6 +28,7 @@ void main() {
       height: 210,
       copyStyles: true,
       disallowReturnToOpener: false,
+      preferInitialWindowPlacement: false,
     );
     await expectLater(opening, throwsA(isA<DocumentPipException>()));
   });
