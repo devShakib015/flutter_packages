@@ -86,12 +86,17 @@ jobs:
           cp -R packages/document_pip /tmp/floor/packages/
           cp analysis_options.yaml /tmp/floor/analysis_options.yaml
           cd /tmp/floor/packages/document_pip
+          # The example is dropped because its own pubspec cannot resolve out
+          # here — which also removes example/web/, so the one test that asserts
+          # those files ship is skipped with it. That test is about the tarball,
+          # not about the SDK, and the verify job already runs it on stable
+          # along with a real web build of the example.
           rm -rf example
           sed -i '/^resolution: workspace$/d' pubspec.yaml
           flutter --version
           flutter pub get
           flutter analyze --no-pub
-          flutter test
+          flutter test $(ls test/*.dart | grep -v bootstrap_snippet_test)
 
   # Native code needs a real toolchain. The on-device model itself needs Apple
   # Intelligence hardware that hosted runners do not have, so this compiles the
