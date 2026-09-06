@@ -1,3 +1,19 @@
+## 0.2.2
+
+**Declared web-only on pub.dev.** The listing claimed all six platforms. That
+was inferred from the package compiling on all six — which it does on purpose,
+so that an app also targeting mobile can depend on it without conditional
+imports — and the inference reads compiling as supporting. It is not: the File
+System Access API is a browser API, and off the web `isSupported` is false and
+every call throws `UnsupportedByBrowserException`. Five of the six platforms on
+that listing were places this package does nothing at all.
+
+A `platforms: web:` key states the one that is true. It is metadata, not a
+build constraint, so the compiles-everywhere property and the "Off the web"
+section it supports are both unchanged.
+
+No code changes.
+
 ## 0.2.1
 
 No code changes. This release exists because the package was almost impossible

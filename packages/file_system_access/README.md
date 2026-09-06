@@ -104,6 +104,10 @@ and every call throws `UnsupportedByBrowserException` with a message pointing
 at the check you should have made — so an app that also targets web can depend
 on it without conditional imports of its own.
 
+pub.dev lists this as a web package for that reason. It is a statement about
+where the API exists, not a restriction — the dependency still resolves and
+builds in a cross-platform app exactly as described above.
+
 ## Verified
 
 The web path is tested in a real browser, not mocked: `flutter test --platform

@@ -3,7 +3,7 @@ description: >-
   Real files on Flutter Web. Save in place instead of downloading a copy, and
   reopen the same file after a reload with the File System Access API.
 
-version: 0.2.1
+version: 0.2.2
 repository: https://github.com/devShakib015/flutter_packages
 issue_tracker: https://github.com/devShakib015/flutter_packages/issues
 documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/file_system_access
@@ -15,6 +15,16 @@ topics:
   - filesystem
   - storage
   - browser
+
+# Web only, declared rather than inferred. The analyser reads compiling as
+# supporting, and this package compiles everywhere on purpose so that an app
+# also targeting mobile needs no conditional import of its own. But off the web
+# `isSupported` is false and every call throws: the File System Access API is a
+# browser API and nothing else implements it. This narrows the listing to the
+# platform where the package does something. Metadata for pub.dev, not a build
+# constraint — nothing about compiling everywhere changes.
+platforms:
+  web:
 
 environment:
   sdk: ^3.5.0
