@@ -27,6 +27,15 @@ your app.
 - Compiles everywhere through a conditional export; off the web `isSupported`
   is false and `open()` throws rather than failing to build.
 
+The screenshot on this page is two unretouched captures of the two live
+windows, composited by `tool/shoot.sh` so it can be regenerated rather than
+hand-made. They cannot be taken simultaneously — Chrome stops compositing a
+window it considers occluded, and the pop-out taking focus is exactly what
+occludes the page, so both `Page.captureScreenshot` and `Page.startScreencast`
+return blank frames — so the example's shared clock is paused first and each
+window is captured while it is frontmost. Both halves therefore show the same
+instant of the same state, which is the thing the picture is claiming.
+
 Chrome and Edge 116+, and Firefox 151+ (shipped 2026-05-19). Safari and
 Firefox for Android have no implementation. `isSupported` is a feature detect,
 so it is true wherever the API is — but only Chromium was exercised for this

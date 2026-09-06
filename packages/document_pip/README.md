@@ -3,6 +3,10 @@
 Live Flutter widgets in a real, always-on-top operating-system window — from
 Flutter Web.
 
+![The page and a real always-on-top pop-out window, one paused player in both](https://raw.githubusercontent.com/devShakib015/flutter_packages/HEAD/packages/document_pip/doc/popout.png)
+
+*Two windows, one widget tree. The pop-out is a real OS window — it stays above every other application, and it keeps running when you switch tabs.*
+
 Not a widget floating inside your app. An actual window the browser owns, which
 stays above your editor, your terminal and every other application, while your
 app keeps running with its state intact.

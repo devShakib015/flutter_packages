@@ -9,6 +9,12 @@ issue_tracker: https://github.com/devShakib015/flutter_packages/issues
 documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/document_pip
 resolution: workspace
 
+screenshots:
+  - description: >-
+      The page and a real always-on-top pop-out window, showing one paused
+      player: same widget tree, same state, two windows.
+    path: doc/popout.png
+
 topics:
   - picture-in-picture
   - web
