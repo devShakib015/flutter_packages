@@ -3,7 +3,7 @@ description: >-
   Put live Flutter widgets in a real always-on-top OS window from Flutter Web,
   using the Document Picture-in-Picture API and Flutter's multi-view engine.
 
-version: 0.1.0
+version: 0.1.1
 repository: https://github.com/devShakib015/flutter_packages
 issue_tracker: https://github.com/devShakib015/flutter_packages/issues
 documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/document_pip
@@ -21,6 +21,17 @@ topics:
   - window
   - multi-view
   - floating
+
+# Web only, declared rather than inferred. The analyser sees a package that
+# compiles on all six platforms — which it deliberately does, so that adding it
+# to a cross-platform app is not a build error — and concluded it supports all
+# six. It does not: off the web `isSupported` is false and `open()` throws,
+# because Document Picture-in-Picture is a browser API and nothing else
+# implements it. This key narrows the claim to the one platform where the
+# package does anything. It is metadata for pub.dev, not a build constraint,
+# so the compiles-everywhere property is unchanged.
+platforms:
+  web:
 
 # Flutter 3.32, not 3.24, for exactly one reason: PlatformDispatcher
 # .requestViewFocusChange exists from 3.24 but its body is a no-op stub until

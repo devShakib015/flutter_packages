@@ -1,3 +1,22 @@
+## 0.1.1
+
+**Declared web-only on pub.dev.** 0.1.0 listed all six platforms, because the
+analyser infers support from what compiles and this package deliberately
+compiles everywhere — a conditional export exists precisely so that adding it
+to a cross-platform app is not a build error. The inference was therefore
+correct about the code and wrong about the package: Document Picture-in-Picture
+is a browser API, nothing else implements it, and off the web `isSupported` is
+false and `open()` throws. Five of the six platforms in that list were places
+the package cannot do anything at all.
+
+A `platforms: web:` key in the pubspec narrows the claim to the one that is
+true. It is metadata, not a build constraint, so the compiles-everywhere
+property is unchanged and no consumer needs to do anything. The README says so
+explicitly now, since a package listed as web-only invites the opposite
+assumption.
+
+No code changes.
+
 ## 0.1.0
 
 First release.

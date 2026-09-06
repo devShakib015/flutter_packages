@@ -180,6 +180,11 @@ platform. `DocumentPip.isSupported` is a feature detect, so it is true wherever
 the API exists — gate the control on it rather than showing a button that
 always fails.
 
+pub.dev lists this as a web package for that reason, but it still compiles
+everywhere. A conditional export keeps a cross-platform app building; off the
+web `isSupported` is false and `open()` throws, so the gate above is all you
+need and nothing else has to change.
+
 **Both engines were verified for this release**, by running the example in
 each: Chrome 152, and Firefox 151.0 and 155.0.1. In Firefox the pop-out opens
 at exactly the size requested, Flutter adds its view inside the new document
