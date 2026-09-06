@@ -1,3 +1,6 @@
-tool/
-test/
-doc/frames/
+# Anchored to the package root on purpose. Unanchored `test/` also matches
+# example/test/, which silently dropped the example's own widget test from the
+# tarball — the one file that shows a consumer how to test against this package.
+/tool/
+/test/
+/doc/frames/

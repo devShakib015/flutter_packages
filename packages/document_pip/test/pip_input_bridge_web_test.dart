@@ -141,20 +141,12 @@ void main() {
     ]);
   });
 
-  test('"Flutter consumed it" travels back to the real event', () {
-    // The whole contract in one assertion. The engine calls preventDefault
-    // synchronously when the framework handled the key; the bridge mirrors
-    // that onto the original so the browser does not also act on it.
-    attach();
-    final JSFunction consume = ((web.Event e) => e.preventDefault()).toJS;
-    web.document.body!.addEventListener('keydown', consume);
-    addTearDown(
-      () => web.document.body!.removeEventListener('keydown', consume),
-    );
-
-    final web.KeyboardEvent original = press('keydown', 'Tab', 'Tab');
-    expect(original.defaultPrevented, isTrue);
-  });
+  // The matching positive case — a key Flutter really consumed coming back
+  // marked prevented — is NOT asserted here. The old test for it installed its
+  // own preventDefault listener and so only proved that dispatchEvent reports
+  // what its own listener did, which is a property of the DOM, not of this
+  // bridge. The real question needs a mounted Flutter app and lives in
+  // bridge_reaches_flutter_web_test.dart.
 
   test('an unconsumed key leaves the original alone', () {
     // The inverse, so the test above is not passing because everything is

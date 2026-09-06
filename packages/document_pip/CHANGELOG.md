@@ -47,6 +47,29 @@ what makes the forced-frame workaround necessary. Firefox keeps reporting it
 `visible` — 308 animation frames in 2.5s with a pop-out open against 9 without —
 so Flutter never switches frames off there and the workaround never runs.
 
+Late fixes, all found by the pre-publish audit and then measured rather than
+argued:
+
+- **A failure after the window opened used to strand it.** Everything between
+  `requestWindow` succeeding and the handle existing is now guarded: on any
+  error the view is removed, dropped from `popOutViewIds`, and the window is
+  closed before rethrowing. The likeliest cause — `window.documentPipApp`
+  holding something that is not a Flutter app runner, which nothing can check
+  earlier because the interop type is an extension type — now arrives as
+  `DocumentPipNotBootstrapped` with the snippet rather than a raw JS error.
+- **`.pubignore` was unanchored**, so `test/` also matched `example/test/` and
+  quietly dropped the example's own widget test from the tarball.
+- **The keyboard bridge is proven to reach Flutter, not just the DOM.** A new
+  browser test mounts a real `Shortcuts` tree and asserts that a key typed in a
+  separate browsing context fires the action — and that it does not without the
+  bridge. The same test pins the opposite result for the `preventDefault`
+  mirroring: the engine does not report consumption, so that half is inert
+  today. It is kept because it costs nothing while the engine is silent and
+  becomes correct if it ever speaks.
+- **CI now builds the web example** — the check that would have caught the
+  missing `example/web/` — and a new job pins **Flutter 3.32.0** and runs the
+  package against it, so the declared floor is exercised rather than trusted.
+
 `tool/verify-firefox.sh` re-runs all eight of those checks against any Firefox
 version, so the support claim can be re-tested rather than trusted — it fetches
 the build it needs and never installs anything.

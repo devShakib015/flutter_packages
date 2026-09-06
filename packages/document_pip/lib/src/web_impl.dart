@@ -74,70 +74,99 @@ class DocumentPipImpl {
       );
     }
 
-    if (copyStyles) {
-      copyStyleSheets(pip.document);
-      // The stylesheets alone are not enough: `html.dark .card {}` needs the
-      // class too, and RTL needs `dir`. A blank window inherits no attributes.
-      copyRootAttributes(
-        web.document.documentElement,
-        pip.document.documentElement,
+    // From here the window is ON SCREEN, so every failure below has to take it
+    // with them. Leaving it open would strand an always-on-top window that the
+    // app has no handle to close and the user can only dismiss by hand.
+    final _WebPipWindow handle;
+    int? addedViewId;
+    try {
+      if (copyStyles) {
+        copyStyleSheets(pip.document);
+        // The stylesheets alone are not enough: `html.dark .card {}` needs the
+        // class too, and RTL needs `dir`. A blank window inherits no attributes.
+        copyRootAttributes(
+          web.document.documentElement,
+          pip.document.documentElement,
+        );
+        copyRootAttributes(web.document.body, pip.document.body);
+      }
+
+      // A blank window has no layout of its own, so the host is given one and
+      // the body's default margin removed. Without this the Flutter view
+      // measures zero and paints nothing. Merged, not assigned: the opener's
+      // own inline style may have just been copied in above.
+      mergeStyle(pip.document.documentElement, 'height:100%');
+      mergeStyle(
+        pip.document.body,
+        'margin:0;padding:0;height:100%;overflow:hidden',
       );
-      copyRootAttributes(web.document.body, pip.document.body);
+      final web.HTMLDivElement host =
+          pip.document.createElement('div') as web.HTMLDivElement;
+      // Explicit pixels rather than `inset:0`, and set *before* the element is
+      // in the tree: Flutter puts a ResizeObserver on its host, and a host whose
+      // size is still resolving makes that observer fire inside its own
+      // callback, which the browser reports as "ResizeObserver loop completed
+      // with undelivered notifications" in the console of anyone using this.
+      host.setAttribute(
+        'style',
+        'display:block;position:absolute;left:0;top:0;'
+            'width:${pip.innerWidth}px;height:${pip.innerHeight}px',
+      );
+      pip.document.body!.appendChild(host);
+
+      // The window is resizable, so the host has to follow it. The tear-off is
+      // kept so _teardown can actually detach it: every `.toJS` makes a NEW JS
+      // function, so removing with a second one silently does nothing and the
+      // listener outlives the window it was watching.
+      void onResize(web.Event _) {
+        host.style.width = '${pip.innerWidth}px';
+        host.style.height = '${pip.innerHeight}px';
+      }
+
+      final JSFunction onResizeRef = onResize.toJS;
+      pip.addEventListener('resize', onResizeRef);
+
+      final int viewId = app.addView(AddViewOptions(hostElement: host));
+      addedViewId = viewId;
+      _pipViewIds.add(viewId);
+      // Flutter binds the keyboard to the opener's window, once. Without this
+      // bridge every key event in the pop-out is dropped: no Shortcuts, no
+      // Escape, no Tab traversal. See PipInputBridge.
+      final PipInputBridge input = PipInputBridge.attach(
+        source: pip,
+        target: web.document,
+        viewId: viewId,
+      );
+      handle = _WebPipWindow(viewId, pip, app, onResizeRef, input);
+      _current = handle;
+    } catch (e) {
+      // Unwind in the opposite order to setup: the view first, because a view
+      // left registered would keep DocumentPipApp rendering popOut into a
+      // window that is about to disappear.
+      if (addedViewId != null) {
+        _pipViewIds.remove(addedViewId);
+        try {
+          app.removeView(addedViewId);
+        } catch (_) {
+          // The view may never have finished being added.
+        }
+      }
+      try {
+        pip.close();
+      } catch (_) {
+        // Already gone, or the browser refused. Nothing better to try.
+      }
+      if (e is DocumentPipException) rethrow;
+      // The likeliest way to get here: window.documentPipApp holds something
+      // that is not a Flutter app runner, so addView throws. The interop type
+      // is an extension type, so nothing checks that earlier.
+      throw DocumentPipNotBootstrapped(
+        'document_pip opened the window but could not render into it: $e\n\n'
+        'This usually means window.documentPipApp is not the object returned '
+        'by engine.runApp(). Check the bootstrap:\n\n'
+        '${const DocumentPipNotBootstrapped().message}',
+      );
     }
-
-    // A blank window has no layout of its own, so the host is given one and
-    // the body's default margin removed. Without this the Flutter view
-    // measures zero and paints nothing. Merged, not assigned: the opener's
-    // own inline style may have just been copied in above.
-    mergeStyle(pip.document.documentElement, 'height:100%');
-    mergeStyle(
-      pip.document.body,
-      'margin:0;padding:0;height:100%;overflow:hidden',
-    );
-    final web.HTMLDivElement host =
-        pip.document.createElement('div') as web.HTMLDivElement;
-    // Explicit pixels rather than `inset:0`, and set *before* the element is
-    // in the tree: Flutter puts a ResizeObserver on its host, and a host whose
-    // size is still resolving makes that observer fire inside its own
-    // callback, which the browser reports as "ResizeObserver loop completed
-    // with undelivered notifications" in the console of anyone using this.
-    host.setAttribute(
-      'style',
-      'display:block;position:absolute;left:0;top:0;'
-          'width:${pip.innerWidth}px;height:${pip.innerHeight}px',
-    );
-    pip.document.body!.appendChild(host);
-
-    // The window is resizable, so the host has to follow it. The tear-off is
-    // kept so _teardown can actually detach it: every `.toJS` makes a NEW JS
-    // function, so removing with a second one silently does nothing and the
-    // listener outlives the window it was watching.
-    void onResize(web.Event _) {
-      host.style.width = '${pip.innerWidth}px';
-      host.style.height = '${pip.innerHeight}px';
-    }
-
-    final JSFunction onResizeRef = onResize.toJS;
-    pip.addEventListener('resize', onResizeRef);
-
-    final int viewId = app.addView(AddViewOptions(hostElement: host));
-    _pipViewIds.add(viewId);
-    // Flutter binds the keyboard to the opener's window, once. Without this
-    // bridge every key event in the pop-out is dropped: no Shortcuts, no
-    // Escape, no Tab traversal. See PipInputBridge.
-    final PipInputBridge input = PipInputBridge.attach(
-      source: pip,
-      target: web.document,
-      viewId: viewId,
-    );
-    final _WebPipWindow handle = _WebPipWindow(
-      viewId,
-      pip,
-      app,
-      onResizeRef,
-      input,
-    );
-    _current = handle;
     return handle;
   }
 

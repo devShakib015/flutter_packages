@@ -45,6 +45,13 @@ jobs:
             fi
           done
 
+      # document_pip's example/web/ is hand-written, not generated scaffolding,
+      # and it shipped missing once. A build is what proves it is still there
+      # and still valid.
+      - name: Build the web example (document_pip)
+        run: flutter build web --release
+        working-directory: packages/document_pip/example
+
       - name: Publish dry run
         run: |
           set -euo pipefail
@@ -53,6 +60,38 @@ jobs:
             (cd "$dir" && flutter pub publish --dry-run)
             echo "::endgroup::"
           done
+
+  # `channel: stable` only ever tests the newest Flutter, so a declared floor is
+  # never exercised. document_pip claims '>=3.32.0' for a specific reason —
+  # requestViewFocusChange was a no-op stub before it — and that claim rested on
+  # one run on one laptop until this job existed.
+  floor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.32.0
+          channel: stable
+      - name: document_pip on Flutter 3.32.0, its declared floor
+        run: |
+          set -euo pipefail
+          # Out of the workspace on purpose: sibling packages declare Dart
+          # ^3.13, which the 3.32 SDK cannot satisfy, so resolving in place
+          # would fail for a reason that has nothing to do with this package.
+          # The layout is mirrored so the analysis_options include still points
+          # at the repo's shared rules.
+          mkdir -p /tmp/floor/packages
+          cp -R packages/document_pip /tmp/floor/packages/
+          cp analysis_options.yaml /tmp/floor/analysis_options.yaml
+          cd /tmp/floor/packages/document_pip
+          rm -rf example
+          sed -i '/^resolution: workspace$/d' pubspec.yaml
+          flutter --version
+          flutter pub get
+          flutter analyze --no-pub
+          flutter test
 
   # Native code needs a real toolchain. The on-device model itself needs Apple
   # Intelligence hardware that hosted runners do not have, so this compiles the

@@ -76,10 +76,16 @@ class PipInputBridge {
       _pressed.remove(e.code);
     }
 
-    // dispatchEvent returns false when something called preventDefault. The
-    // engine does exactly that, synchronously, when the framework consumed the
-    // key — so the return value is a truthful "Flutter handled this", and
-    // mirroring it stops the browser acting on the key as well.
+    // dispatchEvent returns false when a handler called preventDefault, and
+    // the engine does that synchronously when the framework consumed the key
+    // (keyboard_binding.dart). Mirroring it back stops the browser also acting
+    // on a key the app just handled.
+    //
+    // Best-effort on purpose. Whether the engine reports consumption depends on
+    // what the app did with the key, and this package cannot guarantee it; when
+    // it does not, the line below is a no-op and the browser's default stands.
+    // That is why the README says defaults may still fire in the pop-out rather
+    // than promising they will not.
     final bool notPrevented = body.dispatchEvent(
       _replay(
         e.type,

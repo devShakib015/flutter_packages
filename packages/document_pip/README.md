@@ -216,10 +216,12 @@ global channel that writes the page's history, so two `MaterialApp.router`s
 will fight over the URL.
 
 **Browser defaults still fire inside the pop-out.** The bridge asks the engine
-whether Flutter consumed a key and mirrors that back, but on a pure Flutter
-page the engine does not report consumption for most keys — so a shortcut you
-handle in Dart may also do whatever the browser would have done. The pop-out is
-a real browser window and this release does not suppress that.
+whether Flutter consumed a key and mirrors that back, but measured against a
+real `Shortcuts` handler the engine does not report consumption — the action
+runs and the event stays un-prevented. So a shortcut you handle in Dart may
+also do whatever the browser would have done. The pop-out is a real browser
+window and this release does not suppress that; the behaviour is pinned by a
+test, so if the engine changes it will be noticed rather than assumed.
 
 **Replayed keys reach your page's own listeners too.** Keys are replayed into
 the opener's `<body>` and bubble to `document` and `window`, so a page that
