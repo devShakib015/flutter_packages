@@ -47,6 +47,10 @@ what makes the forced-frame workaround necessary. Firefox keeps reporting it
 `visible` — 308 animation frames in 2.5s with a pop-out open against 9 without —
 so Flutter never switches frames off there and the workaround never runs.
 
+`tool/verify-firefox.sh` re-runs all eight of those checks against any Firefox
+version, so the support claim can be re-tested rather than trusted — it fetches
+the build it needs and never installs anything.
+
 **Flutter 3.32 or later**, for one specific reason worth stating because it is
 not the usual "we used a new widget". `PlatformDispatcher.requestViewFocusChange`
 has existed since 3.24, but until 3.32 its body was a no-op stub
