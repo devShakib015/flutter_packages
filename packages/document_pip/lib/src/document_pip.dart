@@ -24,8 +24,8 @@ import 'stub_impl.dart' if (dart.library.js_interop) 'web_impl.dart';
 /// implementation, so [isSupported] is false there and [open] throws
 /// `DocumentPipUnsupported` rather than pretending.
 ///
-/// Only Chromium was exercised for this release; Firefox is supported by
-/// feature detection and untested.
+/// Verified by running the example in Chrome 152 and in Firefox 151.0 and
+/// 155.0.1.
 abstract final class DocumentPip {
   /// Whether this browser can open one.
   ///

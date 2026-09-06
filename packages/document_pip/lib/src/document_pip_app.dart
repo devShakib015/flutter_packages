@@ -114,6 +114,11 @@ class _DocumentPipAppState extends State<DocumentPipApp>
   /// the documented way past that: it ignores `framesEnabled` and checks only
   /// whether a frame is already pending.
   ///
+  /// This is a Chromium problem specifically. Firefox 151 and 155 keep
+  /// reporting the opener `visible` while a pop-out is open, so Flutter never
+  /// disables frames and the first guard below returns immediately — measured,
+  /// not assumed.
+  ///
   /// A post-frame callback re-arms it, rather than a persistent one, because a
   /// persistent frame callback can never be removed and would pin this State
   /// forever. Both guards below end the loop on their own: the page coming

@@ -130,6 +130,12 @@ the page is hidden and a window is open. Measured in Chrome 152: **0 frames in
 three seconds before, 311 after.** If you build your own `ViewCollection`
 instead of using this root, you will need to do the same thing.
 
+Firefox does not have the problem. Measured the same way in 151 and 155: with a
+pop-out open it keeps reporting the opener `visible` and runs it at full rate
+(308 animation frames in 2.5s, against 9 for the same page with no pop-out), so
+Flutter never switches frames off. The workaround is gated on frames actually
+being disabled, so in Firefox it costs nothing and never runs.
+
 ## The keyboard works in there
 
 Also not free. Flutter binds the keyboard once, to the page's own window, so a
@@ -174,9 +180,11 @@ platform. `DocumentPip.isSupported` is a feature detect, so it is true wherever
 the API exists — gate the control on it rather than showing a button that
 always fails.
 
-**Only Chromium was verified for this release.** Every measurement in this
-README was taken in Chrome 152. Firefox is new to this API and is supported by
-detection alone, so treat it as untested rather than as promised.
+**Both engines were verified for this release**, by running the example in
+each: Chrome 152, and Firefox 151.0 and 155.0.1. In Firefox the pop-out opens
+at exactly the size requested, Flutter adds its view inside the new document
+and paints there, and the keyboard bridge replays keys into the opener
+correctly. Safari and Firefox for Android have no implementation to test.
 
 **Not video picture-in-picture.** If you want the OS video PiP that Android and
 iOS have, this is the wrong package — on Android try `floating` or

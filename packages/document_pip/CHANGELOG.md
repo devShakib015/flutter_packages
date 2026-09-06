@@ -38,8 +38,14 @@ instant of the same state, which is the thing the picture is claiming.
 
 Chrome and Edge 116+, and Firefox 151+ (shipped 2026-05-19). Safari and
 Firefox for Android have no implementation. `isSupported` is a feature detect,
-so it is true wherever the API is — but only Chromium was exercised for this
-release, so Firefox is supported by detection and untested.
+so it is true wherever the API is, and both engines were verified by running
+the example: Chrome 152, Firefox 151.0 and 155.0.1.
+
+The two engines differ in one way that matters here. Chromium reports the
+opener `hidden` while a pop-out is open and keeps painting it anyway, which is
+what makes the forced-frame workaround necessary. Firefox keeps reporting it
+`visible` — 308 animation frames in 2.5s with a pop-out open against 9 without —
+so Flutter never switches frames off there and the workaround never runs.
 
 **Flutter 3.32 or later**, for one specific reason worth stating because it is
 not the usual "we used a new widget". `PlatformDispatcher.requestViewFocusChange`
