@@ -6,7 +6,8 @@
 # backgrounded app — so the app records itself.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-SRC="/private/tmp/claude-501/-Users-devshakib-Projects/422a40fb-c07d-49d0-9ec0-e5bf2bdb790d/scratchpad/ai_frames"
+# Must match the recorder's output directory; FRAMES_DIR overrides both.
+SRC="${FRAMES_DIR:-/tmp/apple_intelligence_frames}"
 [ -d "$SRC" ] || { echo "no frames at $SRC — run the recorder first"; exit 1; }
 mkdir -p doc
 # Frames are captured when an image arrives, not on a timer, so there are only

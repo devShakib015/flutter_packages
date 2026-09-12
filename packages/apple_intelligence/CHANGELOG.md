@@ -1,3 +1,10 @@
+## 0.3.3
+
+No changes to the package itself. `example/lib/record.dart`, which records the
+README animation, had a machine-specific output directory hard-coded, and so
+did `tool/build_gifs.sh`, which assembles its frames. Both now default to
+`/tmp/apple_intelligence_frames`, and `FRAMES_DIR` changes it for both.
+
 ## 0.3.2
 
 README only. The introduction proved "no Flutter binding for Apple Intelligence

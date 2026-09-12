@@ -16,8 +16,13 @@ import 'package:apple_intelligence/apple_intelligence.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
-const String kOut = '/private/tmp/claude-501/-Users-devshakib-Projects/'
-    '422a40fb-c07d-49d0-9ec0-e5bf2bdb790d/scratchpad/ai_frames';
+// Outside the app container, so the example's sandbox has to be off to record.
+// Change it with --dart-define=FRAMES_DIR=..., and run build_gifs.sh with the
+// same FRAMES_DIR.
+const String kOut = String.fromEnvironment(
+  'FRAMES_DIR',
+  defaultValue: '/tmp/apple_intelligence_frames',
+);
 
 final GlobalKey _stage = GlobalKey();
 
