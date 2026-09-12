@@ -84,6 +84,12 @@ jobs:
           - package: loading_kit
             flutter: '3.27.0'
             tests: 'no'
+          # Null-aware collection elements (`?value`) are Dart 3.8, first
+          # shipped in Flutter 3.32. Its dev dependencies resolve there too, so
+          # the whole suite runs rather than only a compile of lib/.
+          - package: woo_client
+            flutter: '3.32.0'
+            tests: 'yes'
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -101,7 +107,9 @@ jobs:
           cp -R "packages/${{ matrix.package }}" /tmp/floor/packages/
           cp analysis_options.yaml /tmp/floor/analysis_options.yaml
           cd "/tmp/floor/packages/${{ matrix.package }}"
-          rm -rf example
+          # storefront/ is woo_client's demo app: a Flutter workspace member
+          # that cannot resolve on its own, and not part of the package.
+          rm -rf example storefront
           sed -i '/^resolution: workspace$/d' pubspec.yaml
           flutter --version
           if [ "${{ matrix.tests }}" = "no" ]; then
@@ -116,10 +124,15 @@ jobs:
           flutter pub get
           flutter analyze --no-pub
           if [ "${{ matrix.tests }}" = "yes" ]; then
-            # example/web/ went with the example above, so the one test that
-            # asserts those files ship cannot run here. It is about the tarball,
-            # not the SDK, and verify already runs it on stable.
-            flutter test $(ls test/*.dart | grep -v bootstrap_snippet_test)
+            if grep -q 'sdk: flutter' pubspec.yaml; then
+              # example/web/ went with the example above, so the one test that
+              # asserts those files ship cannot run here. It is about the
+              # tarball, not the SDK, and verify already runs it on stable.
+              flutter test $(ls test/*.dart | grep -v bootstrap_snippet_test)
+            else
+              # Pure Dart, so the Dart test runner.
+              dart test
+            fi
           fi
 
   # Native code needs a real toolchain. The on-device model itself needs Apple

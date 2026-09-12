@@ -1,3 +1,21 @@
+## 0.3.3
+
+**The User-Agent was a release behind.** The 0.3.2 archive on pub.dev sends
+`woo_client/0.3.1 (Dart)`, so a store owner reading their access log saw the
+wrong version. This release sends `woo_client/0.3.3 (Dart)`.
+
+**The Dart floor was far higher than the code needs.** `sdk: ^3.13.0` means
+Flutter 3.47 (August 2026) or newer, so no app on an earlier Flutter could use
+this package. What the code requires is Dart 3.8, for null-aware collection
+elements (`?value`). The constraint is now `^3.8.0`, which is Flutter 3.32.
+Checked against real SDKs rather than inferred: on Dart 3.8.0 every dependency
+resolves and the full test suite passes; on 3.7.0 the library fails to compile
+on exactly those elements, so 3.8 is the lowest floor, not just a lower one. CI
+now repeats the 3.8 run on every push.
+
+`tool_real_check.dart`, a development script that was never part of the
+library, is no longer included in the published archive.
+
 ## 0.3.2
 
 0.3.1 removed one false absolute and introduced two. It claimed `Cart-Token`

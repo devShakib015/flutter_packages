@@ -258,8 +258,10 @@ void main() {
         <String, Object?>{'id': 33, 'email': 'ada@example.com', ...extra},
       );
       expect(
-        make(<String, Object?>{'first_name': 'Ada', 'last_name': 'Lovelace'})
-            .displayName,
+        make(<String, Object?>{
+          'first_name': 'Ada',
+          'last_name': 'Lovelace',
+        }).displayName,
         'Ada Lovelace',
       );
       expect(make(<String, Object?>{'username': 'ada'}).displayName, 'ada');

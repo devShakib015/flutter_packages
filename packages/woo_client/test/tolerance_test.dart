@@ -47,8 +47,9 @@ void main() {
 
     test('a number that arrives as a float string', () {
       expect(
-        WooProduct.fromJson(const <String, Object?>{'average_rating': '4.67'})
-            .averageRating,
+        WooProduct.fromJson(const <String, Object?>{
+          'average_rating': '4.67',
+        }).averageRating,
         closeTo(4.67, 0.001),
       );
       expect(
@@ -174,8 +175,9 @@ void main() {
         isFalse,
       );
       expect(
-        WooReview.fromJson(const <String, Object?>{'status': 'approved'})
-            .isApproved,
+        WooReview.fromJson(const <String, Object?>{
+          'status': 'approved',
+        }).isApproved,
         isTrue,
       );
     });
@@ -186,8 +188,9 @@ void main() {
         isFalse,
       );
       expect(
-        WooWebhook.fromJson(const <String, Object?>{'status': 'active'})
-            .isActive,
+        WooWebhook.fromJson(const <String, Object?>{
+          'status': 'active',
+        }).isActive,
         isTrue,
       );
     });

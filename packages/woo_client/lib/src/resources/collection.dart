@@ -103,14 +103,12 @@ class WooCollection<T> {
         '${create.length + update.length + delete.length}. Split it.',
       );
     }
-    final Map<String, Object?> body = await _client.post(
-      '$path/batch',
-      <String, Object?>{
-        if (create.isNotEmpty) 'create': create,
-        if (update.isNotEmpty) 'update': update,
-        if (delete.isNotEmpty) 'delete': delete,
-      },
-    );
+    final Map<String, Object?> body = await _client
+        .post('$path/batch', <String, Object?>{
+          if (create.isNotEmpty) 'create': create,
+          if (update.isNotEmpty) 'update': update,
+          if (delete.isNotEmpty) 'delete': delete,
+        });
     List<T> read(String key) => <T>[
       for (final Object? e in body[key] as List<Object?>? ?? const [])
         if (e is Map<String, Object?>) parse(e),

@@ -75,8 +75,9 @@ void main() {
       );
       // Already prefixed, so do not prefix it twice.
       expect(
-        WooAttribute.fromJson(const <String, Object?>{'slug': 'pa_colour'})
-            .taxonomy,
+        WooAttribute.fromJson(const <String, Object?>{
+          'slug': 'pa_colour',
+        }).taxonomy,
         'pa_colour',
       );
     });
