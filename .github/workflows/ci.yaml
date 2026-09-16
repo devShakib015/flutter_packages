@@ -115,7 +115,11 @@ jobs:
           cd "/tmp/floor/packages/${{ matrix.package }}"
           # storefront/ is woo_client's demo app: a Flutter workspace member
           # that cannot resolve on its own, and not part of the package.
-          rm -rf example storefront
+          # tool/ is development scripts that are not published either — they
+          # run on whatever SDK the maintainer has, and anchored_list's GIF
+          # recorder uses Color.withValues(), which is Flutter 3.27. What the
+          # declared floor promises is about lib/, so check lib/.
+          rm -rf example storefront tool
           sed -i '/^resolution: workspace$/d' pubspec.yaml
           flutter --version
           if [ "${{ matrix.tests }}" = "no" ]; then
