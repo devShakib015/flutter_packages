@@ -84,6 +84,51 @@ times over. The left one is a `ListView`. There is an `itemsRemovedAbove` for
 trimming history off the top, and items added *below* the anchor need no call at
 all, because their indices do not change.
 
+## Dragging items around
+
+Set `onReorder` and every item becomes draggable, on the same terms as
+`ReorderableListView`:
+
+```dart
+AnchoredList.builder(
+  controller: controller,
+  itemCount: rows.length,
+  onReorder: (oldIndex, newIndex) => setState(() {
+    if (newIndex > oldIndex) newIndex -= 1;
+    rows.insert(newIndex, rows.removeAt(oldIndex));
+  }),
+  itemBuilder: (context, index) => ListTile(
+    key: ValueKey(rows[index].id),   // required: an item has to be findable
+    title: Text(rows[index].title),
+  ),
+);
+```
+
+A long press starts the drag. Set `longPressToDrag: false` and wrap a handle in
+`AnchoredListDragStartListener` to put the gesture somewhere deliberate
+instead. `proxyDecorator` styles the item while it is in the air,
+`onReorderStart` and `onReorderEnd` bracket the drag, and screen readers get
+the four move actions without touching any of it.
+
+**A drag crosses the anchor.** That sounds like nothing and is the whole
+difficulty. `SliverReorderableList` finds its drop index by walking only the
+children registered with itself, and this list is two slivers — items before
+the anchor in one, the anchor and everything after in the other. Dropping one
+of those in each half would give two separate reorder domains: drag over the
+anchor and the item would find no target and open no gap. So reordering here is
+written against the list's own index registry, which spans both slivers and
+does not know which one an item is in. Auto-scrolling past the anchor is free
+for the same reason — the two slivers share one scroll space, so crossing the
+anchor is just passing through offset zero.
+
+**The viewport does not lurch.** A move that steps over the anchor changes how
+many items sit above it, which would slide everything on screen by a row. The
+anchor is an index, so the correction is the same single increment
+`itemsInsertedAbove` makes, and the list applies it for you.
+
+Reordering needs an `Overlay` above the list for the dragged item to float in.
+`WidgetsApp` and `MaterialApp` both provide one.
+
 ## Reaching the scroll position
 
 The list will use a `ScrollController` you supply, and hands back whichever one

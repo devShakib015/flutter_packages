@@ -24,7 +24,7 @@ class DemoPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('anchored_list'),
@@ -32,10 +32,13 @@ class DemoPage extends StatelessWidget {
             tabs: <Widget>[
               Tab(text: 'Jump'),
               Tab(text: 'Insert above'),
+              Tab(text: 'Reorder'),
             ],
           ),
         ),
-        body: const TabBarView(children: <Widget>[_JumpDemo(), _PrependDemo()]),
+        body: const TabBarView(
+          children: <Widget>[_JumpDemo(), _PrependDemo(), _ReorderDemo()],
+        ),
       ),
     );
   }
@@ -257,6 +260,129 @@ class _PrependDemoState extends State<_PrependDemo> {
             },
             separatorBuilder: (BuildContext context, int index) =>
                 const Divider(height: 1),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// --------------------------------------------------------------- reordering
+
+class _ReorderDemo extends StatefulWidget {
+  const _ReorderDemo();
+
+  @override
+  State<_ReorderDemo> createState() => _ReorderDemoState();
+}
+
+class _ReorderDemoState extends State<_ReorderDemo> {
+  final AnchoredListController _controller = AnchoredListController();
+  final List<String> _rows = List<String>.generate(2000, (int i) => 'Row $i');
+
+  /// Off puts the gesture on a handle instead of the whole row.
+  bool _longPress = true;
+  String _lastMove = 'nothing moved yet';
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _move(int oldIndex, int newIndex) {
+    setState(() {
+      int target = newIndex;
+      if (target > oldIndex) target -= 1;
+      final String row = _rows.removeAt(oldIndex);
+      _rows.insert(target, row);
+      _lastMove = '$row: $oldIndex \u2192 $target';
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          child: Row(
+            children: <Widget>[
+              FilledButton.tonal(
+                onPressed: () => _controller.jumpToIndex(1500, alignment: 0.5),
+                child: const Text('Jump to 1500'),
+              ),
+              const Spacer(),
+              const Text('long press'),
+              Switch(
+                value: _longPress,
+                onChanged: (bool v) => setState(() => _longPress = v),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  _lastMove,
+                  style: Theme.of(context).textTheme.labelMedium,
+                ),
+              ),
+              // Watch this correct itself by one when a drag steps over the
+              // anchor. That correction is why the view does not lurch.
+              ValueListenableBuilder<List<ItemPosition>>(
+                valueListenable: _controller.itemPositions,
+                builder: (BuildContext context, List<ItemPosition> _, __) =>
+                    Text(
+                  'anchor ${_controller.isAttached ? _controller.anchorIndex : 0}',
+                  style: Theme.of(context).textTheme.labelMedium,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Divider(height: 20),
+        Expanded(
+          child: AnchoredList.builder(
+            controller: _controller,
+            itemCount: _rows.length,
+            // Mid-list, so the drag has items on both sides of the anchor to
+            // cross — the thing a pair of reorderable slivers could not do.
+            initialIndex: 1000,
+            initialAlignment: 0.5,
+            longPressToDrag: _longPress,
+            onReorder: _move,
+            proxyDecorator: (Widget child, int index, Animation<double> a) =>
+                AnimatedBuilder(
+              animation: a,
+              builder: (BuildContext context, Widget? c) => Material(
+                elevation: 6 * a.value,
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                child: c,
+              ),
+              child: child,
+            ),
+            itemBuilder: (BuildContext context, int index) => ListTile(
+              key: ValueKey<String>(_rows[index]),
+              dense: true,
+              leading: CircleAvatar(
+                radius: 14,
+                child: Text(
+                  '${index % 100}',
+                  style: const TextStyle(fontSize: 11),
+                ),
+              ),
+              title: Text(_rows[index]),
+              trailing: _longPress
+                  ? null
+                  : AnchoredListDragStartListener(
+                      index: index,
+                      child: const Icon(Icons.drag_handle),
+                    ),
+            ),
           ),
         ),
       ],

@@ -71,6 +71,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # Reordering leans on the AnimationStatus.isDismissed / isCompleted
+          # getters, which landed in exactly 3.24.0 — the declared floor with
+          # nothing to spare. Everything else it uses is 3.10 or older.
+          - package: anchored_list
+            flutter: '3.24.0'
+            tests: 'no'
           # requestViewFocusChange existed from 3.24 but was a no-op stub
           # until 3.32, so a lower floor would compile and silently misbehave.
           - package: document_pip

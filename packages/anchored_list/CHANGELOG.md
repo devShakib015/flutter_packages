@@ -1,3 +1,35 @@
+## 0.3.0
+
+Items can be dragged into a new order, and a drag can cross the anchor.
+
+Asked for in [issue #2](https://github.com/devShakib015/flutter_packages/issues/2).
+
+### Added
+
+- **`onReorder`**, and with it `onReorderStart`, `onReorderEnd`,
+  `proxyDecorator`, `longPressToDrag` and `autoScrollerVelocityScalar`. The
+  callback follows `ReorderableListView` exactly, so existing reorder code
+  moves across unchanged. Items need a `Key`, and the list needs an `Overlay`
+  above it.
+- **`AnchoredListDragStartListener`** and
+  **`AnchoredListDelayedDragStartListener`**, for putting the drag gesture on a
+  handle rather than the whole row.
+
+### Why it is not `SliverReorderableList`
+
+That widget resolves its drop index by walking only the children registered
+with itself, and this list is two slivers — one before the anchor, one from the
+anchor on. One in each half would be two reorder domains, and a drag over the
+anchor would find no drop target and open no gap. Reordering is written against
+the list's own index registry instead, which already spans both slivers, so a
+drag neither knows nor cares where the split is. Auto-scrolling across the
+anchor comes free: the slivers share one scroll space and the anchor is just
+offset zero.
+
+A move that steps over the anchor also changes how many items sit above it,
+which would slide the viewport by a row. The list corrects the anchor by one,
+the same arithmetic `itemsInsertedAbove` does, so the pixels hold still.
+
 ## 0.2.1
 
 No code changes. This release exists because the package was almost impossible

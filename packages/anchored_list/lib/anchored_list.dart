@@ -11,7 +11,12 @@
 /// ```
 library;
 
-export 'src/anchored_list.dart' show AnchoredList;
+export 'src/anchored_list.dart'
+    show
+        AnchoredList,
+        AnchoredListDelayedDragStartListener,
+        AnchoredListDragStartListener,
+        AnchoredListReorder;
 export 'src/anchored_list_controller.dart'
     show AnchoredListBinding, AnchoredListController;
 export 'src/item_position.dart' show ItemPosition;

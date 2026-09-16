@@ -2,10 +2,17 @@ import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/widgets.dart';
 
 import 'anchored_list_controller.dart';
 import 'item_position.dart';
+
+part 'reorder.dart';
+
+/// Matches the framework's own reorderable lists, so a drag near the edge
+/// scrolls at the speed people already expect.
+const double _kDefaultAutoScrollVelocityScalar = 50;
 
 /// A lazy list that can jump to any index instantly.
 ///
@@ -41,6 +48,12 @@ import 'item_position.dart';
 /// list: because the anchor is an index rather than a pixel offset, correcting
 /// for a prepended page is arithmetic on one integer. See
 /// [AnchoredListController.itemsInsertedAbove].
+///
+/// It pays off a third time in reordering, which is why that lives here at
+/// all. The registry of built items is keyed by *list* index and does not know
+/// which sliver an item is in, so a drag crosses the anchor without noticing
+/// it — where a `SliverReorderableList` in each half would be two separate
+/// reorder domains. See [onReorder].
 ///
 /// ## The trade
 ///
@@ -79,6 +92,12 @@ class AnchoredList extends StatefulWidget {
     this.scrollBehavior,
     this.clipBehavior = Clip.hardEdge,
     this.restorationId,
+    this.onReorder,
+    this.onReorderStart,
+    this.onReorderEnd,
+    this.proxyDecorator,
+    this.longPressToDrag = true,
+    this.autoScrollerVelocityScalar = _kDefaultAutoScrollVelocityScalar,
   })  : itemCount = children.length,
         itemBuilder = ((BuildContext _, int index) => children[index]),
         separatorBuilder = null,
@@ -113,6 +132,12 @@ class AnchoredList extends StatefulWidget {
     this.scrollBehavior,
     this.clipBehavior = Clip.hardEdge,
     this.restorationId,
+    this.onReorder,
+    this.onReorderStart,
+    this.onReorderEnd,
+    this.proxyDecorator,
+    this.longPressToDrag = true,
+    this.autoScrollerVelocityScalar = _kDefaultAutoScrollVelocityScalar,
   })  : separatorBuilder = null,
         assert(itemCount >= 0, 'itemCount cannot be negative'),
         assert(initialIndex >= 0, 'initialIndex cannot be negative'),
@@ -150,6 +175,12 @@ class AnchoredList extends StatefulWidget {
     this.scrollBehavior,
     this.clipBehavior = Clip.hardEdge,
     this.restorationId,
+    this.onReorder,
+    this.onReorderStart,
+    this.onReorderEnd,
+    this.proxyDecorator,
+    this.longPressToDrag = true,
+    this.autoScrollerVelocityScalar = _kDefaultAutoScrollVelocityScalar,
   })  : assert(itemCount >= 0, 'itemCount cannot be negative'),
         assert(initialIndex >= 0, 'initialIndex cannot be negative'),
         assert(
@@ -237,12 +268,87 @@ class AnchoredList extends StatefulWidget {
   /// Restoration id for the scroll position.
   final String? restorationId;
 
+  /// Called when a drag drops an item somewhere new. Non-null turns
+  /// reordering on.
+  ///
+  /// Move the item in your own data and rebuild, exactly as with
+  /// [ReorderableListView] — `newIndex` counts with the dragged item still in
+  /// place, so a move down the list needs the usual correction:
+  ///
+  /// ```dart
+  /// onReorder: (int oldIndex, int newIndex) {
+  ///   setState(() {
+  ///     if (newIndex > oldIndex) newIndex -= 1;
+  ///     items.insert(newIndex, items.removeAt(oldIndex));
+  ///   });
+  /// },
+  /// ```
+  ///
+  /// Dragging works the whole length of the list, across the anchor
+  /// included. When a move steps over the anchor the list corrects the anchor
+  /// itself, so the viewport does not slide by a row underneath you.
+  ///
+  /// Every item must carry a [Key], or the framework cannot follow an item to
+  /// its new index. Reordering also needs an [Overlay] above the list, which
+  /// [WidgetsApp] and [MaterialApp] both provide.
+  final ReorderCallback? onReorder;
+
+  /// Called with the item's index when a drag starts.
+  final void Function(int index)? onReorderStart;
+
+  /// Called with the index the item is dropped at when a drag ends.
+  ///
+  /// This runs before [onReorder] and, like it, counts with the dragged item
+  /// still in place.
+  final void Function(int index)? onReorderEnd;
+
+  /// Decorates the floating copy of the item while it is being dragged.
+  ///
+  /// The animation runs forward as the drag begins and back as it settles, so
+  /// an elevation or a scale can be driven straight off it. Without one the
+  /// item is drawn exactly as it sits in the list.
+  final ReorderItemProxyDecorator? proxyDecorator;
+
+  /// Whether a long press anywhere on an item starts dragging it.
+  ///
+  /// True by default, which is what you want on touch: an immediate drag
+  /// would fight the scroll gesture. Set it false to put the gesture
+  /// somewhere deliberate instead — wrap a handle inside the item in an
+  /// [AnchoredListDragStartListener] and only that handle will drag.
+  ///
+  /// Ignored when [onReorder] is null.
+  final bool longPressToDrag;
+
+  /// How fast the list scrolls when a drag reaches its edge.
+  final double autoScrollerVelocityScalar;
+
+  /// The reordering half of the nearest enclosing [AnchoredList].
+  ///
+  /// Throws when there is no list above [context]; use [maybeOf] where that
+  /// is a possibility.
+  static AnchoredListReorder of(BuildContext context) {
+    final AnchoredListReorder? found = maybeOf(context);
+    if (found == null) {
+      throw FlutterError.fromParts(<DiagnosticsNode>[
+        ErrorSummary('AnchoredList.of() called with a context that has no '
+            'AnchoredList above it.'),
+        context.describeElement('The context used was'),
+      ]);
+    }
+    return found;
+  }
+
+  /// The reordering half of the nearest enclosing [AnchoredList], or null.
+  static AnchoredListReorder? maybeOf(BuildContext context) =>
+      context.findAncestorStateOfType<_AnchoredListState>()?._reorder;
+
   @override
   State<AnchoredList> createState() => _AnchoredListState();
 }
 
 class _AnchoredListState extends State<AnchoredList>
-    implements AnchoredListBinding {
+    with TickerProviderStateMixin
+    implements AnchoredListBinding, _ReorderHost {
   /// Marks the sliver that owns scroll offset zero.
   final Key _centreKey = UniqueKey();
 
@@ -250,11 +356,17 @@ class _AnchoredListState extends State<AnchoredList>
   /// to dispose.
   ScrollController? _ownedScroll;
 
-  /// Contexts of items currently built, by list index.
+  /// Items currently built, by list index, across both slivers.
   ///
   /// Kept so movement can hand a real element to [Scrollable.ensureVisible]
-  /// rather than reimplementing offset arithmetic over sliver internals.
-  final Map<int, BuildContext> _built = <int, BuildContext>{};
+  /// rather than reimplementing offset arithmetic over sliver internals — and
+  /// so reordering has one registry spanning the anchor, which is the whole
+  /// reason a drag can cross it. See [_ReorderController].
+  final Map<int, _RegisteredItemState> _built = <int, _RegisteredItemState>{};
+
+  late final _ReorderController _reorder = _ReorderController(this);
+
+  bool get _reorderable => widget.onReorder != null;
 
   late int _anchorIndex = _clamp(widget.initialIndex);
   late double _alignment = widget.initialAlignment;
@@ -266,6 +378,26 @@ class _AnchoredListState extends State<AnchoredList>
 
   int _clamp(int index) =>
       widget.itemCount == 0 ? 0 : index.clamp(0, widget.itemCount - 1);
+
+  @override
+  Map<int, _RegisteredItemState> get builtItems => _built;
+
+  @override
+  AnchoredList get config => widget;
+
+  @override
+  BuildContext get hostContext => context;
+
+  @override
+  TickerProvider get vsync => this;
+
+  @override
+  AxisDirection get axisDirection => _axisDirection;
+
+  @override
+  void reorderSetState(VoidCallback fn) {
+    if (mounted) setState(fn);
+  }
 
   /// The anchor to build against.
   ///
@@ -310,10 +442,12 @@ class _AnchoredListState extends State<AnchoredList>
     if (widget.itemCount != old.itemCount) {
       _anchorIndex = _clamp(_anchorIndex);
     }
+    _reorder.didUpdateConfig(old);
   }
 
   @override
   void dispose() {
+    _reorder.dispose();
     widget.controller?.detach(this);
     scrollController.removeListener(_schedulePositions);
     _ownedScroll?.dispose();
@@ -349,9 +483,9 @@ class _AnchoredListState extends State<AnchoredList>
   void _alignToBox(int index, double alignment) {
     SchedulerBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final BuildContext? item = _built[index];
+      final _RegisteredItemState? item = _built[index];
       final RenderObject? box =
-          item?.mounted ?? false ? item!.findRenderObject() : null;
+          item?.mounted ?? false ? item!.context.findRenderObject() : null;
       if (box is! RenderBox || !box.hasSize) return;
       final double extent = widget.scrollDirection == Axis.vertical
           ? box.size.height
@@ -406,7 +540,7 @@ class _AnchoredListState extends State<AnchoredList>
       if (!mounted) return;
     }
 
-    final BuildContext? item = _built[target];
+    final _RegisteredItemState? item = _built[target];
     if (item == null || !item.mounted) {
       jumpToIndex(target, alignment);
       return;
@@ -422,7 +556,7 @@ class _AnchoredListState extends State<AnchoredList>
       if (!mounted || !item.mounted) return;
     }
     await Scrollable.ensureVisible(
-      item,
+      item.context,
       alignment: alignment,
       duration: duration,
       curve: curve,
@@ -451,9 +585,9 @@ class _AnchoredListState extends State<AnchoredList>
     if (viewportExtent <= 0) return const <ItemPosition>[];
 
     final List<ItemPosition> out = <ItemPosition>[];
-    for (final MapEntry<int, BuildContext> entry in _built.entries) {
+    for (final MapEntry<int, _RegisteredItemState> entry in _built.entries) {
       if (!entry.value.mounted) continue;
-      final RenderObject? box = entry.value.findRenderObject();
+      final RenderObject? box = entry.value.context.findRenderObject();
       if (box is! RenderBox || !box.hasSize) continue;
 
       final Offset origin = box.localToGlobal(Offset.zero, ancestor: self);
@@ -484,12 +618,6 @@ class _AnchoredListState extends State<AnchoredList>
   /// the key the caller actually set rather than the wrapper.
   Widget _item(BuildContext context, int index) {
     final Widget child = widget.itemBuilder(context, index);
-    final Widget item = _RegisteredItem(
-      index: index,
-      registry: _built,
-      onMounted: _schedulePositions,
-      child: child,
-    );
 
     // The child's key is lifted onto the wrapper so key-based child matching
     // still works, but it has to be salted first: copying a GlobalKey onto the
@@ -499,24 +627,120 @@ class _AnchoredListState extends State<AnchoredList>
     // reason.
     final Key? lifted = child.key == null ? null : _AnchoredKey(child.key!);
 
+    if (!_reorderable) {
+      return _withSeparator(
+        context,
+        index,
+        _RegisteredItem(
+          index: index,
+          registry: _built,
+          onMounted: _schedulePositions,
+          child: child,
+        ),
+        key: lifted,
+      );
+    }
+
+    assert(
+      child.key != null,
+      'Every item needs a Key when onReorder is set, or an item cannot be '
+      'followed to its new index. Item $index has none.',
+    );
+    // Registering the item *and* its separator as one unit, rather than the
+    // item alone, is what makes the gap the right size: the drag lifts the
+    // pair, so the hole it leaves has to be the pair's extent.
+    return KeyedSubtree(
+      key: lifted,
+      child: _RegisteredItem(
+        index: index,
+        registry: _built,
+        onMounted: _schedulePositions,
+        reorder: _reorder,
+        capturedThemes: InheritedTheme.capture(
+          from: context,
+          to: Overlay.of(context, debugRequiredFor: widget).context,
+        ),
+        child:
+            _withSeparator(context, index, _draggable(context, index, child)),
+      ),
+    );
+  }
+
+  /// Pairs an item with its separator, when there is one to pair it with.
+  Widget _withSeparator(
+    BuildContext context,
+    int index,
+    Widget item, {
+    Key? key,
+  }) {
     final IndexedWidgetBuilder? separator = widget.separatorBuilder;
     if (separator == null || index >= widget.itemCount - 1) {
-      return KeyedSubtree(key: lifted, child: item);
+      return KeyedSubtree(key: key, child: item);
     }
     final List<Widget> pair = <Widget>[item, separator(context, index)];
     return widget.scrollDirection == Axis.vertical
         ? Column(
-            key: lifted,
+            key: key,
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: pair,
           )
         : Row(
-            key: lifted,
+            key: key,
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: pair,
           );
+  }
+
+  /// Gives an item the gesture that starts a drag, and the screen-reader
+  /// actions that move it without one.
+  Widget _draggable(BuildContext context, int index, Widget child) {
+    final Widget described = _reorderSemantics(context, index, child);
+    return widget.longPressToDrag
+        ? AnchoredListDelayedDragStartListener(index: index, child: described)
+        : described;
+  }
+
+  /// The move-item actions a screen reader offers in place of dragging.
+  ///
+  /// Skipped rather than thrown when there are no [WidgetsLocalizations]
+  /// above the list — a bare widget test is not a reason to fail to build.
+  Widget _reorderSemantics(BuildContext context, int index, Widget child) {
+    final WidgetsLocalizations? l10n =
+        Localizations.of<WidgetsLocalizations>(context, WidgetsLocalizations);
+    if (l10n == null) return child;
+
+    final Map<CustomSemanticsAction, VoidCallback> actions =
+        <CustomSemanticsAction, VoidCallback>{};
+    final bool horizontal = widget.scrollDirection == Axis.horizontal;
+    final bool ltr = Directionality.of(context) == TextDirection.ltr;
+
+    if (index > 0) {
+      actions[CustomSemanticsAction(label: l10n.reorderItemToStart)] =
+          () => _reorder.handleReorder(index, 0);
+      final String before = !horizontal
+          ? l10n.reorderItemUp
+          : (ltr ? l10n.reorderItemLeft : l10n.reorderItemRight);
+      actions[CustomSemanticsAction(label: before)] =
+          () => _reorder.handleReorder(index, index - 1);
+    }
+    if (index < widget.itemCount - 1) {
+      final String after = !horizontal
+          ? l10n.reorderItemDown
+          : (ltr ? l10n.reorderItemRight : l10n.reorderItemLeft);
+      // index + 2, because the item lands *before* that index and it is still
+      // counted in place.
+      actions[CustomSemanticsAction(label: after)] =
+          () => _reorder.handleReorder(index, index + 2);
+      actions[CustomSemanticsAction(label: l10n.reorderItemToEnd)] =
+          () => _reorder.handleReorder(index, widget.itemCount);
+    }
+    return Semantics(
+      container: true,
+      customSemanticsActions: actions,
+      child: child,
+    );
   }
 
   /// Translates a caller's list index into an index within one sliver.
@@ -651,22 +875,51 @@ class _RegisteredItem extends StatefulWidget {
     required this.registry,
     required this.onMounted,
     required this.child,
+    this.reorder,
+    this.capturedThemes,
   });
 
   final int index;
-  final Map<int, BuildContext> registry;
+  final Map<int, _RegisteredItemState> registry;
   final VoidCallback onMounted;
   final Widget child;
+
+  /// Set only when the list is reorderable, and then the same controller for
+  /// every item.
+  final _ReorderController? reorder;
+
+  /// The inherited widgets the item needs carried with it into the overlay
+  /// while it is being dragged.
+  final CapturedThemes? capturedThemes;
 
   @override
   State<_RegisteredItem> createState() => _RegisteredItemState();
 }
 
 class _RegisteredItemState extends State<_RegisteredItem> {
+  Offset _startOffset = Offset.zero;
+  Offset _targetOffset = Offset.zero;
+  AnimationController? _gap;
+  bool _dragging = false;
+
+  int get index => widget.index;
+
+  CapturedThemes get capturedThemes => widget.capturedThemes!;
+
+  /// Whether this item is the one in the air, in which case it holds its
+  /// place open and the overlay draws it instead.
+  bool get dragging => _dragging;
+  set dragging(bool value) {
+    if (_dragging == value) return;
+    _dragging = value;
+    rebuild();
+  }
+
   @override
   void initState() {
     super.initState();
-    widget.registry[widget.index] = context;
+    widget.registry[widget.index] = this;
+    widget.reorder?.registerItem(this);
     widget.onMounted();
   }
 
@@ -674,23 +927,130 @@ class _RegisteredItemState extends State<_RegisteredItem> {
   void didUpdateWidget(_RegisteredItem old) {
     super.didUpdateWidget(old);
     if (old.index != widget.index) {
-      if (widget.registry[old.index] == context) {
+      if (widget.registry[old.index] == this) {
         widget.registry.remove(old.index);
       }
-      widget.registry[widget.index] = context;
+      widget.registry[widget.index] = this;
+      widget.reorder?.registerItem(this);
     }
   }
 
   @override
   void dispose() {
-    if (widget.registry[widget.index] == context) {
+    _gap?.dispose();
+    _gap = null;
+    if (widget.registry[widget.index] == this) {
       widget.registry.remove(widget.index);
     }
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) => widget.child;
+  Widget build(BuildContext context) {
+    final _ReorderController? reorder = widget.reorder;
+    if (reorder == null) return widget.child;
+    if (_dragging) {
+      // Hold the space open at exactly the extent that left, so nothing below
+      // jumps while the item is in the air.
+      return SizedBox.fromSize(
+        size: _extentSize(reorder.draggedExtent ?? 0, reorder.axis),
+      );
+    }
+    widget.registry[widget.index] = this;
+    return Transform.translate(offset: offset, child: widget.child);
+  }
+
+  /// How far this item is currently shifted to make room for the gap.
+  Offset get offset {
+    final AnimationController? gap = _gap;
+    if (gap == null) return _targetOffset;
+    return Offset.lerp(
+      _startOffset,
+      _targetOffset,
+      Curves.easeInOut.transform(gap.value),
+    )!;
+  }
+
+  /// Where this item will be once the gap animation settles.
+  ///
+  /// The target rather than the painted position, so a drop index computed
+  /// mid-animation is the one the eye is already being shown.
+  Rect targetGeometry() {
+    final RenderObject? object = context.findRenderObject();
+    if (object is! RenderBox || !object.hasSize) return Rect.zero;
+    return (object.localToGlobal(Offset.zero) + _targetOffset) & object.size;
+  }
+
+  /// Opens or closes this item's share of the gap left by the dragged item.
+  ///
+  /// Everything between the dragged item and where it would land shifts by
+  /// one item's extent; everything else sits still.
+  void updateForGap(
+    int dragIndex,
+    int gapIndex,
+    double gapExtent, {
+    required bool animate,
+    required bool reverse,
+  }) {
+    final Axis axis = widget.reorder!.axis;
+    final Offset wanted;
+    if (gapIndex < dragIndex && index < dragIndex && index >= gapIndex) {
+      wanted = _extentOffset(reverse ? -gapExtent : gapExtent, axis);
+    } else if (gapIndex > dragIndex && index > dragIndex && index < gapIndex) {
+      wanted = _extentOffset(reverse ? gapExtent : -gapExtent, axis);
+    } else {
+      wanted = Offset.zero;
+    }
+    if (wanted == _targetOffset) return;
+
+    final Offset previous = _targetOffset;
+    _targetOffset = wanted;
+    if (!animate) {
+      _gap?.dispose();
+      _gap = null;
+      _startOffset = _targetOffset;
+      rebuild();
+      return;
+    }
+    final AnimationController? running = _gap;
+    if (running == null) {
+      _gap = AnimationController(
+        vsync: widget.reorder!.vsync,
+        duration: const Duration(milliseconds: 250),
+      )
+        ..addListener(rebuild)
+        ..addStatusListener((AnimationStatus status) {
+          if (!status.isCompleted) return;
+          _startOffset = _targetOffset;
+          _gap?.dispose();
+          _gap = null;
+        })
+        ..forward();
+    } else {
+      // Interrupted mid-slide: carry on from where it actually is, not from
+      // where the last animation started.
+      _startOffset = Offset.lerp(
+        _startOffset,
+        previous,
+        Curves.easeInOut.transform(running.value),
+      )!;
+      running.forward(from: 0);
+    }
+    rebuild();
+  }
+
+  /// Puts the item back where it belongs once the drag is over.
+  void resetGap() {
+    _gap?.dispose();
+    _gap = null;
+    _startOffset = Offset.zero;
+    _targetOffset = Offset.zero;
+    rebuild();
+  }
+
+  void rebuild() {
+    if (mounted) setState(() {});
+  }
 }
 
 /// Wraps a caller's item key so it can be lifted onto the wrapper widget
