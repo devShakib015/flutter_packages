@@ -26,6 +26,15 @@ to, and a photo's orientation is applied either way.
   on-device model refuses reasoning on macOS 27.0 ("The selected model does not
   support reasoning"), so none appears from it yet.
 
+**A second request on a busy session can no longer take the app down on
+macOS 27.** The framework calls it a programmer error, and on macOS 27 it
+corrupted its own heap on the way to saying so: two of three runs of the
+overlapping-request test crashed the app inside FoundationModels, and the third
+threw a generic exception instead of `ConcurrentRequestException`. The plugin
+now turns the second request away itself, before the framework sees it, with
+the `ConcurrentRequestException` this package has always documented. Three
+runs out of three pass since, and so does the whole live suite on macOS 27.
+
 **Breaking**, for code that switches exhaustively: `TranscriptRole` gains
 `reasoning`, and the sealed `FoundationModelsException` gains the two
 subtypes above.
