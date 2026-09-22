@@ -17,7 +17,8 @@
   Access probes can run, now ship with it. They had been ignored along with
   the generated `macos/` folder, so a fresh copy of the example ran sandboxed
   and answered `unknown`.
-- Tests no longer ship in the package.
+- Tests no longer ship in the package, and the screenshot's description fits
+  pub.dev's 160-character limit, which it overran and was marked down for.
 
 ## 0.1.0
 

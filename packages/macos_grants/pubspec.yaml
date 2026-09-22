@@ -10,9 +10,9 @@ resolution: workspace
 
 screenshots:
   - description: >-
-      The example app run from a copy whose framework was modified after
-      signing: the signature does not validate, and Full Disk Access says
-      reinstall rather than relaunch.
+      The example app, run from a copy modified after signing: the signature
+      does not validate, and Full Disk Access says reinstall rather than
+      relaunch.
     path: doc/diagnostics.png
 
 topics:
