@@ -52,7 +52,8 @@ enum PrivacyPane {
 /// Every method answers [GrantStatus.unknown] or a permissive default rather
 /// than guessing. Nothing here prompts, because macOS has no prompt to show.
 abstract final class MacGrants {
-  static const MethodChannel _channel = MethodChannel('dev.shakib/macos_grants');
+  static const MethodChannel _channel =
+      MethodChannel('dev.shakib/macos_grants');
 
   /// Whether this is a Mac at all. Everything else returns an unknown/neutral
   /// answer off macOS rather than throwing, so a cross-platform app can call

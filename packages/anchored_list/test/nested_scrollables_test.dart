@@ -75,9 +75,8 @@ void main() {
 
     // Never await the scroll before pumping: the future completes only as
     // test time advances, and only pumpAndSettle advances it.
-    final Future<void> done =
-        c.animateToIndex(40,
-            alignment: 0.5, duration: const Duration(milliseconds: 200));
+    final Future<void> done = c.animateToIndex(40,
+        alignment: 0.5, duration: const Duration(milliseconds: 200));
     await tester.pumpAndSettle();
     await done;
 
@@ -99,9 +98,8 @@ void main() {
     final ScrollPosition pager = pagerOf(tester);
     final double before = pager.pixels;
 
-    final Future<void> done =
-        c.animateToIndex(3,
-            alignment: 0.5, duration: const Duration(milliseconds: 200));
+    final Future<void> done = c.animateToIndex(3,
+        alignment: 0.5, duration: const Duration(milliseconds: 200));
     await tester.pumpAndSettle();
     await done;
 
@@ -148,6 +146,7 @@ void main() {
     await tester.pumpAndSettle();
     await done;
 
-    expect(tester.getRect(find.text('line 200')).top, moreOrLessEquals(jumped.top, epsilon: 1));
+    expect(tester.getRect(find.text('line 200')).top,
+        moreOrLessEquals(jumped.top, epsilon: 1));
   });
 }

@@ -4,5 +4,10 @@ library;
 
 export 'src/grants.dart' show GrantDiagnosis, MacGrants, PrivacyPane;
 export 'src/probe.dart'
-    show GrantStatus, ProbeFileSystem, SystemProbeFileSystem, kFullDiskAccessProbes, readFullDiskAccess;
+    show
+        GrantStatus,
+        ProbeFileSystem,
+        SystemProbeFileSystem,
+        kFullDiskAccessProbes,
+        readFullDiskAccess;
 export 'src/signing.dart' show SigningIdentity, SigningStatus;
