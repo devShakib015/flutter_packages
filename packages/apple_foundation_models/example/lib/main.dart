@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:apple_foundation_models/apple_foundation_models.dart';
 import 'package:flutter/material.dart';
@@ -44,6 +46,8 @@ class _DemoPageState extends State<DemoPage> {
   Map<String, Object?>? _structured;
   String _toolLog = '';
   bool _busy = false;
+  bool _seesImages = false;
+  Uint8List? _picture;
   StreamSubscription<String>? _streaming;
 
   @override
@@ -61,10 +65,12 @@ class _DemoPageState extends State<DemoPage> {
         instructions: 'You are helpful and concise.',
       );
     }
+    final bool seesImages = await AppleFoundationModels.supportsImages();
     if (!mounted) return;
     setState(() {
       _availability = availability;
       _session = session;
+      _seesImages = seesImages;
     });
   }
 
@@ -81,6 +87,7 @@ class _DemoPageState extends State<DemoPage> {
       _busy = true;
       _output = '';
       _structured = null;
+      _picture = null;
     });
     try {
       await action();
@@ -151,6 +158,41 @@ class _DemoPageState extends State<DemoPage> {
         }
       });
 
+  Future<void> _look() => _guard(() async {
+        final Uint8List picture = await _drawScene();
+        setState(() => _picture = picture);
+        final String reply = await _session!.respond(
+          'Describe this picture in one sentence.',
+          images: <PromptImage>[PromptImage.bytes(picture, label: 'drawing')],
+        );
+        if (mounted) setState(() => _output = reply);
+      });
+
+  /// The picture the model is shown: drawn here, so the demo needs no asset
+  /// and no photo library permission.
+  static Future<Uint8List> _drawScene() async {
+    final ui.PictureRecorder recorder = ui.PictureRecorder();
+    Canvas(recorder)
+      ..drawRect(
+        const Rect.fromLTWH(0, 0, 256, 192),
+        Paint()..color = const Color(0xFF8FD3FF),
+      )
+      ..drawCircle(
+        const Offset(200, 50),
+        28,
+        Paint()..color = const Color(0xFFFFC928),
+      )
+      ..drawOval(
+        const Rect.fromLTWH(-60, 120, 380, 180),
+        Paint()..color = const Color(0xFF3FA34D),
+      );
+    final ui.Image image = await recorder.endRecording().toImage(256, 192);
+    final ByteData? png = await image.toByteData(
+      format: ui.ImageByteFormat.png,
+    );
+    return png!.buffer.asUint8List();
+  }
+
   @override
   Widget build(BuildContext context) {
     final ModelAvailability? availability = _availability;
@@ -195,11 +237,23 @@ class _DemoPageState extends State<DemoPage> {
                         onPressed: ready ? () => unawaited(_tool()) : null,
                         child: const Text('Tool calling'),
                       ),
+                      if (_seesImages)
+                        OutlinedButton(
+                          onPressed: ready ? () => unawaited(_look()) : null,
+                          child: const Text('Look at a picture'),
+                        ),
                     ],
                   ),
                   if (_busy) ...<Widget>[
                     const SizedBox(height: 16),
                     const LinearProgressIndicator(),
+                  ],
+                  if (_picture != null) ...<Widget>[
+                    const SizedBox(height: 16),
+                    _Panel(
+                      title: 'Picture',
+                      body: Image.memory(_picture!, height: 120),
+                    ),
                   ],
                   if (_toolLog.isNotEmpty) ...<Widget>[
                     const SizedBox(height: 16),

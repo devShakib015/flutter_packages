@@ -1,3 +1,4 @@
+import CoreImage
 import Foundation
 import Observation
 
@@ -21,6 +22,9 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
   private var methodChannel: FlutterMethodChannel?
   private var eventSink: FlutterEventSink?
   private var sessions: [Int: Any] = [:]
+  /// Whether each session's model can take images, since a session does not
+  /// say which model it has. Touched only on the platform thread.
+  private var canSee: [Int: Bool] = [:]
   /// In-flight streams, keyed by request id.
   ///
   /// Written from the platform thread when a request starts and from the
@@ -110,6 +114,17 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
       return
     }
 
+    if call.method == "supportsImages" {
+      #if canImport(FoundationModels)
+        if #available(iOS 26.0, macOS 26.0, *) {
+          result(Self.sees(SystemLanguageModel.default))
+          return
+        }
+      #endif
+      result(false)
+      return
+    }
+
     #if canImport(FoundationModels)
       if #available(iOS 26.0, macOS 26.0, *) {
         handleModern(call.method, args, result)
@@ -166,7 +181,14 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
         createSession(args, result)
 
       case "session.respond":
+        let withImages: Prompt?
+        do { withImages = try promptWithImages(args) } catch { return result(flutterError(error)) }
         withSession(args, result) { session in
+          if let withImages {
+            return try await session.respond(
+              to: withImages, options: self.options(from: args["options"])
+            ).content
+          }
           let response = try await session.respond(
             to: args["prompt"] as? String ?? "",
             options: self.options(from: args["options"]))
@@ -174,8 +196,18 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
         }
 
       case "session.respondAs":
+        let withImages: Prompt?
+        do { withImages = try promptWithImages(args) } catch { return result(flutterError(error)) }
         withSession(args, result) { session in
           let schema = try self.schema(from: args["schema"])
+          if let withImages {
+            return try await session.respond(
+              to: withImages,
+              schema: schema,
+              includeSchemaInPrompt: args["includeSchemaInPrompt"] as? Bool ?? true,
+              options: self.options(from: args["options"])
+            ).content.jsonString
+          }
           let response = try await session.respond(
             to: args["prompt"] as? String ?? "",
             schema: schema,
@@ -210,7 +242,10 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
         result(nil)
 
       case "session.dispose":
-        if let id = args["sessionId"] as? Int { sessions.removeValue(forKey: id) }
+        if let id = args["sessionId"] as? Int {
+          sessions.removeValue(forKey: id)
+          canSee.removeValue(forKey: id)
+        }
         result(nil)
 
       default:
@@ -247,6 +282,7 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
           instructions: args["instructions"] as? String)
 
         sessions[id] = session
+        canSee[id] = Self.sees(model)
         result(id)
       } catch {
         result(flutterError(error))
@@ -304,6 +340,8 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
           return result(flutterError(error))
         }
       }
+      let withImages: Prompt?
+      do { withImages = try promptWithImages(args) } catch { return result(flutterError(error)) }
 
       // Acknowledge before the first token so Dart knows the request started.
       result(nil)
@@ -312,9 +350,16 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
         guard let self else { return }
         do {
           if let generationSchema {
-            let stream = session.streamResponse(
-              to: prompt, schema: generationSchema,
-              includeSchemaInPrompt: includeSchema, options: options)
+            let stream: LanguageModelSession.ResponseStream<GeneratedContent>
+            if let withImages {
+              stream = session.streamResponse(
+                to: withImages, schema: generationSchema,
+                includeSchemaInPrompt: includeSchema, options: options)
+            } else {
+              stream = session.streamResponse(
+                to: prompt, schema: generationSchema,
+                includeSchemaInPrompt: includeSchema, options: options)
+            }
             for try await snapshot in stream {
               try Task.checkCancellation()
               self.emit([
@@ -323,7 +368,12 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
               ])
             }
           } else {
-            let stream = session.streamResponse(to: prompt, options: options)
+            let stream: LanguageModelSession.ResponseStream<String>
+            if let withImages {
+              stream = session.streamResponse(to: withImages, options: options)
+            } else {
+              stream = session.streamResponse(to: prompt, options: options)
+            }
             for try await snapshot in stream {
               try Task.checkCancellation()
               self.emit(["requestId": requestId, "type": "delta", "text": snapshot.content])
@@ -402,6 +452,82 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
     }
 
     // MARK: - Translation
+
+    /// Whether [model] reports that it can take images: never before iOS 27
+    /// and macOS 27, nor in an app built without their SDKs.
+    @available(iOS 26.0, macOS 26.0, *)
+    private static func sees(_ model: SystemLanguageModel) -> Bool {
+      #if canImport(FoundationModels, _version: 2.0)
+        if #available(iOS 27.0, macOS 27.0, *) {
+          return model.capabilities.contains(.vision)
+        }
+      #endif
+      return false
+    }
+
+    /// The prompt for a request that carries images, or nil when it carries
+    /// none — text alone keeps the String overloads it always used. Runs on
+    /// the platform thread, the only one that touches `canSee`.
+    @available(iOS 26.0, macOS 26.0, *)
+    private func promptWithImages(_ args: [String: Any]) throws -> Prompt? {
+      let images = args["images"] as? [[String: Any]] ?? []
+      if images.isEmpty { return nil }
+      // No such session: return nil and let the lookup report that, rather
+      // than blaming the images.
+      guard let id = args["sessionId"] as? Int, let sees = canSee[id] else { return nil }
+      #if canImport(FoundationModels, _version: 2.0)
+        guard #available(iOS 27.0, macOS 27.0, *) else {
+          throw CapabilityError(message: "Images in a prompt need iOS 27 or macOS 27.")
+        }
+        guard sees else {
+          throw CapabilityError(message: "This session's model cannot take images.")
+        }
+        let text = args["prompt"] as? String ?? ""
+        var attachments: [Attachment<ImageAttachmentContent>] = []
+        for (index, image) in images.enumerated() {
+          attachments.append(try attachment(image, index: index))
+        }
+        return Prompt {
+          text
+          attachments
+        }
+      #else
+        _ = sees
+        throw CapabilityError(
+          message: "Images in a prompt need an app built with Xcode 27 or later.")
+      #endif
+    }
+
+    #if canImport(FoundationModels, _version: 2.0)
+      /// One image from Dart. Both kinds go through Core Image, which applies
+      /// the photo's own orientation, so a picture taken sideways is not read
+      /// sideways; and input that does not decode fails here, naming which
+      /// image, rather than somewhere inside the model.
+      @available(iOS 27.0, macOS 27.0, *)
+      private func attachment(_ raw: [String: Any], index: Int) throws
+        -> Attachment<ImageAttachmentContent>
+      {
+        let options: [CIImageOption: Any] = [.applyOrientationProperty: true]
+        let image: CIImage?
+        let problem: String
+        if let typed = raw["bytes"] as? FlutterStandardTypedData {
+          image = CIImage(data: typed.data, options: options)
+          problem = "is not in a format Core Image can decode"
+        } else if let path = raw["path"] as? String {
+          image = CIImage(contentsOf: URL(fileURLWithPath: path), options: options)
+          problem = "could not be read as an image from \(path)"
+        } else {
+          image = nil
+          problem = "has neither bytes nor a path"
+        }
+        guard let image else {
+          throw ImageError(index: index, message: "Image \(index) \(problem).")
+        }
+        let attachment = Attachment(image)
+        if let label = raw["label"] as? String { return attachment.label(label) }
+        return attachment
+      }
+    #endif
 
     @available(iOS 26.0, macOS 26.0, *)
     private func options(from raw: Any?) -> GenerationOptions {
@@ -558,6 +684,14 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
         return ErrorPayload(
           code: "toolThrew", message: toolError.message, details: ["tool": toolError.tool])
       }
+      if let capability = error as? CapabilityError {
+        return ErrorPayload(
+          code: "unsupportedCapability", message: capability.message, details: nil)
+      }
+      if let image = error as? ImageError {
+        return ErrorPayload(
+          code: "invalidImage", message: image.message, details: ["index": "\(image.index)"])
+      }
       if let generation = error as? LanguageModelSession.GenerationError {
         let code: String
         switch generation {
@@ -656,6 +790,17 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
 
   struct DartToolError: Error {
     let tool: String
+    let message: String
+  }
+
+  /// A request this OS, app build or model cannot serve.
+  struct CapabilityError: Error {
+    let message: String
+  }
+
+  /// An image from Dart that would not decode.
+  struct ImageError: Error {
+    let index: Int
     let message: String
   }
 }

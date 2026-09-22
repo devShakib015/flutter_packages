@@ -30,11 +30,13 @@ export 'src/exceptions.dart'
         FoundationModelsException,
         FoundationModelsPlatformException,
         GuardrailViolationException,
+        InvalidImageException,
         ModelUnavailableException,
         RateLimitedException,
         RefusalException,
         SchemaException,
         ToolCallException,
+        UnsupportedCapabilityException,
         UnsupportedLanguageException;
 export 'src/generation_options.dart'
     show
@@ -43,6 +45,7 @@ export 'src/generation_options.dart'
         SamplingMode,
         TopKSampling,
         TopPSampling;
+export 'src/prompt_image.dart' show PromptImage;
 export 'src/schema.dart' show Schema;
 export 'src/session.dart' show AppleFoundationModels, LanguageModelSession;
 export 'src/stream_extensions.dart' show ModelStreamDeltas;

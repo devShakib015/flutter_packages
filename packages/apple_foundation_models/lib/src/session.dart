@@ -5,6 +5,7 @@ import 'availability.dart';
 import 'bridge.dart';
 import 'exceptions.dart';
 import 'generation_options.dart';
+import 'prompt_image.dart';
 import 'schema.dart';
 import 'tool.dart';
 import 'transcript.dart';
@@ -76,6 +77,23 @@ abstract final class AppleFoundationModels {
       return const <String>[];
     }
   }
+
+  /// Whether a prompt can carry images here.
+  ///
+  /// True on iOS 27 and macOS 27, in an app built with Xcode 27 or later,
+  /// where the general model reports that it can see. It says nothing about
+  /// whether the model is ready to use — check [availability] as well.
+  ///
+  /// It speaks for [ModelUseCase.general] only. On macOS 27.0 the
+  /// content-tagging model claims it can see, then fails every image it is
+  /// given.
+  static Future<bool> supportsImages() async {
+    try {
+      return await Bridge.invoke<bool>('supportsImages');
+    } on ModelUnavailableException {
+      return false;
+    }
+  }
 }
 
 /// A conversation with the on-device model.
@@ -145,12 +163,20 @@ class LanguageModelSession {
   }
 
   /// Generates a plain text response.
-  Future<String> respond(String prompt, {GenerationOptions? options}) {
+  ///
+  /// [images] go to the model along with the prompt — see [PromptImage] for
+  /// what that needs. Every request method takes them.
+  Future<String> respond(
+    String prompt, {
+    GenerationOptions? options,
+    List<PromptImage> images = const <PromptImage>[],
+  }) {
     _assertUsable();
     return Bridge.invoke<String>('session.respond', <String, Object?>{
       'sessionId': _id,
       'prompt': prompt,
       'options': options?.toJson(),
+      if (images.isNotEmpty) 'images': _wire(images),
     });
   }
 
@@ -167,6 +193,7 @@ class LanguageModelSession {
     required Schema schema,
     GenerationOptions? options,
     bool includeSchemaInPrompt = true,
+    List<PromptImage> images = const <PromptImage>[],
   }) async {
     _assertUsable();
     final String raw = await Bridge.invoke<String>(
@@ -177,6 +204,7 @@ class LanguageModelSession {
         'schema': schema.toJson(),
         'includeSchemaInPrompt': includeSchemaInPrompt,
         'options': options?.toJson(),
+        if (images.isNotEmpty) 'images': _wire(images),
       },
     );
     return _decode(raw);
@@ -200,12 +228,14 @@ class LanguageModelSession {
     required T Function(Map<String, Object?> json) decoder,
     GenerationOptions? options,
     bool includeSchemaInPrompt = true,
+    List<PromptImage> images = const <PromptImage>[],
   }) async {
     final Map<String, Object?> json = await respondAs(
       prompt,
       schema: schema,
       options: options,
       includeSchemaInPrompt: includeSchemaInPrompt,
+      images: images,
     );
     return decoder(json);
   }
@@ -221,12 +251,14 @@ class LanguageModelSession {
     required T Function(Map<String, Object?> json) decoder,
     GenerationOptions? options,
     bool includeSchemaInPrompt = true,
+    List<PromptImage> images = const <PromptImage>[],
   }) {
     return streamAs(
       prompt,
       schema: schema,
       options: options,
       includeSchemaInPrompt: includeSchemaInPrompt,
+      images: images,
     )
         .map<T?>((Map<String, Object?> json) {
           if (json.isEmpty) return null;
@@ -246,13 +278,18 @@ class LanguageModelSession {
   /// the platform, and it is what a UI wants — assign it straight to your
   /// state. Concatenating these events is the one mistake to avoid; it
   /// produces text that repeats itself.
-  Stream<String> stream(String prompt, {GenerationOptions? options}) {
+  Stream<String> stream(
+    String prompt, {
+    GenerationOptions? options,
+    List<PromptImage> images = const <PromptImage>[],
+  }) {
     _assertUsable();
     return _run<String>(
       method: 'session.stream',
       arguments: <String, Object?>{
         'prompt': prompt,
         'options': options?.toJson(),
+        if (images.isNotEmpty) 'images': _wire(images),
       },
       decode: (Map<Object?, Object?> event) => event['text'] as String? ?? '',
     );
@@ -267,6 +304,7 @@ class LanguageModelSession {
     required Schema schema,
     GenerationOptions? options,
     bool includeSchemaInPrompt = true,
+    List<PromptImage> images = const <PromptImage>[],
   }) {
     _assertUsable();
     return _run<Map<String, Object?>>(
@@ -276,6 +314,7 @@ class LanguageModelSession {
         'schema': schema.toJson(),
         'includeSchemaInPrompt': includeSchemaInPrompt,
         'options': options?.toJson(),
+        if (images.isNotEmpty) 'images': _wire(images),
       },
       decode: (Map<Object?, Object?> event) {
         final String? text = event['text'] as String?;
@@ -414,6 +453,22 @@ class LanguageModelSession {
     } on ModelUnavailableException {
       // Nothing was ever allocated on an unsupported platform.
     }
+  }
+
+  /// [images] as they cross the channel, refusing any that cannot possibly
+  /// decode before a request is made.
+  static List<Map<String, Object?>> _wire(List<PromptImage> images) {
+    for (final (int i, PromptImage image) in images.indexed) {
+      if (image.bytes?.isEmpty ?? false) {
+        throw ArgumentError.value(image, 'images[$i]', 'Has no bytes');
+      }
+      if (image.path?.isEmpty ?? false) {
+        throw ArgumentError.value(image, 'images[$i]', 'Has an empty path');
+      }
+    }
+    return <Map<String, Object?>>[
+      for (final PromptImage image in images) image.toJson(),
+    ];
   }
 
   static Map<String, Object?> _decode(String raw) {

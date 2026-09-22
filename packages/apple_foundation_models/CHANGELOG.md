@@ -1,26 +1,39 @@
 ## 0.4.0
 
-**Breaking:** `TranscriptRole` gains `reasoning`, so a `switch` over it with no
-default arm needs a case for it.
+**Images in prompts.** On iOS 27 and macOS 27 the model can look at pictures,
+and every request method now takes `images`: `PromptImage.bytes` for anything
+Core Image decodes, or `PromptImage.file`, which is read natively so a large
+photo never crosses the channel. Each can carry a `label` the model can refer
+to, and a photo's orientation is applied either way.
 
-macOS 27 and iOS 27 added two things a session's transcript can hold, and the
-plugin knew neither:
+- `AppleFoundationModels.supportsImages()` says whether they will work: iOS 27
+  or macOS 27, an app built with Xcode 27 or later, and a model that can see.
+- Where they will not, a request carrying them throws
+  `UnsupportedCapabilityException` rather than quietly leaving them out, and an
+  image that will not decode throws `InvalidImageException`, naming which one.
+- Checked against the real model on macOS 27: red, blue and green squares read
+  as red, blue and green — sent as bytes, as a file, in structured output and
+  streamed. The example app gains a *Look at a picture* button.
+- Use the general model for images. On macOS 27.0 the content-tagging model
+  reports that it can see, then fails every image it is given.
 
-- **The model's reasoning** arrived as `TranscriptRole.unknown` with its text
-  dropped. It is now `TranscriptRole.reasoning`, text included.
-- **An image** in an entry contributed nothing to its text, so it vanished. It
-  now reads as `[image]`, or `[image: label]`.
+**The transcript** learned the two things macOS 27 and iOS 27 added to it:
 
-Neither can reach you through this package yet. The on-device system model
-refuses reasoning on macOS 27.0 ("The selected model does not support
-reasoning"), and a prompt sent from here is text only. Both mappings were
-checked on macOS 27 regardless, through the plugin's own code: a reasoning
-entry in a transcript built by hand, and a real session given an image.
+- **Images** used to vanish from their entry's text. They now read as
+  `[image]`, or `[image: label]`.
+- **The model's reasoning** used to arrive as `TranscriptRole.unknown` with its
+  text dropped. It is now `TranscriptRole.reasoning`, text included — though the
+  on-device model refuses reasoning on macOS 27.0 ("The selected model does not
+  support reasoning"), so none appears from it yet.
 
-Built with Xcode 26, nothing changes: those SDKs do not define the new cases,
-so the plugin compiles without them and such entries read as unknown, as
-before. With Xcode 27 the compiler's two "switch must be exhaustive" warnings
-are gone.
+**Breaking**, for code that switches exhaustively: `TranscriptRole` gains
+`reasoning`, and the sealed `FoundationModelsException` gains the two
+subtypes above.
+
+Built with Xcode 26, nothing else changes: those SDKs define none of this, so
+the plugin compiles without it, `supportsImages()` answers false and such
+entries read as unknown. With Xcode 27 the compiler's two "switch must be
+exhaustive" warnings are gone.
 
 ## 0.3.2
 

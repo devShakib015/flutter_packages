@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:apple_foundation_models/apple_foundation_models.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -326,5 +329,116 @@ void main() {
       ),
       throwsArgumentError,
     );
+  });
+
+  // Images need iOS 27 or macOS 27 and a model that can see; elsewhere these
+  // skip rather than fail.
+  //
+  // They are also the one place this suite asserts content. A structural check
+  // cannot tell an image the model saw from one it never received, since the
+  // reply is a sentence either way, and a solid primary colour under greedy
+  // sampling is as close to a fixed answer as the model gives.
+  group('images', () {
+    Future<Uint8List> square(ui.Color color) async {
+      final ui.PictureRecorder recorder = ui.PictureRecorder();
+      ui.Canvas(recorder).drawRect(
+        const ui.Rect.fromLTWH(0, 0, 64, 64),
+        ui.Paint()..color = color,
+      );
+      final ui.Image image = await recorder.endRecording().toImage(64, 64);
+      final ByteData? png = await image.toByteData(
+        format: ui.ImageByteFormat.png,
+      );
+      return png!.buffer.asUint8List();
+    }
+
+    const String ask = 'What colour is this square? Answer with one word.';
+
+    testWidgets('the model sees an image sent as bytes', (_) async {
+      if (!await AppleFoundationModels.supportsImages()) {
+        return markTestSkipped('Images need iOS 27 or macOS 27.');
+      }
+      final String reply = await session.respond(
+        ask,
+        options: GenerationOptions.deterministic,
+        images: <PromptImage>[
+          PromptImage.bytes(
+            await square(const ui.Color(0xFFFF0000)),
+            label: 'swatch',
+          ),
+        ],
+      );
+      expect(reply.toLowerCase(), contains('red'));
+
+      final List<TranscriptEntry> entries = await session.transcript();
+      expect(
+        entries.any(
+          (TranscriptEntry e) =>
+              e.role == TranscriptRole.prompt &&
+              e.text.contains('[image: swatch]'),
+        ),
+        isTrue,
+        reason: 'the transcript should record the image, with its label',
+      );
+    });
+
+    testWidgets('and one sent as a file', (_) async {
+      if (!await AppleFoundationModels.supportsImages()) {
+        return markTestSkipped('Images need iOS 27 or macOS 27.');
+      }
+      final Directory dir = await Directory.systemTemp.createTemp('afm');
+      addTearDown(() => dir.delete(recursive: true));
+      final File file = File('${dir.path}/square.png');
+      await file.writeAsBytes(await square(const ui.Color(0xFF0000FF)));
+
+      final String reply = await session.respond(
+        ask,
+        options: GenerationOptions.deterministic,
+        images: <PromptImage>[PromptImage.file(file.path)],
+      );
+      expect(reply.toLowerCase(), contains('blue'));
+    });
+
+    testWidgets('structured and streamed requests carry them too', (_) async {
+      if (!await AppleFoundationModels.supportsImages()) {
+        return markTestSkipped('Images need iOS 27 or macOS 27.');
+      }
+      final List<PromptImage> green = <PromptImage>[
+        PromptImage.bytes(await square(const ui.Color(0xFF00FF00))),
+      ];
+      final Map<String, Object?> shaped = await session.respondAs(
+        'What colour is this square?',
+        schema: Schema.object(<String, Schema>{
+          'colour': Schema.string(description: 'one word'),
+        }),
+        options: GenerationOptions.deterministic,
+        images: green,
+      );
+      expect('${shaped['colour']}'.toLowerCase(), contains('green'));
+
+      final String streamed = await session
+          .stream(ask, options: GenerationOptions.deterministic, images: green)
+          .last;
+      expect(streamed.toLowerCase(), contains('green'));
+    });
+
+    testWidgets('an image that will not decode is named, not sent', (_) async {
+      if (!await AppleFoundationModels.supportsImages()) {
+        return markTestSkipped('Images need iOS 27 or macOS 27.');
+      }
+      await expectLater(
+        session.respond(
+          ask,
+          images: <PromptImage>[
+            PromptImage.bytes(await square(const ui.Color(0xFFFF0000))),
+            PromptImage.bytes(Uint8List.fromList('not an image'.codeUnits)),
+          ],
+        ),
+        throwsA(
+          isA<InvalidImageException>()
+              .having((InvalidImageException e) => e.index, 'index', 1),
+        ),
+      );
+    });
   });
 }

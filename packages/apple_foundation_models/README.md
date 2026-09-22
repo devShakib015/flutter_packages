@@ -165,6 +165,36 @@ Write `description` for the model, not for other developers — it is the only
 thing deciding whether the tool fires at the right moment. Saying when *not* to
 call it helps as much as saying when to.
 
+## Images
+
+On iOS 27 and macOS 27 the model can look at pictures. Every request method
+takes `images`, as bytes or as a file:
+
+```dart
+if (await AppleFoundationModels.supportsImages()) {
+  final total = await session.respond(
+    'What is the total on this receipt?',
+    images: [PromptImage.file(photo.path, label: 'receipt')],
+  );
+}
+```
+
+`PromptImage.bytes` takes anything Core Image decodes — PNG, JPEG, HEIC.
+`PromptImage.file` is read natively, so a large photo never crosses the platform
+channel. Either way a photo's orientation is applied, so a picture taken
+sideways is not read sideways. A `label` gives the model a name to refer to,
+which helps when there are several, and shows in the transcript as
+`[image: receipt]`.
+
+It needs three things, and `supportsImages()` checks all of them: iOS 27 or
+macOS 27, an app built with Xcode 27 or later, and a model that can see. Where
+any is missing, a request carrying images throws
+`UnsupportedCapabilityException` instead of quietly dropping them, and an image
+that will not decode throws `InvalidImageException`, which says which one.
+
+Use the general model for images. On macOS 27.0 the content-tagging model
+reports that it can see, then fails every image it is given.
+
 ## Pick the right model
 
 Apple ships narrower models alongside the general one. A specialised model
@@ -240,7 +270,8 @@ than matching on message text: `ContextWindowExceededException`,
 `GuardrailViolationException`, `RefusalException`,
 `UnsupportedLanguageException`, `DecodingFailureException`,
 `RateLimitedException`, `ConcurrentRequestException`,
-`AssetsUnavailableException`, `ToolCallException`, `SchemaException`.
+`AssetsUnavailableException`, `ToolCallException`, `SchemaException`,
+`UnsupportedCapabilityException`, `InvalidImageException`.
 
 The one to plan for is `ContextWindowExceededException`. The window does not
 grow, so recover by starting a fresh session — optionally seeded with a summary

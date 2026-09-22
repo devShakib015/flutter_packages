@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:apple_foundation_models/apple_foundation_models.dart';
@@ -373,6 +374,167 @@ void main() {
       );
       expect(entry.role, TranscriptRole.unknown);
       expect(entry.text, 'hm');
+    });
+  });
+
+  group('images', () {
+    final Uint8List png = Uint8List.fromList(<int>[0x89, 0x50, 0x4E, 0x47]);
+
+    // Records every call and answers the ones a request needs.
+    List<MethodCall> record() {
+      final List<MethodCall> calls = <MethodCall>[];
+      mock((MethodCall call) async {
+        calls.add(call);
+        return switch (call.method) {
+          'session.create' => 1,
+          'session.respond' => 'ok',
+          'session.respondAs' => '{}',
+          _ => null,
+        };
+      });
+      return calls;
+    }
+
+    Object? sentImages(List<MethodCall> calls, String method) =>
+        (calls.lastWhere((MethodCall c) => c.method == method).arguments
+            as Map<Object?, Object?>)['images'];
+
+    test('ride along with a prompt: bytes, files and labels', () async {
+      final List<MethodCall> calls = record();
+      final LanguageModelSession session = await LanguageModelSession.create();
+      await session.respond(
+        'What is this?',
+        images: <PromptImage>[
+          PromptImage.bytes(png, label: 'photo'),
+          const PromptImage.file('/tmp/receipt.jpg'),
+        ],
+      );
+      expect(sentImages(calls, 'session.respond'), <Map<String, Object?>>[
+        <String, Object?>{'bytes': png, 'label': 'photo'},
+        <String, Object?>{'path': '/tmp/receipt.jpg'},
+      ]);
+    });
+
+    test('a text-only request is sent exactly as before', () async {
+      final List<MethodCall> calls = record();
+      final LanguageModelSession session = await LanguageModelSession.create();
+      await session.respond('hi');
+      final Map<Object?, Object?> args = calls.last.arguments as Map;
+      expect(args.containsKey('images'), isFalse);
+    });
+
+    test('every request method carries them, streams included', () async {
+      final List<MethodCall> calls = record();
+      const EventChannel events = EventChannel(
+        'dev.shakib/apple_foundation_models/events',
+      );
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockStreamHandler(
+        events,
+        MockStreamHandler.inline(onListen: (Object? _, __) {}),
+      );
+      addTearDown(
+        () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockStreamHandler(events, null),
+      );
+
+      final LanguageModelSession session = await LanguageModelSession.create();
+      const List<PromptImage> images = <PromptImage>[
+        PromptImage.file('/tmp/a.png'),
+      ];
+      final Schema schema = Schema.object(<String, Schema>{
+        'a': Schema.string(),
+      });
+      await session.respondAs('x', schema: schema, images: images);
+      final StreamSubscription<String> plain =
+          session.stream('x', images: images).listen((_) {});
+      final StreamSubscription<Map<String, Object?>> shaped =
+          session.streamAs('x', schema: schema, images: images).listen((_) {});
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      await plain.cancel();
+      await shaped.cancel();
+
+      for (final String method in <String>[
+        'session.respondAs',
+        'session.stream',
+        'session.streamAs',
+      ]) {
+        expect(
+          sentImages(calls, method),
+          <Map<String, Object?>>[
+            <String, Object?>{'path': '/tmp/a.png'},
+          ],
+          reason: method,
+        );
+      }
+    });
+
+    test('an image that cannot decode is refused before anything is sent',
+        () async {
+      final List<MethodCall> calls = record();
+      final LanguageModelSession session = await LanguageModelSession.create();
+      expect(
+        () => session.respond(
+          'x',
+          images: <PromptImage>[PromptImage.bytes(Uint8List(0))],
+        ),
+        throwsArgumentError,
+      );
+      expect(
+        () => session.stream(
+          'x',
+          images: <PromptImage>[const PromptImage.file('')],
+        ),
+        throwsArgumentError,
+      );
+      expect(calls.map((MethodCall c) => c.method), <String>['session.create']);
+    });
+
+    test('supportsImages reports what the platform says', () async {
+      mock(
+        (MethodCall call) async =>
+            call.method == 'supportsImages' ? true : null,
+      );
+      expect(await AppleFoundationModels.supportsImages(), isTrue);
+    });
+
+    test('supportsImages is false where the plugin is missing', () async {
+      // No mock at all, which is what Android and the web see.
+      expect(await AppleFoundationModels.supportsImages(), isFalse);
+    });
+
+    test('a request the platform cannot serve says so', () async {
+      mock((MethodCall call) async {
+        if (call.method == 'session.create') return 1;
+        throw PlatformException(
+          code: 'unsupportedCapability',
+          message: 'Images in a prompt need iOS 27 or macOS 27.',
+        );
+      });
+      final LanguageModelSession session = await LanguageModelSession.create();
+      await expectLater(
+        session.respond('x', images: <PromptImage>[PromptImage.bytes(png)]),
+        throwsA(isA<UnsupportedCapabilityException>()),
+      );
+    });
+
+    test('an unreadable image is named by its index', () async {
+      mock((MethodCall call) async {
+        if (call.method == 'session.create') return 1;
+        throw PlatformException(
+          code: 'invalidImage',
+          message: 'Image 1 could not be read.',
+          details: <String, Object?>{'index': '1'},
+        );
+      });
+      final LanguageModelSession session = await LanguageModelSession.create();
+      await expectLater(
+        session.respond('x', images: <PromptImage>[PromptImage.bytes(png)]),
+        throwsA(
+          isA<InvalidImageException>()
+              .having((InvalidImageException e) => e.index, 'index', 1),
+        ),
+      );
     });
   });
 }

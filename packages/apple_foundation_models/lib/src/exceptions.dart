@@ -87,6 +87,26 @@ final class AssetsUnavailableException extends FoundationModelsException {
   const AssetsUnavailableException(super.message);
 }
 
+/// The request needs something this device, OS, app build or model cannot do.
+///
+/// Images in a prompt are the case today: they need iOS 27 or macOS 27, an app
+/// built with Xcode 27 or later, and a model that can see. Check
+/// `AppleFoundationModels.supportsImages` before offering them.
+final class UnsupportedCapabilityException extends FoundationModelsException {
+  /// Creates the exception.
+  const UnsupportedCapabilityException(super.message);
+}
+
+/// An image in a prompt could not be read: bytes that do not decode, or a file
+/// that is missing or is not an image.
+final class InvalidImageException extends FoundationModelsException {
+  /// Creates the exception for the image at [index].
+  const InvalidImageException(this.index, super.message);
+
+  /// Which image in the request's list, counting from zero.
+  final int index;
+}
+
 /// A tool invoked by the model threw.
 final class ToolCallException extends FoundationModelsException {
   /// Creates the exception for the tool named [toolName].

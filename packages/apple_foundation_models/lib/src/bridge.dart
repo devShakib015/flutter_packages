@@ -126,6 +126,14 @@ abstract final class Bridge {
       'rateLimited' => RateLimitedException(text),
       'concurrentRequests' => ConcurrentRequestException(text),
       'unsupportedGuide' || 'schema' => SchemaException(text),
+      'unsupportedCapability' => UnsupportedCapabilityException(text),
+      'invalidImage' => InvalidImageException(
+          int.tryParse(
+                (details is Map ? details['index'] : null)?.toString() ?? '',
+              ) ??
+              -1,
+          text,
+        ),
       'toolThrew' => ToolCallException(
           (details is Map && details['tool'] is String)
               ? details['tool']! as String
