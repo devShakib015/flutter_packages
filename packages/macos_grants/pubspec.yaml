@@ -1,0 +1,35 @@
+name: macos_grants
+description: >-
+  macOS privacy grants from Flutter: read Full Disk Access, Accessibility and Screen Recording, and find out whether this copy of your app can hold a grant at all.
+
+version: 0.1.0
+repository: https://github.com/devShakib015/flutter_packages
+issue_tracker: https://github.com/devShakib015/flutter_packages/issues
+documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/macos_grants
+resolution: workspace
+
+topics:
+  - macos
+  - permissions
+  - privacy
+  - code-signing
+  - desktop
+
+environment:
+  sdk: ^3.5.0
+  flutter: '>=3.24.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  plugin:
+    platforms:
+      macos:
+        pluginClass: MacosGrantsPlugin

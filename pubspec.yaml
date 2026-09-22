@@ -35,6 +35,8 @@ workspace:
   - packages/woo_client/storefront
   - packages/document_pip
   - packages/document_pip/example
+  - packages/macos_grants
+  - packages/macos_grants/example
 
 dev_dependencies:
   flutter_lints: ^6.0.0
