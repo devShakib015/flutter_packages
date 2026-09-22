@@ -91,8 +91,16 @@ void main() {
       expect(said.toLowerCase(), isNot(contains('relaunch')));
     });
 
-    test('a broken bundle says so even when access reads as granted', () {
-      expect(GrantStatus.granted.explain(broken), contains('Reinstall'));
+    test('granted is not overruled by a broken signature', () {
+      // The app can plainly do the thing; leading with "reinstall" would be
+      // the same unhelpful noise as "relaunch" is in the other direction.
+      final String said = GrantStatus.granted.explain(broken);
+      expect(said, startsWith('Access is granted'));
+      expect(said, contains('modified'));
+    });
+
+    test('unknown with a broken bundle explains why it may not apply', () {
+      expect(GrantStatus.unknown.explain(broken), contains('Reinstall'));
     });
 
     test('an ad-hoc build warns that the grant will not survive an update', () {

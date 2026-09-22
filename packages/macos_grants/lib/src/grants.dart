@@ -142,20 +142,29 @@ extension GrantDiagnosis on GrantStatus {
   /// where "relaunch and try again" never ends: the switch cannot apply to
   /// this copy. Say *reinstall*.
   String explain(SigningStatus signing) {
+    // A broken signature explains a refusal, but it does not contradict what
+    // the app can plainly do. Telling somebody to reinstall while the thing
+    // works is the same unhelpful noise as telling them to relaunch when it
+    // cannot: say what is true, then add the caveat.
+    if (this == GrantStatus.granted) {
+      return signing.valid
+          ? 'Access is granted.'
+          : 'Access is granted, but this copy of the app has been modified '
+              'since it was signed. Reinstall it before relying on that.';
+    }
     if (!signing.valid) {
       return 'This copy of the app has been modified since it was signed, so '
           'macOS cannot match a privacy grant to it. Reinstall it, then grant '
           'access again.';
     }
     return switch (this) {
-      GrantStatus.granted => 'Access is granted.',
       GrantStatus.denied => signing.survivesUpdate
           ? 'Access is turned off. Grant it in System Settings ▸ Privacy & '
               'Security.'
           : 'Access is turned off. Note that this build is signed ad-hoc, so '
               'macOS treats every update as a new app and the grant has to be '
               'given again after each one.',
-      GrantStatus.unknown => 'Access could not be determined.',
+      _ => 'Access could not be determined.',
     };
   }
 }
