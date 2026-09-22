@@ -27,7 +27,7 @@ print(access.explain(signing));
 | `MacGrants.signing()` | `valid`, `identity`, `teamId`, `survivesUpdate` | `SecStaticCodeCheckValidity` with nested-code and strict flags |
 | `MacGrants.fullDiskAccess()` | `granted` · `denied` · `unknown` | opens paths the grant protects — macOS offers no API for this one |
 | `MacGrants.accessibility()` | `granted` · `denied` · `unknown` | `AXIsProcessTrusted` |
-| `MacGrants.screenRecording()` | `granted` · `denied` · `unknown` | `CGPreflightScreenCaptureAccess` |
+| `MacGrants.screenRecording()` | `granted` · `denied` · `unknown` | `CGPreflightScreenCaptureAccess`; 10.14 had no such grant, so `granted` there |
 | `MacGrants.openSettings(pane)` | opened or not | the Settings anchor for that pane |
 
 ```dart
@@ -63,8 +63,9 @@ if (await MacGrants.fullDiskAccess() != GrantStatus.granted) {
 - **A sandboxed app gets `unknown` for Full Disk Access.** The sandbox blocks
   the probe paths themselves, so there is nothing to learn from them. That is
   reported as unknown rather than denied.
-- **Off macOS, everything answers `unknown`** and `openSettings` returns false,
-  so cross-platform code does not need a guard on every line.
+- **Off macOS, the web included, everything answers `unknown`** and
+  `openSettings` returns false, so cross-platform code does not need a guard on
+  every line.
 - **`signing()` hashes your bundle**, which for a large app is tens of
   milliseconds to a second. It runs off the main thread natively, but call it
   when something is wrong, not every frame.
@@ -83,7 +84,8 @@ takes a `ProbeFileSystem` so the decision is testable without a Mac.
 
 macOS 10.14+. No entitlements, no configuration. The plugin links only
 Security, ApplicationServices and CoreGraphics, all of which ship with macOS,
-so adding it does not raise your deployment target.
+so adding it does not raise your deployment target. It builds through Swift
+Package Manager or CocoaPods, whichever your app uses.
 
 ## Why this exists
 

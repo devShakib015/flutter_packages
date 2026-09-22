@@ -2,7 +2,7 @@ name: macos_grants
 description: >-
   macOS privacy grants from Flutter: read Full Disk Access, Accessibility and Screen Recording, and find out whether this copy of your app can hold a grant at all.
 
-version: 0.1.0
+version: 0.1.1
 repository: https://github.com/devShakib015/flutter_packages
 issue_tracker: https://github.com/devShakib015/flutter_packages/issues
 documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/macos_grants

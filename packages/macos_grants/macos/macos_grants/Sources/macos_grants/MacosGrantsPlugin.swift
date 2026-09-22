@@ -17,9 +17,19 @@ public class MacosGrantsPlugin: NSObject, FlutterPlugin {
     switch call.method {
     case "signing": signing(result: result)
     case "accessibility": result(AXIsProcessTrusted())
-    case "screenRecording": result(CGPreflightScreenCaptureAccess())
+    case "screenRecording": result(Self.screenRecording())
     default: result(FlutterMethodNotImplemented)
     }
+  }
+
+  /// Screen Recording became a privacy grant in macOS 10.15. Before that every
+  /// app could capture the screen, so on 10.14 the true answer is yes — and
+  /// calling the 10.15 API unguarded would stop the plugin compiling there.
+  private static func screenRecording() -> Bool {
+    if #available(macOS 10.15, *) {
+      return CGPreflightScreenCaptureAccess()
+    }
+    return true
   }
 
   /// What macOS makes of this bundle: does it still validate, and whose

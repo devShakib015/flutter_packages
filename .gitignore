@@ -11,7 +11,7 @@ doc/api/
 packages/*/example/android/
 packages/*/example/ios/
 packages/*/example/linux/
-packages/*/example/macos/
+packages/*/example/macos/*
 packages/*/example/windows/
 packages/*/example/web/
 # ...except document_pip's, which is NOT generated scaffolding: its
@@ -19,6 +19,14 @@ packages/*/example/web/
 # and its index.html carries the sized #app host those need. Untracked, they
 # were also missing from the published tarball, so the example could not run.
 !packages/document_pip/example/web/
+# ...and macos_grants' entitlements, which turn the sandbox off. A sandboxed
+# app cannot reach a single Full Disk Access probe, so without them a fresh
+# copy of the example answers unknown. flutter create leaves them alone when it
+# regenerates the rest. (macos/* rather than macos/ above: git cannot
+# re-include a file whose parent directory is excluded.)
+!packages/macos_grants/example/macos/Runner/
+packages/macos_grants/example/macos/Runner/*
+!packages/macos_grants/example/macos/Runner/*.entitlements
 
 # Tooling
 .idea/

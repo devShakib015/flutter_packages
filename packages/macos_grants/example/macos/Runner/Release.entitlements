@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Off on purpose: a sandboxed app cannot read the paths Full Disk
+	     Access protects, so every probe would answer "unknown". Your own app
+	     keeps whatever sandbox setting it needs; the package reports honestly
+	     either way. -->
+	<key>com.apple.security.app-sandbox</key>
+	<false/>
+</dict>
+</plist>

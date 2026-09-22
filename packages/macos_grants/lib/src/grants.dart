@@ -3,6 +3,7 @@ library;
 
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 
 import 'probe.dart';
@@ -58,7 +59,10 @@ abstract final class MacGrants {
   /// Whether this is a Mac at all. Everything else returns an unknown/neutral
   /// answer off macOS rather than throwing, so a cross-platform app can call
   /// these without guarding every line.
-  static bool get isMacOS => Platform.isMacOS;
+  ///
+  /// The web is asked about first because dart:io's `Platform` throws there
+  /// rather than answering false.
+  static bool get isMacOS => !kIsWeb && Platform.isMacOS;
 
   /// What macOS makes of this bundle's signature.
   ///
@@ -99,6 +103,9 @@ abstract final class MacGrants {
   static Future<GrantStatus> accessibility() => _ask('accessibility');
 
   /// Whether screen recording is allowed (`CGPreflightScreenCaptureAccess`).
+  ///
+  /// Screen Recording became a grant in macOS 10.15. On 10.14 every app could
+  /// capture the screen, so there this answers [GrantStatus.granted].
   static Future<GrantStatus> screenRecording() => _ask('screenRecording');
 
   /// Open the Settings pane for [pane]. Returns false if it could not be

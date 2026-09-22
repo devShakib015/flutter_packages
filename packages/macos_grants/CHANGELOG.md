@@ -1,3 +1,24 @@
+## 0.1.1
+
+- **Builds with Swift Package Manager.** `Package.swift` depended on a package
+  called `FlutterMacOS`, which Flutter never generates, so dependency
+  resolution failed before any Swift was compiled — in every app using Swift
+  Package Manager, Flutter's default. It now depends on `FlutterFramework`,
+  like Flutter's own plugin template.
+- **Compiles on macOS 10.14, as declared.** `screenRecording()` called
+  `CGPreflightScreenCaptureAccess`, a macOS 10.15 API, with no availability
+  check, so an app targeting 10.14 could not compile the plugin. On 10.14 it
+  now answers `granted`: Screen Recording was not a grant before 10.15, and
+  every app could capture the screen.
+- **Off macOS includes the web.** `isMacOS` read `Platform.isMacOS`, which
+  throws on the web instead of answering false, so every call threw there
+  rather than answering `unknown`.
+- The example's entitlements, which turn the sandbox off so the Full Disk
+  Access probes can run, now ship with it. They had been ignored along with
+  the generated `macos/` folder, so a fresh copy of the example ran sandboxed
+  and answered `unknown`.
+- Tests no longer ship in the package.
+
 ## 0.1.0
 
 First release.

@@ -7,11 +7,14 @@ let package = Package(
     // where Swift concurrency does not exist.
     platforms: [.macOS("10.14")],
     products: [.library(name: "macos-grants", targets: ["macos_grants"])],
-    dependencies: [.package(name: "FlutterMacOS", path: "../FlutterMacOS")],
+    // FlutterFramework is the package Flutter generates beside each plugin it
+    // links. There is no package called FlutterMacOS, so naming one fails
+    // dependency resolution before a line of Swift is compiled.
+    dependencies: [.package(name: "FlutterFramework", path: "../FlutterFramework")],
     targets: [
         .target(
             name: "macos_grants",
-            dependencies: [.product(name: "FlutterMacOS", package: "FlutterMacOS")]
+            dependencies: [.product(name: "FlutterFramework", package: "FlutterFramework")]
         )
     ]
 )

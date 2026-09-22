@@ -23,6 +23,7 @@ above points at the concept DOI, which always resolves to the latest version.
 | [cross_tab](packages/cross_tab) | Messages, presence and leader election across browser tabs | Web |
 | [woo_client](packages/woo_client) | WooCommerce for Dart: the keyless Store API and the admin REST API | All |
 | [document_pip](packages/document_pip) | Live Flutter widgets in an always-on-top window, from Flutter Web | Web |
+| [macos_grants](packages/macos_grants) | Full Disk Access, Accessibility and Screen Recording, and whether this copy of the app can hold a grant at all | macOS |
 
 The Apple packages also need the matching hardware: `roomplan` needs a LiDAR
 sensor, and `apple_foundation_models` and `apple_intelligence` need a device
