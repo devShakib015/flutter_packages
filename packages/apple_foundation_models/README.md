@@ -50,7 +50,7 @@ your setup trips on it.
 
 ```yaml
 dependencies:
-  apple_foundation_models: ^0.3.0
+  apple_foundation_models: ^0.4.0
 ```
 
 ## Structured output
@@ -215,6 +215,11 @@ for (final entry in await session.transcript()) {
 `TranscriptRole` distinguishes the instructions the session was created with
 from the prompts and responses that followed, which matters when you are
 reconstructing a conversation rather than just displaying one.
+
+macOS 27 and iOS 27 let a transcript hold two more things: the model's
+reasoning, as `TranscriptRole.reasoning`, and images, which read as `[image]`
+in the text. The on-device model does not reason yet, so the first will not
+appear from it.
 
 ## Options
 

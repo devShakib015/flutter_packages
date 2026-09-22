@@ -1,3 +1,27 @@
+## 0.4.0
+
+**Breaking:** `TranscriptRole` gains `reasoning`, so a `switch` over it with no
+default arm needs a case for it.
+
+macOS 27 and iOS 27 added two things a session's transcript can hold, and the
+plugin knew neither:
+
+- **The model's reasoning** arrived as `TranscriptRole.unknown` with its text
+  dropped. It is now `TranscriptRole.reasoning`, text included.
+- **An image** in an entry contributed nothing to its text, so it vanished. It
+  now reads as `[image]`, or `[image: label]`.
+
+Neither can reach you through this package yet. The on-device system model
+refuses reasoning on macOS 27.0 ("The selected model does not support
+reasoning"), and a prompt sent from here is text only. Both mappings were
+checked on macOS 27 regardless, through the plugin's own code: a reasoning
+entry in a transcript built by hand, and a real session given an image.
+
+Built with Xcode 26, nothing changes: those SDKs do not define the new cases,
+so the plugin compiles without them and such entries read as unknown, as
+before. With Xcode 27 the compiler's two "switch must be exhaustive" warnings
+are gone.
+
 ## 0.3.2
 
 Corrects 0.3.1, which claimed a floor it had not actually been checked against.

@@ -348,7 +348,13 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
 
     @available(iOS 26.0, macOS 26.0, *)
     private func transcript(of session: LanguageModelSession) -> [[String: String]] {
-      session.transcript.map { entry in
+      Self.rows(of: session.transcript)
+    }
+
+    /// One row per entry, in the shape `TranscriptEntry.fromJson` reads.
+    @available(iOS 26.0, macOS 26.0, *)
+    static func rows(of transcript: Transcript) -> [[String: String]] {
+      transcript.map { entry in
         switch entry {
         case .instructions(let value):
           return ["role": "instructions", "text": Self.text(of: value.segments)]
@@ -360,6 +366,13 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
           return ["role": "toolCall", "text": calls.map(\.toolName).joined(separator: ", ")]
         case .toolOutput(let value):
           return ["role": "toolOutput", "text": Self.text(of: value.segments)]
+        // macOS 27 and iOS 27 can record the model's reasoning. The case exists
+        // only in the SDKs that shipped with them (FoundationModels 2.0), so an
+        // older SDK compiles without it and such an entry reads as unknown.
+        #if canImport(FoundationModels, _version: 2.0)
+        case .reasoning(let value):
+          return ["role": "reasoning", "text": Self.text(of: value.segments)]
+        #endif
         @unknown default:
           return ["role": "unknown", "text": ""]
         }
@@ -372,6 +385,17 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
         switch segment {
         case .text(let s): return s.content
         case .structure(let s): return s.content.jsonString
+        // An image in the conversation, from macOS 27 and iOS 27. It has no
+        // text, so say what was there rather than let it vanish.
+        #if canImport(FoundationModels, _version: 2.0)
+        case .attachment(let a):
+          let kind: String
+          switch a.content {
+          case .image: kind = "image"
+          @unknown default: kind = "attachment"
+          }
+          return a.label.map { "[\(kind): \($0)]" } ?? "[\(kind)]"
+        #endif
         @unknown default: return ""
         }
       }.joined()

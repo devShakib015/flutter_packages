@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:apple_foundation_models/apple_foundation_models.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -339,6 +341,38 @@ void main() {
         ),
         throwsA(isA<DecodingFailureException>()),
       );
+    });
+  });
+
+  group('transcript', () {
+    // Roles cross the channel as strings, written in Swift and read here. One
+    // the plugin sends that Dart does not know arrives as unknown without a
+    // word, which is how reasoning went missing — so hold both sides to it.
+    test('every role the plugin sends has a TranscriptRole', () {
+      final String swift = File(
+        'darwin/apple_foundation_models/Sources/apple_foundation_models/'
+        'AppleFoundationModelsPlugin.swift',
+      ).readAsStringSync();
+      final Set<String> sent = RegExp(r'"role": "(\w+)"')
+          .allMatches(swift)
+          .map((RegExpMatch m) => m.group(1)!)
+          .toSet();
+      // A pattern that matched nothing would pass everything below.
+      expect(sent, containsAll(<String>['prompt', 'response', 'reasoning']));
+      for (final String role in sent.difference(<String>{'unknown'})) {
+        final TranscriptEntry entry = TranscriptEntry.fromJson(
+          <String, Object?>{'role': role, 'text': 'x'},
+        );
+        expect(entry.role, isNot(TranscriptRole.unknown), reason: role);
+      }
+    });
+
+    test('a role this version does not know still reads as unknown', () {
+      final TranscriptEntry entry = TranscriptEntry.fromJson(
+        <String, Object?>{'role': 'telepathy', 'text': 'hm'},
+      );
+      expect(entry.role, TranscriptRole.unknown);
+      expect(entry.text, 'hm');
     });
   });
 }

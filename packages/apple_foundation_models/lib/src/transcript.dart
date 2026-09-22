@@ -17,6 +17,11 @@ enum TranscriptRole {
   /// What the tool returned.
   toolOutput,
 
+  /// The model's reasoning before it answered. Only macOS 27 and iOS 27
+  /// record it, and only for a model that supports reasoning, which the
+  /// on-device system model did not as of macOS 27.0.
+  reasoning,
+
   /// An entry this version does not recognise.
   unknown,
 }
@@ -34,7 +39,9 @@ class TranscriptEntry {
   /// Who produced it.
   final TranscriptRole role;
 
-  /// Its text content.
+  /// Its text content. An image in the conversation, which macOS 27 and
+  /// iOS 27 can record, reads as `[image]`, or `[image: label]` when it has
+  /// one.
   final String text;
 
   /// Reads an entry off the platform channel.
