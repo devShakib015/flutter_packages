@@ -526,6 +526,14 @@ class _AnchoredListState extends State<AnchoredList>
     if (widget.itemCount == 0) return;
     final int target = _clamp(index);
 
+    // No duration means no animation to run, and the caller expects the list
+    // to land — not to do nothing. jumpToIndex is that landing, alignment and
+    // all, in constant time.
+    if (duration <= Duration.zero) {
+      jumpToIndex(target, alignment);
+      return;
+    }
+
     // Only built content can be scrolled *through*; beyond it the extents are
     // unknown. So land near the target first, then animate the last stretch —
     // a fast scroll rather than a cross-fade between two lists.
@@ -555,8 +563,18 @@ class _AnchoredListState extends State<AnchoredList>
       await SchedulerBinding.instance.endOfFrame;
       if (!mounted || !item.mounted) return;
     }
-    await Scrollable.ensureVisible(
-      item.context,
+    // This list's own position, not Scrollable.ensureVisible. That walks up
+    // through *every* enclosing scrollable and reveals the target in each one,
+    // so a list inside a TabBarView dragged the horizontal pager toward the
+    // next tab as it scrolled (issue #3). Only this axis should move.
+    final ScrollController scroll = scrollController;
+    final RenderObject? box = item.context.findRenderObject();
+    if (!scroll.hasClients || box == null) {
+      jumpToIndex(target, alignment);
+      return;
+    }
+    await scroll.position.ensureVisible(
+      box,
       alignment: alignment,
       duration: duration,
       curve: curve,

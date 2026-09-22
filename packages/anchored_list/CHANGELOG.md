@@ -1,3 +1,19 @@
+## 0.3.1
+
+Reported in [issue #3](https://github.com/devShakib015/flutter_packages/issues/3).
+
+### Fixed
+
+- **`animateToIndex` scrolled its ancestors too.** It went through
+  `Scrollable.ensureVisible`, which walks *every* enclosing scrollable and
+  reveals the target in each one, so a list inside a `TabBarView` could drag
+  the horizontal pager with it. It now moves this list's own `ScrollPosition`
+  and nothing else.
+- **`animateToIndex` refused a zero duration.** It asserted `duration > zero`,
+  so a caller passing `Duration.zero` got an assertion in debug and, with
+  asserts compiled out, no scroll at all. Zero now means `jumpToIndex`: same
+  destination, same alignment, no animation.
+
 ## 0.3.0
 
 Items can be dragged into a new order, and a drag can cross the anchor.

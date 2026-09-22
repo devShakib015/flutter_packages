@@ -77,6 +77,13 @@ class AnchoredListController extends ChangeNotifier {
   /// *through* — the extent of unbuilt items is unknown — so the list
   /// re-anchors near the target and animates the final stretch. The result
   /// reads as a fast scroll rather than a cross-fade between two lists.
+  ///
+  /// A [duration] of zero means [jumpToIndex]: same destination, same
+  /// alignment, no animation. A caller that animates or not depending on a
+  /// setting does not need two branches for it.
+  ///
+  /// Only this list scrolls. Scrollables around it — the pager behind a
+  /// `TabBarView`, an outer `PageView` — are left where they are.
   Future<void> animateToIndex(
     int index, {
     double alignment = 0,
@@ -84,7 +91,7 @@ class AnchoredListController extends ChangeNotifier {
     Curve curve = Curves.easeOutCubic,
   }) {
     assert(alignment >= 0 && alignment <= 1, 'alignment must be 0..1');
-    assert(duration > Duration.zero, 'duration must be positive');
+    assert(!duration.isNegative, 'duration cannot be negative');
     return _requireBinding().animateToIndex(index, alignment, duration, curve);
   }
 
