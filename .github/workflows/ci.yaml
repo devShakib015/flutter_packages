@@ -180,6 +180,79 @@ jobs:
         run: flutter build ios --debug --no-codesign
         working-directory: packages/vitals/example
 
+      # macos_grants 0.1.0 could not be built through Swift Package Manager at
+      # all: its Package.swift named a FlutterMacOS package that Flutter never
+      # generates, so resolution failed before any Swift was compiled. SPM is
+      # the default, and is set here anyway so the step keeps testing it if
+      # that ever changes. The example's entitlements are tracked, so the
+      # scaffold keeps its sandbox off.
+      - name: Scaffold example platforms (macos_grants)
+        run: flutter create --platforms=macos .
+        working-directory: packages/macos_grants/example
+      - name: Build example (macOS, Swift Package Manager)
+        run: |
+          flutter config --enable-swift-package-manager
+          flutter build macos --debug
+        working-directory: packages/macos_grants/example
+
+      # An example build is no test of a plugin's declared floor. Flutter 3.47
+      # with Xcode 27 compiled macos_grants at the app's macOS 12.0, through
+      # SPM and through CocoaPods alike, so 0.1.0's unguarded 10.15 call built
+      # cleanly while the package declared 10.14. This compiles each plugin at
+      # exactly the floor its Package.swift declares, per platform, and checks
+      # the podspec says the same.
+      - name: Swift at each plugin's declared floor
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          flutter precache --ios --macos
+          engine="$FLUTTER_ROOT/bin/cache/artifacts/engine"
+          status=0
+          checked=0
+          for manifest in packages/*/{darwin,ios,macos}/*/Package.swift; do
+            dir=$(dirname "$manifest")
+            podspec=$(ls "$(dirname "$dir")"/*.podspec)
+            sources=$(find "$dir/Sources" -name '*.swift' | sort)
+            platforms=$(grep -oE '\.(iOS|macOS)\("[0-9.]+"\)' "$manifest" || true)
+            if [ -z "$platforms" ]; then
+              echo "::error file=$manifest::no platform declared in a form this step reads"
+              status=1
+              continue
+            fi
+            for platform in $platforms; do
+              version=$(echo "$platform" | sed -E 's/.*"([0-9.]+)".*/\1/')
+              case "$platform" in
+                .iOS*)
+                  sdk=iphoneos
+                  triple="arm64-apple-ios$version"
+                  framework="$engine/ios/Flutter.xcframework/ios-arm64"
+                  key='ios\.deployment_target *= *|:ios, *' ;;
+                .macOS*)
+                  sdk=macosx
+                  triple="x86_64-apple-macos$version"
+                  framework="$engine/darwin-x64/FlutterMacOS.xcframework/macos-arm64_x86_64"
+                  key='osx\.deployment_target *= *|:osx, *' ;;
+              esac
+              [ -d "$framework" ] || { echo "::error::missing $framework"; exit 1; }
+              pod=$(grep -hoE "($key)'[0-9.]+'" "$podspec" | sed -E "s/.*'([0-9.]+)'.*/\1/" || true)
+              if [ "$pod" != "$version" ]; then
+                echo "::error file=$podspec::podspec says ${pod:-nothing} where Package.swift says $version"
+                status=1
+              fi
+              if xcrun --sdk "$sdk" swiftc -typecheck -target "$triple" -F "$framework" $sources; then
+                echo "ok  $triple  $dir"
+              else
+                echo "::error file=$manifest::does not compile at its declared floor, $triple"
+                status=1
+              fi
+              checked=$((checked + 1))
+            done
+          done
+          # A loop that matched nothing would pass without checking anything.
+          [ "$checked" -gt 0 ] || { echo "::error::no plugin was checked"; exit 1; }
+          echo "$checked platform floors checked"
+          exit $status
+
   # vitals' Health Connect code. Worth running here because the dev machine
   # cannot hold the Android and Apple toolchains at once.
   android:
