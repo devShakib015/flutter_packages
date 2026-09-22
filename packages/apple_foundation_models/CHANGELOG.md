@@ -1,3 +1,15 @@
+## 0.3.3
+
+**A second request on a busy session can no longer take the app down on
+macOS 27.** The framework calls it a programmer error, and on macOS 27 it
+corrupted its own heap on the way to saying so: two of three runs of the
+overlapping-request test crashed the app inside FoundationModels, and the third
+threw a generic exception instead of `ConcurrentRequestException`. The plugin
+now turns the second request away itself, before the framework sees it, with
+the `ConcurrentRequestException` this package has always documented.
+
+No API changes. 0.4.0 carries the same fix.
+
 ## 0.3.2
 
 Corrects 0.3.1, which claimed a floor it had not actually been checked against.

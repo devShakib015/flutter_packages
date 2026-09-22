@@ -21,6 +21,14 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
   private var methodChannel: FlutterMethodChannel?
   private var eventSink: FlutterEventSink?
   private var sessions: [Int: Any] = [:]
+  /// Sessions with a request in flight. Touched only on the platform thread.
+  ///
+  /// The framework calls a second request on a busy session a programmer
+  /// error, and on macOS 27 it can corrupt its own heap on the way to saying
+  /// so: EXC_BAD_ACCESS and "memory corruption of free block" inside
+  /// FoundationModels, taking the app with it. So the plugin turns the second
+  /// request away itself, before the framework sees it.
+  private var busy: Set<Int> = []
   /// In-flight streams, keyed by request id.
   ///
   /// Written from the platform thread when a request starts and from the
@@ -264,6 +272,23 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
         code: "sessionMissing", message: "That session has been disposed.", details: nil)
     }
 
+    /// Claims a session for one request, or says why it cannot have it.
+    ///
+    /// `isResponding` covers what `busy` cannot: a stream that was cancelled
+    /// and has left the plugin while the framework is still winding it down.
+    @available(iOS 26.0, macOS 26.0, *)
+    private func claim(_ id: Int, _ session: LanguageModelSession) -> FlutterError? {
+      if busy.contains(id) || session.isResponding {
+        return FlutterError(
+          code: "concurrentRequests",
+          message: "This session is still responding. It takes one request at a time: "
+            + "await the first, or use a second session.",
+          details: nil)
+      }
+      busy.insert(id)
+      return nil
+    }
+
     /// Runs async work against a session and replies once, mapping any throw.
     @available(iOS 26.0, macOS 26.0, *)
     private func withSession(
@@ -271,14 +296,23 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
       _ result: @escaping FlutterResult,
       _ body: @escaping (LanguageModelSession) async throws -> Any?
     ) {
-      guard let session = session(args) else { return result(missingSession()) }
+      guard let id = args["sessionId"] as? Int, let session = session(args) else {
+        return result(missingSession())
+      }
+      if let refused = claim(id, session) { return result(refused) }
       Task {
         do {
           let value = try await body(session)
-          DispatchQueue.main.async { result(value) }
+          DispatchQueue.main.async {
+            self.busy.remove(id)
+            result(value)
+          }
         } catch {
           let payload = self.errorPayload(error)
-          DispatchQueue.main.async { result(payload.flutterError) }
+          DispatchQueue.main.async {
+            self.busy.remove(id)
+            result(payload.flutterError)
+          }
         }
       }
     }
@@ -304,6 +338,8 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
           return result(flutterError(error))
         }
       }
+      let sessionId = args["sessionId"] as? Int ?? -1
+      if let refused = claim(sessionId, session) { return result(refused) }
 
       // Acknowledge before the first token so Dart knows the request started.
       result(nil)
@@ -341,8 +377,11 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
           ])
         }
         // Back to the main queue: this closure runs on the cooperative pool,
-        // and `running` is written from the platform thread too.
-        DispatchQueue.main.async { self.running.removeValue(forKey: requestId) }
+        // and `running` and `busy` are written from the platform thread too.
+        DispatchQueue.main.async {
+          self.running.removeValue(forKey: requestId)
+          self.busy.remove(sessionId)
+        }
       }
     }
 
