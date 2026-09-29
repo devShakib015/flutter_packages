@@ -96,6 +96,11 @@ jobs:
           - package: woo_client
             flutter: '3.32.0'
             tests: 'yes'
+          # Same reason, same floor: null-aware elements in lib/. Pure Dart, and
+          # checked on a real 3.8.0 SDK before its first release.
+          - package: flutter_health_check
+            flutter: '3.32.0'
+            tests: 'yes'
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2

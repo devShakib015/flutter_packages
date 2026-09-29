@@ -1,0 +1,48 @@
+name: flutter_health_check
+description: >-
+  Audits a Flutter app before a release: Google Play and App Store rules,
+  leaked secrets, Firebase rules, vulnerable and stale packages, in one report.
+
+version: 0.1.0
+repository: https://github.com/devShakib015/flutter_packages
+issue_tracker: https://github.com/devShakib015/flutter_packages/issues
+documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/flutter_health_check
+resolution: workspace
+
+screenshots:
+  - description: >-
+      The HTML report for a real app: a score per area, what to fix first, and
+      each finding with why it matters and how to fix it.
+    path: doc/report.png
+
+topics:
+  - cli
+  - security
+  - static-analysis
+  - google-play
+  - app-store
+
+environment:
+  # Dart 3.8 (Flutter 3.32), for the null-aware collection elements (`?value`)
+  # lib/ relies on. Checked against a real 3.8.0 SDK, and CI repeats it.
+  sdk: ^3.8.0
+
+executables:
+  fhc: fhc
+
+# A command-line tool: it compiles for Android and iOS too, but only runs
+# where there is a project folder, git and a Flutter SDK.
+platforms:
+  linux:
+  macos:
+  windows:
+
+dependencies:
+  args: ^2.6.0
+  http: ^1.2.0
+  path: ^1.9.0
+  yaml: ^3.1.0
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.0
