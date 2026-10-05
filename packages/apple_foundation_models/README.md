@@ -50,7 +50,7 @@ your setup trips on it.
 
 ```yaml
 dependencies:
-  apple_foundation_models: ^0.4.0
+  apple_foundation_models: ^0.4.1
 ```
 
 ## Structured output
@@ -271,7 +271,9 @@ than matching on message text: `ContextWindowExceededException`,
 `UnsupportedLanguageException`, `DecodingFailureException`,
 `RateLimitedException`, `ConcurrentRequestException`,
 `AssetsUnavailableException`, `ToolCallException`, `SchemaException`,
-`UnsupportedCapabilityException`, `InvalidImageException`.
+`UnsupportedCapabilityException`, `InvalidImageException`. That holds
+whichever Xcode built the app, though Xcode 27 changed the error types the
+framework throws.
 
 The one to plan for is `ContextWindowExceededException`. The window does not
 grow, so recover by starting a fresh session — optionally seeded with a summary

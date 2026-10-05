@@ -1,3 +1,30 @@
+## 0.4.1
+
+**In an app built with Xcode 27, the framework's errors arrived as the wrong
+exception.** FoundationModels throws different types to apps built with Xcode
+27 — `LanguageModelError`, `SystemLanguageModel.Error`,
+`LanguageModelSession.Error` and `GeneratedContent.ParsingError`, in place of
+the `LanguageModelSession.GenerationError` that only Xcode 26 builds still
+get — and the plugin matched only the old type. So in an Xcode 27 build,
+`ContextWindowExceededException`, `GuardrailViolationException`,
+`RefusalException`, `UnsupportedLanguageException`, `RateLimitedException`,
+`AssetsUnavailableException` and `DecodingFailureException` all reached Dart as
+a generic `FoundationModelsPlatformException`. Both generations are now mapped,
+so the exception you catch no longer depends on which Xcode built the app.
+
+- Checked against the real model on macOS 27: a prompt past the context window
+  threw `FoundationModelsPlatformException` with 0.4.0, and throws
+  `ContextWindowExceededException` now, after which the session answers
+  normally. The test is `example/integration_test/errors_test.dart`.
+- Two errors Xcode 27 added have no type here yet. They arrive as
+  `FoundationModelsPlatformException` with its `code` set to `timeout` or
+  `transcriptMutationWhileResponding`. Content the model can't take, such as an
+  image for a model that can't see, is an `UnsupportedCapabilityException`.
+- Building with Xcode 27 no longer warns that `GenerationOptions(sampling:)` is
+  deprecated.
+
+No API changes.
+
 ## 0.4.0
 
 **Images in prompts.** On iOS 27 and macOS 27 the model can look at pictures,

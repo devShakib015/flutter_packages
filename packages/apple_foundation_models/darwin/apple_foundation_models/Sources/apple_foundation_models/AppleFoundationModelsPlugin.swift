@@ -582,10 +582,19 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
         default: sampling = nil
         }
       }
-      return GenerationOptions(
-        sampling: sampling,
-        temperature: map["temperature"] as? Double,
-        maximumResponseTokens: map["maximumResponseTokens"] as? Int)
+      // The 27 SDK renames sampling: to samplingMode: and back-deploys the
+      // new name to 26.0, so it is only a question of which SDK is building.
+      #if canImport(FoundationModels, _version: 2.0)
+        return GenerationOptions(
+          samplingMode: sampling,
+          temperature: map["temperature"] as? Double,
+          maximumResponseTokens: map["maximumResponseTokens"] as? Int)
+      #else
+        return GenerationOptions(
+          sampling: sampling,
+          temperature: map["temperature"] as? Double,
+          maximumResponseTokens: map["maximumResponseTokens"] as? Int)
+      #endif
     }
 
     @available(iOS 26.0, macOS 26.0, *)
@@ -704,9 +713,7 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
       // inside, so matching on the plugin's types alone made ToolCallException
       // and SchemaException unreachable for anything the framework raised —
       // every one of them collapsed into the generic fallback.
-      if #available(iOS 26.0, macOS 26.0, *),
-        let callError = error as? LanguageModelSession.ToolCallError
-      {
+      if let callError = error as? LanguageModelSession.ToolCallError {
         var payload = errorPayload(callError.underlyingError)
         if payload.details?["tool"] == nil {
           var details = payload.details ?? [:]
@@ -731,6 +738,14 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
         return ErrorPayload(
           code: "invalidImage", message: image.message, details: ["index": "\(image.index)"])
       }
+      #if canImport(FoundationModels, _version: 2.0)
+        // An app built with Xcode 27 is thrown these instead of
+        // GenerationError, which only Xcode 26 builds still get. Matching the
+        // old type alone sent every one of them to the generic fallback.
+        if #available(iOS 27.0, macOS 27.0, *), let payload = currentErrorPayload(error) {
+          return payload
+        }
+      #endif
       if let generation = error as? LanguageModelSession.GenerationError {
         let code: String
         switch generation {
@@ -750,6 +765,47 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
       }
       return ErrorPayload(code: "unknown", message: "\(error)", details: nil)
     }
+
+    #if canImport(FoundationModels, _version: 2.0)
+      /// The error types that replace GenerationError, mapped to the codes
+      /// Dart already knows, so the exception a caller catches doesn't depend
+      /// on which Xcode built the app.
+      @available(iOS 27.0, macOS 27.0, *)
+      private func currentErrorPayload(_ error: Error) -> ErrorPayload? {
+        let code: String
+        if let model = error as? LanguageModelError {
+          switch model {
+          case .contextSizeExceeded: code = "exceededContextWindowSize"
+          case .rateLimited: code = "rateLimited"
+          case .guardrailViolation: code = "guardrailViolation"
+          case .refusal: code = "refusal"
+          case .unsupportedCapability: code = "unsupportedCapability"
+          // Content the model can't take, such as an image for one that can't see.
+          case .unsupportedTranscriptContent: code = "unsupportedCapability"
+          case .unsupportedGenerationGuide: code = "unsupportedGuide"
+          case .unsupportedLanguageOrLocale: code = "unsupportedLanguageOrLocale"
+          case .timeout: code = "timeout"
+          @unknown default: code = "unknown"
+          }
+        } else if let system = error as? SystemLanguageModel.Error {
+          switch system {
+          case .assetsUnavailable: code = "assetsUnavailable"
+          @unknown default: code = "unknown"
+          }
+        } else if let session = error as? LanguageModelSession.Error {
+          switch session {
+          case .concurrentRequests: code = "concurrentRequests"
+          case .transcriptMutationWhileResponding: code = "transcriptMutationWhileResponding"
+          @unknown default: code = "unknown"
+          }
+        } else if error is GeneratedContent.ParsingError {
+          code = "decodingFailure"
+        } else {
+          return nil
+        }
+        return ErrorPayload(code: code, message: error.localizedDescription, details: nil)
+      }
+    #endif
 
     /// Calls back into Dart so the model can reach code it was never trained on.
     @available(iOS 26.0, macOS 26.0, *)
