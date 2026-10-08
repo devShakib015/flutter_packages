@@ -1,3 +1,33 @@
+## 0.5.0
+
+**What a session spends, what the model is, and moving a conversation between
+models**, the parts of iOS 27 and macOS 27 that can be checked on a Mac today.
+All checked against the real model on macOS 27.0.1, in
+`example/integration_test/model_test.dart`.
+
+- `session.usage()` returns a `TokenUsage`: input, cached input, output and
+  reasoning tokens, as a running total. Subtract two readings for one request.
+  The second request in a session reused 68 of its 82 input tokens from the
+  cache. Needs iOS 27 or macOS 27 and Xcode 27; null elsewhere.
+- `AppleFoundationModels.modelInfo()` returns a `ModelInfo`: the model's name
+  ("AFM 3 Core"), its `ModelCapability`s and its context size (4096). Both
+  on-device models report vision, tool calling and guided generation, but not
+  reasoning. Name and capabilities need iOS 27 or macOS 27; context size needs
+  only Xcode 27. Unknown fields are null, not empty.
+- `AppleFoundationModels.tokenCount(text)` measures text before you send it, so
+  a long prompt can be cut down instead of failing with
+  `ContextWindowExceededException`. Needs iOS 26.4 or macOS 26.4 and Xcode 27.
+- `session.switchModel(useCase)` moves the conversation to the other model,
+  keeping the transcript, instructions and tools, and `session.useCase` says
+  where it is. iOS 27's profiles can only be attached when a session is
+  created, so the plugin rebuilds the native session from its transcript
+  instead, which works on iOS 26 and macOS 26 too. Between requests only:
+  mid-request it throws `ConcurrentRequestException`. On the real model a code
+  word survived two switches, a tool still fired after them, and `usage` kept
+  counting across them.
+
+Additive only: nothing existing changed.
+
 ## 0.4.1
 
 **In an app built with Xcode 27, the framework's errors arrived as the wrong

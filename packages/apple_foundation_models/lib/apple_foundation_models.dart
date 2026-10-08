@@ -45,6 +45,7 @@ export 'src/generation_options.dart'
         SamplingMode,
         TopKSampling,
         TopPSampling;
+export 'src/model_info.dart' show ModelCapability, ModelInfo, TokenUsage;
 export 'src/prompt_image.dart' show PromptImage;
 export 'src/schema.dart' show Schema;
 export 'src/session.dart' show AppleFoundationModels, LanguageModelSession;

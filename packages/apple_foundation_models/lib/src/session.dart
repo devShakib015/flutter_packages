@@ -5,6 +5,7 @@ import 'availability.dart';
 import 'bridge.dart';
 import 'exceptions.dart';
 import 'generation_options.dart';
+import 'model_info.dart';
 import 'prompt_image.dart';
 import 'schema.dart';
 import 'tool.dart';
@@ -94,6 +95,53 @@ abstract final class AppleFoundationModels {
       return false;
     }
   }
+
+  /// What the model behind [useCase] says about itself: its name, what it can
+  /// do, and how many tokens a session can hold.
+  ///
+  /// Fields the platform can't report are null; see [ModelInfo]. Where the
+  /// model isn't available at all every field is null, so check
+  /// [availability] for that.
+  ///
+  /// ```dart
+  /// final ModelInfo info = await AppleFoundationModels.modelInfo();
+  /// if (info.can(ModelCapability.vision)) showPhotoButton();
+  /// ```
+  static Future<ModelInfo> modelInfo({
+    ModelUseCase useCase = ModelUseCase.general,
+  }) async {
+    try {
+      final Object? raw = await Bridge.invoke<Object?>(
+        'modelInfo',
+        <String, Object?>{'useCase': useCase.wireName},
+      );
+      return raw == null
+          ? const ModelInfo()
+          : ModelInfo.fromJson(Bridge.asStringMap(raw));
+    } on ModelUnavailableException {
+      return const ModelInfo();
+    }
+  }
+
+  /// How many tokens [text] comes to for the model behind [useCase].
+  ///
+  /// Compare it with [ModelInfo.contextSize] before sending something long,
+  /// rather than finding out from a `ContextWindowExceededException`. Null
+  /// before iOS 26.4 and macOS 26.4, in an app built with Xcode 26, or where
+  /// the plugin isn't available.
+  static Future<int?> tokenCount(
+    String text, {
+    ModelUseCase useCase = ModelUseCase.general,
+  }) async {
+    try {
+      return await Bridge.invoke<int?>('tokenCount', <String, Object?>{
+        'text': text,
+        'useCase': useCase.wireName,
+      });
+    } on ModelUnavailableException {
+      return null;
+    }
+  }
 }
 
 /// A conversation with the on-device model.
@@ -112,10 +160,11 @@ abstract final class AppleFoundationModels {
 ///
 /// Sessions hold native resources. Always [dispose].
 class LanguageModelSession {
-  LanguageModelSession._(this._id, this._toolCount);
+  LanguageModelSession._(this._id, this._toolCount, this._useCase);
 
   final int _id;
   final int _toolCount;
+  ModelUseCase _useCase;
   bool _disposed = false;
 
   /// Opens a session.
@@ -153,7 +202,7 @@ class LanguageModelSession {
     Bridge.registerTools(id, <String, LanguageModelTool>{
       for (final LanguageModelTool t in tools) t.name: t,
     });
-    return LanguageModelSession._(id, tools.length);
+    return LanguageModelSession._(id, tools.length, useCase);
   }
 
   void _assertUsable() {
@@ -434,6 +483,47 @@ class LanguageModelSession {
         TranscriptEntry.fromJson(Bridge.asStringMap(entry)),
     ];
   }
+
+  /// Tokens this session has used so far, across every request and every
+  /// [switchModel].
+  ///
+  /// Null where the platform can't count them: before iOS 27 and macOS 27, or
+  /// in an app built with Xcode 26. For one request, subtract the reading
+  /// before it; see [TokenUsage].
+  Future<TokenUsage?> usage() async {
+    _assertUsable();
+    final Object? raw = await Bridge.invoke<Object?>(
+      'session.usage',
+      <String, Object?>{'sessionId': _id},
+    );
+    return raw == null ? null : TokenUsage.fromJson(Bridge.asStringMap(raw));
+  }
+
+  /// Moves the conversation to the model behind [useCase], keeping its
+  /// transcript, instructions and tools.
+  ///
+  /// The general model can hold the conversation and the content-tagging
+  /// model can label what came out of it, without starting over:
+  ///
+  /// ```dart
+  /// await session.respond('Here are this week\'s support tickets: $tickets');
+  /// await session.switchModel(ModelUseCase.contentTagging);
+  /// final tags = await session.respondAs('Tag the main topics.', schema: tagSchema);
+  /// ```
+  ///
+  /// Works on iOS 26 and macOS 26. Between requests only: while the session
+  /// is responding it throws [ConcurrentRequestException].
+  Future<void> switchModel(ModelUseCase useCase) async {
+    _assertUsable();
+    await Bridge.invoke<void>('session.switchModel', <String, Object?>{
+      'sessionId': _id,
+      'useCase': useCase.wireName,
+    });
+    _useCase = useCase;
+  }
+
+  /// The model this session is talking to.
+  ModelUseCase get useCase => _useCase;
 
   /// How many tools this session exposes.
   int get toolCount => _toolCount;

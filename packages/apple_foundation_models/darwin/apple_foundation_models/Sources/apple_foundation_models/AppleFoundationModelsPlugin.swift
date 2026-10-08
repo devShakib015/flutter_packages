@@ -40,6 +40,12 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
   /// Dictionary — the failure mode is heap corruption, not a wrong answer.
   /// Every access now goes through the main queue.
   private var running: [Int: Task<Void, Never>] = [:]
+  /// Each session's tools, kept so a model switch can carry them over.
+  /// Touched only on the platform thread.
+  private var toolsBySession: [Int: Any] = [:]
+  /// Token counts from the native sessions a model switch replaced, so
+  /// `session.usage` stays a running total across switches.
+  private var carriedUsage: [Int: [String: Int]] = [:]
   private var nextSessionId = 0
 
   // MARK: - Registration
@@ -130,6 +136,40 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
         }
       #endif
       result(false)
+      return
+    }
+
+    if call.method == "modelInfo" {
+      #if canImport(FoundationModels)
+        if #available(iOS 26.0, macOS 26.0, *) {
+          result(Self.info(of: Self.model(for: args["useCase"] as? String)))
+          return
+        }
+      #endif
+      result(nil)
+      return
+    }
+
+    if call.method == "tokenCount" {
+      // tokenCount(for:) arrived in iOS 26.4 and macOS 26.4. Gating it on the
+      // 27 SDK as well keeps one rule for everything this plugin version adds.
+      #if canImport(FoundationModels, _version: 2.0)
+        if #available(iOS 26.4, macOS 26.4, *) {
+          let model = Self.model(for: args["useCase"] as? String)
+          let text = args["text"] as? String ?? ""
+          Task {
+            do {
+              let count = try await model.tokenCount(for: text)
+              DispatchQueue.main.async { result(count) }
+            } catch {
+              let payload = self.errorPayload(error)
+              DispatchQueue.main.async { result(payload.flutterError) }
+            }
+          }
+          return
+        }
+      #endif
+      result(nil)
       return
     }
 
@@ -249,10 +289,21 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
         }
         result(nil)
 
+      case "session.usage":
+        guard let id = args["sessionId"] as? Int, let session = session(args) else {
+          return result(missingSession())
+        }
+        result(usage(of: session, carried: carriedUsage[id]))
+
+      case "session.switchModel":
+        switchModel(args, result)
+
       case "session.dispose":
         if let id = args["sessionId"] as? Int {
           sessions.removeValue(forKey: id)
           canSee.removeValue(forKey: id)
+          toolsBySession.removeValue(forKey: id)
+          carriedUsage.removeValue(forKey: id)
         }
         result(nil)
 
@@ -278,23 +329,67 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
               plugin: self))
         }
 
-        // A specialised model beats prompting the general one harder.
-        let model: SystemLanguageModel =
-          (args["useCase"] as? String == "contentTagging")
-          ? SystemLanguageModel(useCase: .contentTagging)
-          : SystemLanguageModel.default
-
+        let model = Self.model(for: args["useCase"] as? String)
         let session = LanguageModelSession(
           model: model,
           tools: tools,
           instructions: args["instructions"] as? String)
 
         sessions[id] = session
+        toolsBySession[id] = tools
         canSee[id] = Self.sees(model)
         result(id)
       } catch {
         result(flutterError(error))
       }
+    }
+
+    /// Replaces a session's native session with one on another model, built
+    /// from the same transcript (instructions included) and the same tools.
+    /// The framework has no way to change a live session's model before iOS
+    /// 27's profiles, and those can only be attached at creation; rebuilding
+    /// works on 26 as well.
+    @available(iOS 26.0, macOS 26.0, *)
+    private func switchModel(_ args: [String: Any], _ result: @escaping FlutterResult) {
+      guard let id = args["sessionId"] as? Int, let old = session(args) else {
+        return result(missingSession())
+      }
+      if busy.contains(id) || old.isResponding {
+        return result(
+          FlutterError(
+            code: "concurrentRequests",
+            message: "This session is still responding. Switch models between requests.",
+            details: nil))
+      }
+      if let total = usage(of: old, carried: carriedUsage[id]) as? [String: Int] {
+        carriedUsage[id] = total
+      }
+      let model = Self.model(for: args["useCase"] as? String)
+      sessions[id] = LanguageModelSession(
+        model: model,
+        tools: toolsBySession[id] as? [any Tool] ?? [],
+        transcript: old.transcript)
+      canSee[id] = Self.sees(model)
+      result(nil)
+    }
+
+    /// The session's token counts plus any carried over from before a model
+    /// switch, or nil where the platform doesn't count them.
+    @available(iOS 26.0, macOS 26.0, *)
+    private func usage(of session: LanguageModelSession, carried: [String: Int]?) -> Any? {
+      #if canImport(FoundationModels, _version: 2.0)
+        if #available(iOS 27.0, macOS 27.0, *) {
+          let u = session.usage
+          let now = [
+            "input": u.input.totalTokenCount,
+            "cachedInput": u.input.cachedTokenCount,
+            "output": u.output.totalTokenCount,
+            "reasoning": u.output.reasoningTokenCount,
+          ]
+          return now.merging(carried ?? [:], uniquingKeysWith: +)
+        }
+      #endif
+      return nil
     }
 
     @available(iOS 26.0, macOS 26.0, *)
@@ -491,6 +586,32 @@ public class AppleFoundationModelsPlugin: NSObject, FlutterPlugin, FlutterStream
     }
 
     // MARK: - Translation
+
+    /// A specialised model beats prompting the general one harder.
+    @available(iOS 26.0, macOS 26.0, *)
+    private static func model(for useCase: String?) -> SystemLanguageModel {
+      useCase == "contentTagging" ? SystemLanguageModel(useCase: .contentTagging) : .default
+    }
+
+    /// What [model] reports about itself. Every key is optional: context size
+    /// needs the 27 SDK, and name and capabilities iOS 27 and macOS 27 too.
+    @available(iOS 26.0, macOS 26.0, *)
+    private static func info(of model: SystemLanguageModel) -> [String: Any] {
+      var out: [String: Any] = [:]
+      #if canImport(FoundationModels, _version: 2.0)
+        // Back-deployed to 26.0 in the 27 SDK.
+        out["contextSize"] = model.contextSize
+        if #available(iOS 27.0, macOS 27.0, *) {
+          out["name"] = model.variant.displayName
+          let known: [(LanguageModelCapabilities.Capability, String)] = [
+            (.vision, "vision"), (.reasoning, "reasoning"),
+            (.toolCalling, "toolCalling"), (.guidedGeneration, "guidedGeneration"),
+          ]
+          out["capabilities"] = known.filter { model.capabilities.contains($0.0) }.map(\.1)
+        }
+      #endif
+      return out
+    }
 
     /// Whether [model] reports that it can take images: never before iOS 27
     /// and macOS 27, nor in an app built without their SDKs.

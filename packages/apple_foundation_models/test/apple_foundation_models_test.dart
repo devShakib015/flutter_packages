@@ -537,4 +537,119 @@ void main() {
       );
     });
   });
+
+  group('model info, token counts, usage', () {
+    test(
+        'modelInfo reads what the platform reports, ignoring names it '
+        'does not know', () async {
+      mock((MethodCall call) async {
+        expect(call.method, 'modelInfo');
+        expect(call.arguments, <String, Object?>{'useCase': 'contentTagging'});
+        return <String, Object?>{
+          'name': 'AFM 3 Core',
+          'contextSize': 4096,
+          'capabilities': <Object?>['vision', 'toolCalling', 'telepathy'],
+        };
+      });
+      final ModelInfo info = await AppleFoundationModels.modelInfo(
+        useCase: ModelUseCase.contentTagging,
+      );
+      expect(info.name, 'AFM 3 Core');
+      expect(info.contextSize, 4096);
+      expect(info.capabilities, <ModelCapability>{
+        ModelCapability.vision,
+        ModelCapability.toolCalling,
+      });
+      expect(info.can(ModelCapability.reasoning), isFalse);
+    });
+
+    test('an older platform reports unknown, not "can do nothing"', () async {
+      mock((MethodCall call) async => <String, Object?>{'contextSize': 4096});
+      final ModelInfo info = await AppleFoundationModels.modelInfo();
+      expect(info.capabilities, isNull);
+      expect(info.name, isNull);
+      expect(info.can(ModelCapability.vision), isFalse);
+    });
+
+    test('without the plugin every field is null', () async {
+      expect(await AppleFoundationModels.modelInfo(), const ModelInfo());
+      expect(await AppleFoundationModels.tokenCount('hi'), isNull);
+    });
+
+    test('tokenCount passes the text and use case through', () async {
+      mock((MethodCall call) async {
+        expect(call.method, 'tokenCount');
+        expect(call.arguments, <String, Object?>{
+          'text': 'hello',
+          'useCase': 'general',
+        });
+        return 2;
+      });
+      expect(await AppleFoundationModels.tokenCount('hello'), 2);
+    });
+
+    test('usage reads the counts, and two readings subtract', () async {
+      int reading = 0;
+      mock((MethodCall call) async {
+        if (call.method == 'session.create') return 1;
+        reading++;
+        return <String, Object?>{
+          'input': 67 * reading,
+          'cachedInput': reading == 1 ? 0 : 68,
+          'output': 5 * reading,
+          'reasoning': 0,
+        };
+      });
+      final LanguageModelSession session = await LanguageModelSession.create();
+      final TokenUsage first = (await session.usage())!;
+      final TokenUsage second = (await session.usage())!;
+      expect(first.totalTokens, 72);
+      expect(
+        second - first,
+        const TokenUsage(
+          inputTokens: 67,
+          cachedInputTokens: 68,
+          outputTokens: 5,
+          reasoningTokens: 0,
+        ),
+      );
+    });
+
+    test('usage is null where the platform does not count', () async {
+      mock((MethodCall call) async =>
+          call.method == 'session.create' ? 1 : null);
+      final LanguageModelSession session = await LanguageModelSession.create();
+      expect(await session.usage(), isNull);
+    });
+
+    test('switchModel moves the session and remembers where it is', () async {
+      final List<MethodCall> calls = <MethodCall>[];
+      mock((MethodCall call) async {
+        calls.add(call);
+        return call.method == 'session.create' ? 7 : null;
+      });
+      final LanguageModelSession session = await LanguageModelSession.create();
+      expect(session.useCase, ModelUseCase.general);
+      await session.switchModel(ModelUseCase.contentTagging);
+      expect(session.useCase, ModelUseCase.contentTagging);
+      expect(calls.last.method, 'session.switchModel');
+      expect(calls.last.arguments, <String, Object?>{
+        'sessionId': 7,
+        'useCase': 'contentTagging',
+      });
+    });
+
+    test('a refused switch leaves the session where it was', () async {
+      mock((MethodCall call) async {
+        if (call.method == 'session.create') return 1;
+        throw PlatformException(code: 'concurrentRequests', message: 'busy');
+      });
+      final LanguageModelSession session = await LanguageModelSession.create();
+      await expectLater(
+        session.switchModel(ModelUseCase.contentTagging),
+        throwsA(isA<ConcurrentRequestException>()),
+      );
+      expect(session.useCase, ModelUseCase.general);
+    });
+  });
 }

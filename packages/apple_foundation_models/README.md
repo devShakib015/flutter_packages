@@ -50,7 +50,7 @@ your setup trips on it.
 
 ```yaml
 dependencies:
-  apple_foundation_models: ^0.4.1
+  apple_foundation_models: ^0.5.0
 ```
 
 ## Structured output
@@ -206,6 +206,35 @@ final tagger = await LanguageModelSession.create(
 );
 ```
 
+A conversation can move between them without starting over. `switchModel`
+keeps the transcript, the instructions and the tools, so the general model can
+hold the conversation and the tagger can label what came out of it:
+
+```dart
+await session.respond('Here are this week\'s support tickets: $tickets');
+await session.switchModel(ModelUseCase.contentTagging);
+final tags = await session.respondAs('Tag the main topics.', schema: tagSchema);
+await session.switchModel(ModelUseCase.general);
+```
+
+It works on iOS 26 and macOS 26, between requests only: mid-request it throws
+`ConcurrentRequestException`.
+
+`modelInfo` says what a model reports about itself:
+
+```dart
+final info = await AppleFoundationModels.modelInfo();
+info.name;         // "AFM 3 Core"
+info.contextSize;  // 4096
+info.can(ModelCapability.vision);  // true
+```
+
+On macOS 27.0.1 both models call themselves AFM 3 Core and report vision, tool
+calling and guided generation, but not reasoning. The name and capabilities
+need iOS 27 or macOS 27 and an app built with Xcode 27; the context size needs
+Xcode 27 and works on 26 too. Anything the platform can't report is null,
+which means unknown rather than no.
+
 ## Languages
 
 ```dart
@@ -251,6 +280,31 @@ reasoning, as `TranscriptRole.reasoning`, and images, which read as `[image]`
 in the text. The on-device model does not reason yet, so the first will not
 appear from it.
 
+## Count tokens
+
+A session holds 4,096 tokens on today's on-device model, prompts and answers
+together. `tokenCount` measures text before you send it, and `usage` says what
+a session has spent:
+
+```dart
+final info = await AppleFoundationModels.modelInfo();
+final cost = await AppleFoundationModels.tokenCount(article);
+final limit = info.contextSize;
+if (cost != null && limit != null && cost > limit ~/ 2) article = shorten(article);
+
+final before = await session.usage();
+await session.respond('Summarise this: $article');
+final after = await session.usage();
+print((after! - before!).totalTokens);
+```
+
+`usage` is a running total, so subtracting two readings gives one request. It
+counts input, cached input, output and reasoning tokens. Checked on macOS 27.0.1: a
+second request in a session reused 68 of its 82 input tokens from the cache.
+`usage` needs iOS 27 or macOS 27 and an app built with Xcode 27, and
+`tokenCount` needs iOS 26.4 or macOS 26.4 and Xcode 27; elsewhere they return
+null.
+
 ## Options
 
 ```dart
@@ -277,7 +331,8 @@ framework throws.
 
 The one to plan for is `ContextWindowExceededException`. The window does not
 grow, so recover by starting a fresh session — optionally seeded with a summary
-of the old transcript, which you can read from `session.transcript()`.
+of the old transcript, which you can read from `session.transcript()`. Better
+still, measure first with `tokenCount` (see [Count tokens](#count-tokens)).
 
 A session handles one request at a time; overlapping calls raise
 `ConcurrentRequestException`. Use a second session for parallel work.
