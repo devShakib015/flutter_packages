@@ -1,4 +1,4 @@
-## Unreleased
+## 0.2.0
 
 **Plugin readiness for Swift Package Manager and AGP 9.** Two new findings, read
 from the versions the lockfile resolved rather than pub.dev's latest:
@@ -9,6 +9,12 @@ whose Android build applies the Kotlin Gradle Plugin, which AGP 9's built-in
 Kotlin refuses. That one is High once `android.builtInKotlin=true`, because the
 build then fails. A federated plugin is named with the dependency that pulls it
 in (`url_launcher_ios` via `url_launcher`), and dev_dependencies are left out.
+
+**Checked on real apps first.** LocalSend, Saber, wger and two of the author's
+apps. wger caught a false positive: health_bridge and sentry_flutter apply
+`kotlin-android` only below AGP 9 (`if (!isAgp9OrAbove)`, `if (!builtInKotlin)`),
+which builds fine with built-in Kotlin on. An application inside an `if` about
+the AGP version or built-in Kotlin now counts as migrated, and is a test.
 
 ## 0.1.0
 

@@ -3,7 +3,7 @@ description: >-
   Audits a Flutter app before a release: Google Play and App Store rules,
   leaked secrets, Firebase rules, vulnerable and stale packages, in one report.
 
-version: 0.1.0
+version: 0.2.0
 repository: https://github.com/devShakib015/flutter_packages
 issue_tracker: https://github.com/devShakib015/flutter_packages/issues
 documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/flutter_health_check
