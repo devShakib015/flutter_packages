@@ -16,6 +16,7 @@ class PubInfo {
     this.points,
     this.maxPoints,
     this.isPlugin = false,
+    this.swiftPm = false,
   });
 
   /// The package name.
@@ -45,6 +46,9 @@ class PubInfo {
   /// Has platform code (`flutter: plugin:` in its pubspec): the kind of
   /// package that breaks when Android, iOS or Flutter move.
   final bool isPlugin;
+
+  /// pub.dev tags [latest] `is:swiftpm-plugin`: it ships a Swift package.
+  final bool swiftPm;
 }
 
 /// One advisory from the OSV database.
@@ -113,6 +117,7 @@ class PubClient {
       maxPoints: (score?['maxPoints'] as num?)?.toInt(),
       isPlugin:
           ((latest?['pubspec'] as Map?)?['flutter'] as Map?)?['plugin'] != null,
+      swiftPm: tags.contains('is:swiftpm-plugin'),
     );
   }
 

@@ -14,6 +14,7 @@ import 'src/checks/assets.dart';
 import 'src/checks/code.dart';
 import 'src/checks/dependencies.dart';
 import 'src/checks/ios.dart';
+import 'src/checks/plugins.dart';
 import 'src/checks/security.dart';
 import 'src/checks/testing.dart';
 import 'src/context.dart';
@@ -76,6 +77,8 @@ Future<Report> audit(
       ...checkIos(ctx),
       ...checkSecurity(ctx),
       ...await checkCode(ctx),
+      // After checkCode: with --pub-get, that is where packages get resolved.
+      ...await checkPluginReadiness(ctx),
       ...checkTesting(ctx),
       ...checkAssets(ctx),
     ];

@@ -48,7 +48,9 @@ itself. The `com.example` application ID. Release builds signed with the debug
 key. `android:debuggable`. Permissions Play restricts (all-files access,
 `QUERY_ALL_PACKAGES`, SMS and call log, background location, package installs,
 exact alarms, full-screen intents, photo and video access), Health Connect data
-types, and foreground service types, each with what Play asks for.
+types, and foreground service types, each with what Play asks for. Plugins
+whose Android build still applies the Kotlin Gradle Plugin, which AGP 9's
+built-in Kotlin refuses (a build error once `android.builtInKotlin=true`).
 
 **iOS and the App Store.** Purpose strings each plugin needs for what the app
 actually uses (`ImageSource.camera` needs a camera string; picking from the
@@ -56,7 +58,11 @@ gallery needs none), including the ones permission_handler requests, found in
 Info.plist, build settings or InfoPlist.strings. Purpose strings that name the
 resource but not the reason. permission_handler permissions compiled out by the
 Podfile. The UIScene life cycle that apps built with the iOS 27 SDK need to
-launch (TN3187). App Transport Security switched off.
+launch (TN3187). App Transport Security switched off. Plugins with no Swift
+package, which Flutter builds through CocoaPods (read-only from 2 December
+2026), and whether a newer release has one. Both plugin checks read the
+versions the lockfile resolved, and name the dependency in your pubspec that
+pulls each one in.
 
 **Security.** Credentials with a recognisable shape (AWS, Stripe, OpenAI,
 Anthropic, GitHub, Slack, SendGrid, Supabase service-role keys and more),

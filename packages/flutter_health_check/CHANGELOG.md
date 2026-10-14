@@ -1,3 +1,15 @@
+## Unreleased
+
+**Plugin readiness for Swift Package Manager and AGP 9.** Two new findings, read
+from the versions the lockfile resolved rather than pub.dev's latest:
+`ios.cocoapods-only` for plugins with no Swift package, which Flutter builds
+through CocoaPods (read-only from 2 December 2026), with the newer release that
+has one when pub.dev knows of it; and `android.kotlin-gradle-plugin` for plugins
+whose Android build applies the Kotlin Gradle Plugin, which AGP 9's built-in
+Kotlin refuses. That one is High once `android.builtInKotlin=true`, because the
+build then fails. A federated plugin is named with the dependency that pulls it
+in (`url_launcher_ios` via `url_launcher`), and dev_dependencies are left out.
+
 ## 0.1.0
 
 First release. `fhc` reads a Flutter project and writes one report, scored by
