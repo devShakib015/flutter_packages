@@ -194,8 +194,11 @@ Future<List<Finding>> checkPluginReadiness(CheckContext ctx) async {
   return findings;
 }
 
-/// True when this Gradle build applies the Kotlin Gradle Plugin. Comments are
-/// removed first: they often mention the plugin they used to apply.
+/// True when this Gradle build applies the Kotlin Gradle Plugin on AGP 9.
+/// Comments are removed first: they often mention the plugin they used to
+/// apply. A plugin that applies it only below AGP 9 (`if (!isAgp9OrAbove)`,
+/// or a check of `android.builtInKotlin`) has migrated: health_bridge does
+/// this to keep building on older AGP.
 bool appliesKotlinGradlePlugin(String gradle) {
   final src = gradle
       .replaceAll(RegExp(r'/\*[\s\S]*?\*/'), '')
@@ -203,13 +206,45 @@ bool appliesKotlinGradlePlugin(String gradle) {
         RegExp(r'(^|[^:])//.*$', multiLine: true),
         (m) => m[1]!,
       );
-  return RegExp(
-        r'''\bid\s*\(?\s*["'](?:kotlin-android|org\.jetbrains\.kotlin\.android)["']''',
-      ).hasMatch(src) ||
-      RegExp(
-        r'''\bapply\s+plugin\s*:\s*["'](?:kotlin-android|org\.jetbrains\.kotlin\.android)["']''',
-      ).hasMatch(src) ||
-      RegExp(r'''\bkotlin\s*\(\s*["']android["']\s*\)''').hasMatch(src);
+  final applies = [
+    RegExp(
+      r'''\bid\s*\(?\s*["'](?:kotlin-android|org\.jetbrains\.kotlin\.android)["']''',
+    ),
+    RegExp(
+      r'''\bapply\s+plugin\s*:\s*["'](?:kotlin-android|org\.jetbrains\.kotlin\.android)["']''',
+    ),
+    RegExp(r'''\bkotlin\s*\(\s*["']android["']\s*\)'''),
+  ];
+  return applies.any(
+    (re) => re.allMatches(src).any((m) => !_belowAgp9Only(src, m.start)),
+  );
+}
+
+/// Whether the code at [at] sits inside an `if` whose condition is about the
+/// AGP version or built-in Kotlin.
+bool _belowAgp9Only(String src, int at) {
+  var depth = 0;
+  for (var i = at - 1; i >= 0; i--) {
+    final c = src[i];
+    if (c == '}') {
+      depth++;
+    } else if (c == '{') {
+      if (depth > 0) {
+        depth--;
+        continue;
+      }
+      // A block that encloses [at] opens here; what heads it?
+      final head = src.substring(i < 300 ? 0 : i - 300, i);
+      final cond = RegExp(r'\bif\s*\(([^{}]*)\)\s*$').firstMatch(head)?[1];
+      if (cond != null &&
+          RegExp(
+            r'agp|android_gradle_plugin|builtinkotlin',
+          ).hasMatch(cond.toLowerCase())) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 bool _builtInKotlinOn(File properties) =>

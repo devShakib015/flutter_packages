@@ -292,6 +292,31 @@ void main() {
       ("/* id 'kotlin-android' */\napply plugin: 'com.android.library'", false),
       ('plugins {\n    id("com.android.library")\n}', false),
       ('url "https://example.com/kotlin-android"', false),
+      // health_bridge 2.0.0: applied only below AGP 9, so it has migrated.
+      (
+        "def isAgp9OrAbove = com.android.Version.ANDROID_GRADLE_PLUGIN_VERSION"
+            ".tokenize('.')[0].toInteger() >= 9\n"
+            "apply plugin: 'com.android.library'\n"
+            "if (!isAgp9OrAbove) {\n    apply plugin: 'kotlin-android'\n}",
+        false,
+      ),
+      (
+        'if (!project.hasProperty("android.builtInKotlin")) {\n'
+            '    apply(plugin = "kotlin-android")\n'
+            '    apply plugin: "kotlin-android"\n}',
+        false,
+      ),
+      // An if about something else does not make it conditional on AGP.
+      (
+        "if (project.hasProperty('flavor')) {\n    apply plugin: 'kotlin-android'\n}",
+        true,
+      ),
+      // Guarded once and applied unconditionally elsewhere still applies it.
+      (
+        "if (!isAgp9OrAbove) {\n    apply plugin: 'kotlin-android'\n}\n"
+            "apply plugin: 'org.jetbrains.kotlin.android'",
+        true,
+      ),
     ]) {
       test(gradle.replaceAll('\n', ' '), () {
         expect(appliesKotlinGradlePlugin(gradle), applies);
