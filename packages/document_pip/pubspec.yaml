@@ -1,9 +1,10 @@
 name: document_pip
 description: >-
-  Put live Flutter widgets in a real always-on-top OS window from Flutter Web,
-  using the Document Picture-in-Picture API and Flutter's multi-view engine.
+  Picture-in-picture for Flutter Web: put live widgets in a real always-on-top
+  OS window, using the Document Picture-in-Picture API and Flutter's multi-
+  view engine.
 
-version: 0.1.1
+version: 0.1.2
 repository: https://github.com/devShakib015/flutter_packages
 issue_tracker: https://github.com/devShakib015/flutter_packages/issues
 documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/document_pip

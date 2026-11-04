@@ -1,3 +1,7 @@
+## 0.3.4
+
+The pub.dev description and topics now use the words people search for. No code changes.
+
 ## 0.3.3
 
 Widened the SDK constraint, which was wrong rather than merely strict.

@@ -1,3 +1,7 @@
+## 0.3.4
+
+The pub.dev description and topics now use the words people search for. No code changes.
+
 ## 0.3.3
 
 **The User-Agent was a release behind.** The 0.3.2 archive on pub.dev sends

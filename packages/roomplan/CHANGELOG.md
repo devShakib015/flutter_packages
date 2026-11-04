@@ -1,3 +1,7 @@
+## 0.3.2
+
+The pub.dev description and topics now use the words people search for. No code changes.
+
 ## 0.3.1
 
 No code changes. This release exists because the package was almost impossible

@@ -1,9 +1,10 @@
 name: woo_client
 description: >-
-  A WooCommerce client for Dart: the public Store API for carts and checkout
-  with no API keys, and the full admin REST API. Typed, batched, and tested.
+  A WooCommerce API client for Dart and Flutter: the public Store API for
+  carts and checkout with no API keys, and the full admin REST API. Typed,
+  batched, tested.
 
-version: 0.3.3
+version: 0.3.4
 repository: https://github.com/devShakib015/flutter_packages
 issue_tracker: https://github.com/devShakib015/flutter_packages/issues
 documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/woo_client

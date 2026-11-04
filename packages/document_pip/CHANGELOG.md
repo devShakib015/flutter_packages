@@ -1,3 +1,7 @@
+## 0.1.2
+
+The pub.dev description and topics now use the words people search for. No code changes.
+
 ## 0.1.1
 
 **Declared web-only on pub.dev.** 0.1.0 listed all six platforms, because the

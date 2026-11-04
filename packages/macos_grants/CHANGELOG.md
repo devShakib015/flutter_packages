@@ -1,3 +1,7 @@
+## 0.1.2
+
+The pub.dev description and topics now use the words people search for. No code changes.
+
 ## 0.1.1
 
 - **Builds with Swift Package Manager.** `Package.swift` depended on a package
