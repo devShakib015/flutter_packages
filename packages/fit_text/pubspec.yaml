@@ -1,9 +1,10 @@
 name: fit_text
 description: >-
-  Text that shrinks to fit its box, correctly. Works inside Expanded, Row,
-  IntrinsicHeight and unbounded constraints, where LayoutBuilder-based
-  auto-sizing gives up.
-version: 0.2.1
+  Auto size text that shrinks to fit its box, correctly. Works inside
+  Expanded, Row, IntrinsicHeight and unbounded constraints, where
+  LayoutBuilder-based auto-sizing gives up.
+
+version: 0.2.2
 repository: https://github.com/devShakib015/flutter_packages
 issue_tracker: https://github.com/devShakib015/flutter_packages/issues
 documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/fit_text
@@ -17,10 +18,10 @@ screenshots:
 
 topics:
   - text
+  - auto-size
   - layout
   - typography
   - responsive
-  - ui
 
 # The two constraints have to agree. Dart ^3.13 means Flutter 3.47, so the
 # old pair promised '>=3.32.0' while actually refusing anything below 3.47.

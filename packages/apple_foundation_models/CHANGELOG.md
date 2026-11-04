@@ -1,3 +1,7 @@
+## 0.5.1
+
+The pub.dev description and topics now use the words people search for. No code changes.
+
 ## 0.5.0
 
 **What a session spends, what the model is, and moving a conversation between

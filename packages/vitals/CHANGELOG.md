@@ -1,3 +1,7 @@
+## 0.3.3
+
+The pub.dev description and topics now use the words people search for. No code changes.
+
 ## 0.3.2
 
 No behaviour changes. `sdk: ^3.13.0` meant Dart 3.13, which ships only with
