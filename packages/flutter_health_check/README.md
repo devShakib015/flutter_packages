@@ -47,8 +47,9 @@ Kotlin against the floors the installed Flutter enforces, read from the SDK
 itself. The `com.example` application ID. Release builds signed with the debug
 key. `android:debuggable`. Permissions Play restricts (all-files access,
 `QUERY_ALL_PACKAGES`, SMS and call log, background location, package installs,
-exact alarms, full-screen intents, photo and video access), Health Connect data
-types, and foreground service types, each with what Play asks for. Plugins
+exact alarms, full-screen intents, photo and video access, and the 2027 rules for
+fine location, contacts and local network), Health Connect data types, and
+foreground service types, each with what Play asks for. Plugins
 whose Android build still applies the Kotlin Gradle Plugin, which AGP 9's
 built-in Kotlin refuses (a build error once `android.builtInKotlin=true`).
 
@@ -70,7 +71,11 @@ reported redacted so the report itself leaks nothing. Google API keys outside
 Firebase config. `.env` files bundled as assets. Signing keys and
 `key.properties` in git. Firestore, Storage and Realtime Database rules that are
 open, in test mode, or open to any signed-in user. Cleartext HTTP, disabled
-certificate checks, and plain `http://` URLs.
+certificate checks, and plain `http://` URLs. Builds that still trust the
+compromised eMudhra certificates, which OSV does not list: Flutter below 3.47.8
+on Android, Windows and Linux (the version the project or its CI pins, or the
+one on this machine), `cloud_firestore` on iOS, macOS and Windows, and the
+Firebase App Distribution Gradle plugin.
 
 **Code, tests, assets.** Analyzer errors, warnings and deprecated API use. Lint
 setup. Files over 800 lines. Tests (and whether the only one is the template's

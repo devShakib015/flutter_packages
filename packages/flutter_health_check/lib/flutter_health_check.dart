@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
+import 'src/checks/advisories.dart';
 import 'src/checks/android.dart';
 import 'src/checks/assets.dart';
 import 'src/checks/code.dart';
@@ -28,7 +29,7 @@ export 'src/model.dart';
 export 'src/report.dart';
 
 /// This package's version, as `fhc --version` prints it.
-const toolVersion = '0.2.0';
+const toolVersion = '0.3.0';
 
 /// Runs every check on the Flutter project at [path].
 ///
@@ -76,6 +77,7 @@ Future<Report> audit(
       ...checkAndroid(ctx),
       ...checkIos(ctx),
       ...checkSecurity(ctx),
+      ...checkAdvisories(ctx),
       ...await checkCode(ctx),
       // After checkCode: with --pub-get, that is where packages get resolved.
       ...await checkPluginReadiness(ctx),
@@ -131,6 +133,7 @@ void _projectFacts(CheckContext ctx) {
   final pinned = _pinnedFlutter(project);
   if (pinned != null) {
     ctx.pinnedFlutter = pinned.$1;
+    ctx.pinnedFlutterAt = pinned.$2;
     ctx.facts['Flutter pinned by the project'] = '${pinned.$1} (${pinned.$2})';
     final installed = ctx.defaults.flutterVersion;
     if (installed != null && !pinned.$1.startsWith(installed)) {

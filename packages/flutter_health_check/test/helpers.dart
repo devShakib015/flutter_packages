@@ -7,9 +7,9 @@ import 'package:http/testing.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
-/// Flutter 3.47.5's numbers, fixed so tests do not depend on the SDK here.
+/// Flutter 3.47.9's numbers, fixed so tests do not depend on the SDK here.
 final defaults = FlutterDefaults(
-  flutterVersion: '3.47.5',
+  flutterVersion: '3.47.9',
   targetSdk: 36,
   compileSdk: 36,
   minSdk: 24,

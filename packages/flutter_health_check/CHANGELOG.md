@@ -1,3 +1,37 @@
+## 0.3.0
+
+**The eMudhra certificates.** Compromised eMudhra certificate authorities can
+forge HTTPS certificates, and builds that compile in the old roots keep trusting
+them whatever the operating system does. No package database lists this for
+Flutter's SDK or for `cloud_firestore`, so `deps.vulnerability` stays silent, and
+three new findings read it directly. `security.emudhra-flutter` flags Flutter
+below 3.47.8 (3.50.0-0.2.pre on beta) on Android, Windows and Linux, reading the
+version from the project's pin and its CI, including composite actions.
+`security.emudhra-firestore` flags `cloud_firestore` on iOS, macOS and Windows:
+6.10.1 fixed only Apple's platforms, and 7.0.0 fixed neither, so the version
+alone isn't the answer. `security.emudhra-app-distribution` flags the Firebase
+App Distribution Gradle plugin. The first two are High, because installed builds
+stay exposed until users update. With no pin, the Flutter on the machine running
+`fhc` is all there is to go on, so that case is Medium and says so.
+
+**Google Play's 2027 permission rules.** `ACCESS_FINE_LOCATION`, `READ_CONTACTS`,
+`WRITE_CONTACTS`, `MANAGE_CONTACTS` and `ACCESS_LOCAL_NETWORK` are now reported
+with what Play asks for and when (27 January and 25 August 2027). They are Low
+for now, because they apply once an app targets API 37 or 38. A fine-location
+entry with `onlyForLocationButton` is what Play wants, so it isn't reported.
+`READ_CALL_LOG` adds that verifying an account by phone call stops being allowed.
+
+**Removed.** `StoreRules.playExtensionUntil`, and the sentence about extensions:
+the last one ended on 1 November 2026.
+
+**Two fixes.** `toJson` now lists the `skipped` areas. In print, the report's
+severity bar kept the card's grey border instead of its severity colour.
+
+**Checked on real apps first.** Three open-source apps and two of the author's.
+One keeps its Flutter pin in a composite action, which the first version missed.
+Another builds Flutter from a git submodule, where the Flutter on this machine
+says nothing about the release, so that is now a note instead of a finding.
+
 ## 0.2.0
 
 **Plugin readiness for Swift Package Manager and AGP 9.** Two new findings, read

@@ -79,8 +79,7 @@ List<Finding> _appGradle(CheckContext ctx, File file) {
             'for new apps and updates',
         detail:
             'Since ${StoreRules.playTargetSdkSince}, Google Play accepts new apps and app '
-            'updates only if they target API level ${StoreRules.playTargetSdk} (Android 16). Apps '
-            'that were granted an extension have until ${StoreRules.playExtensionUntil}.'
+            'updates only if they target API level ${StoreRules.playTargetSdk} (Android 16).'
             '${lowest.value! < StoreRules.playExistingAppFloor ? ' Below API ${StoreRules.playExistingAppFloor}, the app already published is also hidden from new users on devices running a newer Android version.' : ''}',
         fix:
             'Set targetSdk to ${StoreRules.playTargetSdk}, then test the Android 16 changes that '
@@ -403,7 +402,7 @@ const _restricted = <String, (Severity, String)>{
   'RECEIVE_SMS': (Severity.high, _sms),
   'RECEIVE_MMS': (Severity.high, _sms),
   'RECEIVE_WAP_PUSH': (Severity.high, _sms),
-  'READ_CALL_LOG': (Severity.high, _sms),
+  'READ_CALL_LOG': (Severity.high, _callLog),
   'WRITE_CALL_LOG': (Severity.high, _sms),
   'PROCESS_OUTGOING_CALLS': (Severity.high, _sms),
   'ACCESS_BACKGROUND_LOCATION': (
@@ -428,12 +427,46 @@ const _restricted = <String, (Severity, String)>{
   ),
   'READ_MEDIA_IMAGES': (Severity.medium, _media),
   'READ_MEDIA_VIDEO': (Severity.medium, _media),
+  // Mandatory later, and only once the app targets API 37 or 38, so low today.
+  'ACCESS_FINE_LOCATION': (
+    Severity.low,
+    'From ${StoreRules.playPermissionsFrom}, apps targeting Android 17 (API 37) must use the '
+        'location button for one-time, user-initiated location requests, with '
+        'android:usesPermissionFlags="onlyForLocationButton" if that is all they need. Keeping '
+        'ACCESS_FINE_LOCATION for anything else needs a Play Console declaration saying why '
+        'coarse location or the button will not do. ${StoreRules.playPermissionsSource}',
+  ),
+  'READ_CONTACTS': (
+    Severity.low,
+    'From ${StoreRules.playPermissionsFrom}, apps targeting Android 17 (API 37) may request '
+        'READ_CONTACTS only with a Play Console declaration, when the Android Contact Picker '
+        '(Intent.ACTION_PICK_CONTACTS) is not enough for core functionality. '
+        '${StoreRules.playPermissionsSource}',
+  ),
+  'WRITE_CONTACTS': (Severity.low, _manageContacts),
+  'MANAGE_CONTACTS': (Severity.low, _manageContacts),
+  'ACCESS_LOCAL_NETWORK': (
+    Severity.low,
+    'From ${StoreRules.playLocalNetworkFrom}, apps targeting Android 17 (API 37) may request '
+        'ACCESS_LOCAL_NETWORK only with a Play Console declaration, when core functionality '
+        'needs it and a device picker such as NsdManager\'s is not enough. Below API 37 access '
+        'comes with INTERNET, and Android says not to declare it at all. '
+        '${StoreRules.playPermissionsSource}',
+  ),
 };
 
 const _sms =
     'SMS and call-log permissions are restricted to the default SMS, phone or '
     'assistant app, plus a short list of exceptions. For one-time codes, the SMS Retriever and '
     'SMS User Consent APIs need no permission.';
+const _callLog =
+    '$_sms From ${StoreRules.playPermissionsFrom}, verifying an account by phone call is no '
+    'longer an allowed use of READ_CALL_LOG. ${StoreRules.playPermissionsSource}';
+const _manageContacts =
+    'From ${StoreRules.playLocalNetworkFrom}, MANAGE_CONTACTS is only for apps whose core '
+    'functionality the platform intents (ACTION_INSERT, ACTION_EDIT) cannot serve, with a Play '
+    'Console declaration, and WRITE_CONTACTS is not for apps targeting API 38. '
+    '${StoreRules.playPermissionsSource}';
 const _media =
     'Broad photo and video access needs a Play Console declaration. Apps that '
     'only need a picture now and then must use the system photo picker, which needs no '
@@ -510,9 +543,10 @@ List<Finding> _manifests(CheckContext ctx) {
         r'''android:name\s*=\s*["']([^"']+)["']''',
       ).firstMatch(attrs)?[1];
       if (name == null) continue;
-      permissions
-          .putIfAbsent(name, () => [])
-          .add('$rel:${lineOf(xml, m.start)}');
+      final locations = permissions.putIfAbsent(name, () => []);
+      // Only the location button can use it, which is what Play asks for.
+      if (attrs.contains('onlyForLocationButton')) continue;
+      locations.add('$rel:${lineOf(xml, m.start)}');
     }
   }
   if (manifests.isNotEmpty) {
@@ -526,7 +560,7 @@ List<Finding> _manifests(CheckContext ctx) {
     final rule = e.key.startsWith('android.permission.')
         ? _restricted[short]
         : null;
-    if (rule == null) continue;
+    if (rule == null || e.value.isEmpty) continue;
     findings.add(
       Finding(
         id: 'android.restricted-permission',

@@ -53,9 +53,12 @@ void main() {
     expect(StoreRules.playTargetSdk, 36);
     expect(StoreRules.playTargetSdkSince, '31 August 2026');
     expect(StoreRules.playExistingAppFloor, 35);
+    expect(StoreRules.playPermissionsFrom, '27 January 2027');
+    expect(StoreRules.playLocalNetworkFrom, '25 August 2027');
     expect(StoreRules.appStoreSdk, 'Xcode 26 with the iOS 26 SDK');
     expect([
       StoreRules.playSource,
+      StoreRules.playPermissionsSource,
       StoreRules.appStoreSource,
       StoreRules.sceneSource,
     ], everyElement(startsWith('https://')));

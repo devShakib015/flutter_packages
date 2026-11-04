@@ -4,6 +4,7 @@ import 'package:path/path.dart' as p;
 
 import '../context.dart';
 import '../model.dart';
+import '../project.dart';
 
 const _ci = <String, List<String>>{
   'GitHub Actions': ['.github/workflows'],
@@ -20,6 +21,46 @@ const _ci = <String, List<String>>{
     'ios/fastlane/Fastfile',
   ],
 };
+
+/// [project]'s folder and those above it, up to the repository root: CI and
+/// submodules can live there when the app is in a subfolder.
+List<Directory> repositoryRoots(FlutterProject project) {
+  final roots = <Directory>[project.root];
+  var dir = project.root;
+  for (
+    var i = 0;
+    i < 4 && !Directory(p.join(dir.path, '.git')).existsSync();
+    i++
+  ) {
+    final parent = dir.parent;
+    if (parent.path == dir.path) break;
+    roots.add(dir = parent);
+  }
+  return roots;
+}
+
+/// The CI config files of [project], by provider.
+Map<String, List<File>> ciConfigs(FlutterProject project) {
+  final found = <String, List<File>>{};
+  for (final root in repositoryRoots(project)) {
+    for (final MapEntry(key: name, value: paths) in _ci.entries) {
+      for (final rel in paths) {
+        final path = p.join(root.path, rel);
+        if (Directory(path).existsSync()) {
+          final ymls = Directory(path)
+              .listSync()
+              .whereType<File>()
+              .where((f) => f.path.endsWith('.yml') || f.path.endsWith('.yaml'))
+              .toList();
+          if (ymls.isNotEmpty) found.putIfAbsent(name, () => []).addAll(ymls);
+        } else if (File(path).existsSync()) {
+          found.putIfAbsent(name, () => []).add(File(path));
+        }
+      }
+    }
+  }
+  return found;
+}
 
 /// Tests, and whether a CI pipeline builds the app and runs them.
 List<Finding> checkTesting(CheckContext ctx) {
@@ -86,36 +127,7 @@ List<Finding> checkTesting(CheckContext ctx) {
     );
   }
 
-  // CI can live at the repository root when the app is in a subfolder.
-  final roots = <Directory>[project.root];
-  var dir = project.root;
-  for (
-    var i = 0;
-    i < 4 && !Directory(p.join(dir.path, '.git')).existsSync();
-    i++
-  ) {
-    final parent = dir.parent;
-    if (parent.path == dir.path) break;
-    roots.add(dir = parent);
-  }
-  final found = <String, List<File>>{};
-  for (final root in roots) {
-    for (final MapEntry(key: name, value: paths) in _ci.entries) {
-      for (final rel in paths) {
-        final path = p.join(root.path, rel);
-        if (Directory(path).existsSync()) {
-          final ymls = Directory(path)
-              .listSync()
-              .whereType<File>()
-              .where((f) => f.path.endsWith('.yml') || f.path.endsWith('.yaml'))
-              .toList();
-          if (ymls.isNotEmpty) found.putIfAbsent(name, () => []).addAll(ymls);
-        } else if (File(path).existsSync()) {
-          found.putIfAbsent(name, () => []).add(File(path));
-        }
-      }
-    }
-  }
+  final found = ciConfigs(project);
   ctx.facts['CI'] = found.isEmpty ? 'none found' : found.keys.join(', ');
   if (found.isEmpty) {
     findings.add(

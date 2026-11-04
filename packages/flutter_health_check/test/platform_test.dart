@@ -9,7 +9,7 @@ void main() {
     expect(r.findings.map((f) => f.id), isEmpty);
     expect(
       r.facts.values['targetSdk'],
-      '36 (flutter.targetSdkVersion, Flutter 3.47.5)',
+      '36 (flutter.targetSdkVersion, Flutter 3.47.9)',
     );
     expect(r.facts.values['Gradle'], '9.3.1');
     expect(r.facts.values['Android Gradle Plugin'], '9.1.0');

@@ -12,15 +12,24 @@ class StoreRules {
   /// When [playTargetSdk] took effect.
   static const playTargetSdkSince = '31 August 2026';
 
-  /// The last day for apps that were granted an extension.
-  static const playExtensionUntil = '1 November 2026';
-
   /// Existing apps below this stay listed only for devices up to their target.
   static const playExistingAppFloor = 35;
 
   /// Google's page for the target API requirement.
   static const playSource =
       'https://developer.android.com/google/play/requirements/target-sdk';
+
+  /// When Play's rules for contacts and location, and for verifying accounts
+  /// through READ_CALL_LOG, become mandatory.
+  static const playPermissionsFrom = '27 January 2027';
+
+  /// When Play's rules for local network access and MANAGE_CONTACTS become
+  /// mandatory.
+  static const playLocalNetworkFrom = '25 August 2027';
+
+  /// Google's page for the permissions that access sensitive information.
+  static const playPermissionsSource =
+      'https://support.google.com/googleplay/android-developer/answer/16909972';
 
   /// App Store: uploads built with Xcode 26 and the iOS 26 SDK, since 28 Apr 2026.
   static const appStoreSdk = 'Xcode 26 with the iOS 26 SDK';
@@ -35,6 +44,35 @@ class StoreRules {
   /// TN3187: apps built with the SDK after iOS 26 must use the scene life cycle.
   static const sceneSource =
       'https://developer.apple.com/documentation/technotes/tn3187-migrating-to-the-uikit-scene-based-life-cycle';
+}
+
+/// The eMudhra certificate compromise, which no package database carries for
+/// Flutter's SDK or for cloud_firestore: the advisory is on the Dart SDK's
+/// repository, and the Firestore versions are on Firebase's page. OSV had
+/// neither on 4 November 2026.
+class EmudhraAdvisory {
+  /// The first stable Flutter with the fix.
+  static const flutterFixed = '3.47.8';
+
+  /// The first beta Flutter with the fix.
+  static const flutterBetaFixed = '3.50.0-0.2.pre';
+
+  /// The first cloud_firestore with the fix on iOS, macOS and Windows.
+  static const firestoreFixed = '7.1.0';
+
+  /// The first 6.x cloud_firestore with the fix on iOS, macOS and Windows.
+  static const firestore6Fixed = '6.10.2';
+
+  /// The first Firebase App Distribution Gradle plugin with the fix.
+  static const appDistributionFixed = '5.3.1';
+
+  /// The Dart SDK's advisory.
+  static const dartSource =
+      'https://github.com/dart-lang/sdk/security/advisories/GHSA-frr6-h895-5pxp';
+
+  /// Firebase's page for the Firestore and App Distribution versions.
+  static const firebaseSource =
+      'https://firebase.google.com/support/guides/compromised-emudhra-intermediate-ca';
 }
 
 /// What `flutter.targetSdkVersion` and friends resolve to, read from the

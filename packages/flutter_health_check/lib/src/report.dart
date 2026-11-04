@@ -227,6 +227,7 @@ String toJson(Report r) => const JsonEncoder.withIndent('  ').convert({
         'grade': Report.grade(r.scoreFor(a)),
       },
   ],
+  'skipped': [for (final a in r.skipped) a.name],
   'findings': [for (final f in r.prioritised) _findingJson(f)],
   'waived': [
     for (final (f, reason) in r.waived) {..._findingJson(f), 'reason': reason},
@@ -361,6 +362,7 @@ footer { color: var(--muted); font-size: 12px; margin-top: 40px; }
 @media print {
   body { background: #fff; }
   .card { border-color: #ddd; }
+  .finding { border-left-color: currentColor; }
   h2 { break-after: avoid; }
 }
 </style>

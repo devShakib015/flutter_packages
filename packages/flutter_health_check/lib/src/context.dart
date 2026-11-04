@@ -58,6 +58,9 @@ class CheckContext {
   /// The Flutter version the project pins (FVM, asdf), when there is one.
   String? pinnedFlutter;
 
+  /// The file that pins [pinnedFlutter], relative to the project.
+  String? pinnedFlutterAt;
+
   /// True when the project pins a Flutter other than the one checking it:
   /// what the installed Flutter refuses is then upgrade work, not a broken
   /// build today.
