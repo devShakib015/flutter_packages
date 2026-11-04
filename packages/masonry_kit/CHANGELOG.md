@@ -1,3 +1,14 @@
+## 0.4.1
+
+Documentation only: no code changes, and no reason to upgrade.
+
+`flutter_staggered_grid_view` released 0.8.0-dev.1 on 3 November 2026, which fixes
+the backward jump this package was written for. In this package's own head-to-head
+test it makes no jumps with two or four grids, and drifts 444px against 0.7.0's
+1,920px and this package's 145px. So the README no longer says the package has
+gone quiet or that the alternatives all jump, gives the measured numbers for both
+versions, and says when `flutter_staggered_grid_view` is the better choice.
+
 ## 0.4.0
 
 Closes both limitations this package was shipping with, and one it did not know

@@ -3,8 +3,8 @@
 A staggered / masonry grid for Flutter — Pinterest-style columns of uneven
 height, as a sliver or a plain box widget.
 
-Unlike the alternatives, you can put **more than one in the same scroll view**
-without the viewport jumping backwards as you scroll.
+You can put **more than one in the same scroll view** without the viewport
+jumping backwards as you scroll, and the scrollbar barely moves while you do.
 
 ```dart
 MasonryGridView.count(
@@ -21,25 +21,29 @@ MasonryGridView.count(
 ## The problem
 
 
-`flutter_staggered_grid_view` does 1.22M downloads a month and has not had a
-commit since July 2023. Its tracker has been carrying the same complaint since
-2022 — [#265](https://github.com/letsar/flutter_staggered_grid_view/issues/265),
+`flutter_staggered_grid_view` does 1.43M downloads a month. From 2022 its tracker
+carried the same complaint — [#265](https://github.com/letsar/flutter_staggered_grid_view/issues/265),
 [#244](https://github.com/letsar/flutter_staggered_grid_view/issues/244),
 [#286](https://github.com/letsar/flutter_staggered_grid_view/issues/286),
 [#338](https://github.com/letsar/flutter_staggered_grid_view/issues/338) —
 put two `SliverMasonryGrid`s in one `CustomScrollView` and scrolling throws you
 backwards.
 
-Running both packages through one harness, dragging forward 45 times:
+**It is being fixed upstream.** On 3 November 2026 its author released
+[0.8.0-dev.1](https://github.com/letsar/flutter_staggered_grid_view/releases/tag/v0.8.0-dev.1),
+a rewrite of the masonry layout and the first release since July 2023. It is a
+pre-release, so `flutter pub add` and `^0.7.0` still give you 0.7.0.
 
-| grids in one `CustomScrollView` | `flutter_staggered_grid_view` 0.7.0 | `masonry_kit` |
-| --- | --- | --- |
-| one | no backward jumps | no backward jumps |
-| **two** | **2 jumps, worst 3,400px** | none |
-| **four** | **3 jumps, worst 2,350px** | none |
+Running all of them through one harness, dragging forward 45 times:
+
+| grids in one `CustomScrollView` | `flutter_staggered_grid_view` 0.7.0 | 0.8.0-dev.1 | `masonry_kit` |
+| --- | --- | --- | --- |
+| one | none | none | none |
+| **two** | **2 jumps, worst 3,400px** | none | none |
+| **four** | **3 jumps, worst 2,350px** | none | none |
 
 Both panels below are dragged by the same finger, the same distance, at the
-same moment. The left one gets thrown back into the first grid:
+same moment. The left one, on 0.7.0, gets thrown back into the first grid:
 
 ![The same drag applied to both packages side by side](https://raw.githubusercontent.com/devShakib015/flutter_packages/HEAD/packages/masonry_kit/doc/jump.gif)
 
@@ -68,14 +72,21 @@ their exact extent and only the unmeasured tail is estimated:
 | worst shrink in the reported scroll extent | |
 | --- | --- |
 | Flutter's own `SliverList` | 2,887px |
-| `flutter_staggered_grid_view` | 1,920px |
+| `flutter_staggered_grid_view` 0.7.0 | 1,920px |
+| `flutter_staggered_grid_view` 0.8.0-dev.1 | 444px |
 | **`masonry_kit`** | **145px** |
 
-400 items, 45 forward drags — `test/head_to_head_test.dart` runs it, so these
-figures cannot quietly stop being true. The absolute pixels depend on the item
-count and cell heights; the order of magnitude is the claim. Note that
-Flutter's own lazy estimate drifts furthest here: this is a property of
-estimating an unmeasured tail, not a defect unique to the incumbent.
+400 items, 45 forward drags — `test/head_to_head_test.dart` runs it, so the
+figures for `SliverList`, 0.7.0 and this package cannot quietly stop being true.
+0.8.0-dev.1 is measured by pointing the same test at it, last on 4 November 2026;
+CI stays on the stable release. The absolute pixels depend on the item count and
+cell heights; the order of magnitude is the claim. Note that Flutter's own lazy
+estimate drifts furthest here: this is a property of estimating an unmeasured
+tail, not a defect unique to any one package.
+
+The first estimate differs too. Two grids of 60 items really end at 5,986px.
+Here the first estimate is 6,034, so a jump to the end lands there. On 0.8.0-dev.1
+it is 2,711, so the first jump stops about halfway and a second one is needed.
 
 ## Feeds with no end
 
@@ -119,8 +130,8 @@ Both take `mainAxisSpacing`, `crossAxisSpacing` and `crossAxisCount`.
 
 ## What this does not do
 
-**Only masonry.** The package it replaces also ships aligned, quilted, woven and
-staired layouts. Those are not broken, so they are not here; if you use them,
+**Only masonry.** `flutter_staggered_grid_view` also ships aligned, quilted, woven
+and staired layouts. Those are not broken, so they are not here; if you use them,
 stay where you are.
 
 **A far jump measures its way there.** Because masonry is sequential, jumping to
@@ -134,15 +145,20 @@ a jump to the end of a 2,000-item grid peaks at ~118 live subtrees rather than
 
 ## Alternatives, honestly
 
-`waterfall_flow` (21k downloads a month, maintained) does not have the
+`waterfall_flow` (20k downloads a month, maintained) does not have the
 backwards-scrolling bug either, and if it suits you, use it. The difference is
 the API: `SliverWaterfallFlow.count` takes a `List<Widget> children`, so lazy
 building means restructuring your call site into a delegate. `masonry_kit`
 keeps `itemBuilder`, so the switch from `flutter_staggered_grid_view` is an
 import line.
 
-`flutter_staggered_grid_view` itself is still the right answer if you need
-aligned, quilted, woven or staired layouts, or if you are below Flutter 3.24.
+`flutter_staggered_grid_view` is the right answer if you need aligned, quilted,
+woven or staired layouts, or if you are below Flutter 3.24. Once 0.8.0 is stable
+it is also a sound answer for masonry: the backward jump this package was written
+for is gone there, and its new `mainAxisExtentBuilder` places children without
+building them when you know their heights, so a far jump skips the walk this
+package has to do. What this package still has is a stable release today, a
+scrollbar that drifts less, and an end it estimates well from the start.
 
 ## License
 

@@ -1,5 +1,9 @@
-// The README makes a numeric claim about the package this one replaces.
-// This is that claim, executed, so it cannot quietly stop being true.
+// The README makes numeric claims about flutter_staggered_grid_view. These are
+// those claims, executed against its stable release, so they cannot quietly stop
+// being true. Its 0.8.0-dev.1 fixes the jump and drifts 444px: `^0.7.0` will not
+// resolve a pre-release, so to re-measure, set the dev dependency to that version
+// in a scratch copy. The tests that say "the incumbent still jumps" then fail, and
+// when 0.8.0 goes stable the README needs revisiting.
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart'
     as incumbent;
