@@ -7,9 +7,9 @@ front of it. On 6.x and 7.0.0: raise the floors of `cloud_firestore` (to 6.10.2 
 7.1.0) and `firebase_core` (4.15.2 or 5.1.0), then upgrade only the FlutterFire
 packages the pubspec lists. Raising the floors is what moves them: naming the
 packages alone changed nothing on that app's real lockfile, and with the floors
-raised 10 packages moved. `fake_cloud_firestore` below 4.2.0 no longer compiles
-against cloud_firestore 6.7.1 and later, so its floor is raised too. Below 6, the
-fix is `--major-versions` on the same packages. With a `Podfile.lock` in ios/ or
+raised 10 packages moved. `fake_cloud_firestore` 4.1.1 no longer compiles against
+cloud_firestore 6.10.2 and 4.2.0 does, so a lower floor is raised too. Below 6,
+the fix is `--major-versions` on the same packages. With a `Podfile.lock` in ios/ or
 macos/, it adds `pod update Firebase`, because the lock still pins the old
 Firebase SDK and `pod install` fails on it. A `cloud_firestore` that comes in
 through another package gets a floor by being listed.

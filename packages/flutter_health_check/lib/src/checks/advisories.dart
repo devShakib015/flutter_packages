@@ -226,8 +226,8 @@ String _firestoreFix(FlutterProject project, LockedPackage firestore) {
         ? EmudhraAdvisory.firestoreFixed
         : EmudhraAdvisory.firestore6Fixed,
     'firebase_core': seven ? '5.1.0' : '4.15.2',
-    // Below 4.2.0 it no longer compiles against cloud_firestore 6.7.1 and
-    // later (MockWriteBatch.update), and naming it doesn't move it.
+    // 4.1.1 no longer compiles against cloud_firestore 6.10.2
+    // (MockWriteBatch.update); 4.2.0 does. Naming it doesn't move it.
     'fake_cloud_firestore': '4.2.0',
   };
   final raise = [
