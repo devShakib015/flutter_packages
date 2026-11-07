@@ -29,7 +29,7 @@ export 'src/model.dart';
 export 'src/report.dart';
 
 /// This package's version, as `fhc --version` prints it.
-const toolVersion = '0.3.0';
+const toolVersion = '0.3.1';
 
 /// Runs every check on the Flutter project at [path].
 ///

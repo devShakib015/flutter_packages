@@ -226,6 +226,155 @@ void main() {
       expect(ids(r), isNot(contains('security.emudhra-firestore')));
     });
 
+    Map<String, String> filesFor(
+      Map<String, (String, String)> locked, {
+      String deps = '',
+      String dev = '',
+      bool pods = true,
+    }) {
+      return {
+        ...healthy(),
+        'pubspec.yaml': pubspec
+            .replaceFirst(
+              '    sdk: flutter\ndev_',
+              '    sdk: flutter\n$deps\ndev_',
+            )
+            .replaceFirst(
+              'flutter_lints: ^6.0.0\n',
+              'flutter_lints: ^6.0.0\n$dev',
+            ),
+        'pubspec.lock': lock(locked),
+        if (pods)
+          'ios/Podfile.lock': 'PODS:\n  - Firebase/Firestore (12.15.0)\n',
+      };
+    }
+
+    test(
+      'on 6.x: raise the floors, then name only the FlutterFire packages',
+      () async {
+        final f = one(
+          await check(
+            project(
+              filesFor(
+                {
+                  'cloud_firestore': ('6.6.0', 'direct main'),
+                  'firebase_core': ('4.11.0', 'direct main'),
+                  'firebase_auth': ('6.5.3', 'direct main'),
+                  'http': ('1.2.0', 'direct main'),
+                  'fake_cloud_firestore': ('4.1.1', 'direct dev'),
+                },
+                deps:
+                    '  cloud_firestore: ^6.5.0\n  firebase_core: ^4.10.0\n  firebase_auth: ^6.5.2\n  http: ^1.2.0',
+                dev: '  fake_cloud_firestore: ^4.1.1\n',
+              ),
+            ),
+          ),
+          'security.emudhra-firestore',
+        ).fix;
+        expect(f, contains('`cloud_firestore` to `^6.10.2`'));
+        expect(f, contains('`firebase_core` to `^4.15.2`'));
+        expect(f, contains('`fake_cloud_firestore` to `^4.2.0`'));
+        expect(
+          f,
+          contains(
+            '`flutter pub upgrade cloud_firestore fake_cloud_firestore firebase_auth firebase_core`',
+          ),
+        );
+        expect(f, isNot(contains('http')));
+        expect(f, contains('In ios/, run `pod update Firebase` too'));
+        expect(f, isNot(contains('--major-versions')));
+      },
+    );
+
+    test('on 7.0.0: the 7.1.0 floor, and firebase_core 5.1', () async {
+      final f = one(
+        await check(
+          project(
+            filesFor(
+              {
+                'cloud_firestore': ('7.0.0', 'direct main'),
+                'firebase_core': ('5.0.0', 'direct main'),
+              },
+              deps: '  cloud_firestore: ^7.0.0\n  firebase_core: ^5.0.0',
+              pods: false,
+            ),
+          ),
+        ),
+        'security.emudhra-firestore',
+      ).fix;
+      expect(f, contains('`cloud_firestore` to `^7.1.0`'));
+      expect(f, contains('`firebase_core` to `^5.1.0`'));
+      expect(f, isNot(contains('pod update')));
+    });
+
+    test('a floor already high enough is left alone', () async {
+      final f = one(
+        await check(
+          project(
+            filesFor({
+                'cloud_firestore': ('6.10.1', 'direct main'),
+                'firebase_core': ('4.15.2', 'direct main'),
+              }, deps: '  cloud_firestore: ^6.10.1\n  firebase_core: ^4.15.2')
+              ..['windows/CMakeLists.txt'] = '',
+          ),
+        ),
+        'security.emudhra-firestore',
+      ).fix;
+      expect(f, contains('`cloud_firestore` to `^6.10.2`'));
+      expect(f, isNot(contains('`firebase_core` to')));
+    });
+
+    test(
+      'below 6: every FlutterFire package to its current major at once',
+      () async {
+        final f = one(
+          await check(
+            project(
+              filesFor(
+                {
+                  'cloud_firestore': ('5.6.12', 'direct main'),
+                  'firebase_core': ('3.15.2', 'direct main'),
+                  'firebase_auth': ('5.7.0', 'direct main'),
+                },
+                deps:
+                    '  cloud_firestore: ^5.6.0\n  firebase_core: ^3.10.0\n  firebase_auth: ^5.4.0',
+              ),
+            ),
+          ),
+          'security.emudhra-firestore',
+        ).fix;
+        expect(
+          f,
+          contains(
+            '`flutter pub upgrade --major-versions cloud_firestore firebase_auth firebase_core`',
+          ),
+        );
+        expect(f, contains('7.1.0'));
+      },
+    );
+
+    test('pulled in by another package: set the floor by listing it', () async {
+      final f = one(
+        await check(
+          project(
+            filesFor({
+              'cloud_firestore': ('6.6.0', 'transitive'),
+              'firebase_core': ('4.11.0', 'transitive'),
+              'firebase_ui_firestore': ('2.0.0', 'direct main'),
+            }, deps: '  firebase_ui_firestore: ^2.0.0'),
+          ),
+        ),
+        'security.emudhra-firestore',
+      ).fix;
+      expect(f, contains('add `cloud_firestore: ^6.10.2` to dependencies'));
+      expect(
+        f,
+        contains(
+          '`flutter pub upgrade cloud_firestore firebase_core firebase_ui_firestore`',
+        ),
+      );
+    });
+
     test('a fixed version says nothing', () async {
       final r = await check(project(firestore('7.1.0')));
       expect(ids(r), isNot(contains('security.emudhra-firestore')));

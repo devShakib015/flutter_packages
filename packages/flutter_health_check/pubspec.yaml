@@ -4,7 +4,7 @@ description: >-
   secrets, Firebase rules, vulnerable and stale packages, in one scored
   report.
 
-version: 0.3.0
+version: 0.3.1
 repository: https://github.com/devShakib015/flutter_packages
 issue_tracker: https://github.com/devShakib015/flutter_packages/issues
 documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/flutter_health_check

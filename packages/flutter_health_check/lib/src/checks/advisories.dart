@@ -171,15 +171,88 @@ List<Finding> _firestore(CheckContext ctx) {
           'reaches builds already installed. Firebase lists 7.0.0 and earlier as affected, '
           'apart from 6.10.1 (iOS and macOS only) and 6.10.2. Firestore on Android and the web '
           'is not. ${EmudhraAdvisory.firebaseSource}',
-      fix:
-          'Run `flutter pub upgrade`, which reaches ${EmudhraAdvisory.firestore6Fixed} inside a ^6 '
-          'constraint; naming cloud_firestore alone can leave it held back by what else is '
-          'locked. For ${EmudhraAdvisory.firestoreFixed}, move the FlutterFire packages together '
-          '(it needs firebase_core 5.1, BoM 5.1.0). Then release and ask users to update.',
+      fix: _firestoreFix(project, locked),
       locations: const ['pubspec.yaml'],
     ),
   ];
 }
+
+/// FlutterFire's packages and the ones built on them, by name: firebase_*,
+/// cloud_firestore, cloud_functions, fake_cloud_firestore, geoflutterfire.
+final _flutterFire = RegExp(
+  r'firebase|firestore|flutterfire|^cloud_functions$',
+);
+
+/// How to reach a fixed cloud_firestore while moving as little as possible.
+///
+/// Measured on a real app's lockfile (cloud_firestore 6.6.0): naming the
+/// packages in `pub upgrade` changed nothing, because the solver keeps what is
+/// locked; raising the two floors first moved 10 packages and reached 6.10.2.
+/// A plain `pub upgrade` gets there too, by moving everything (118 there).
+String _firestoreFix(FlutterProject project, LockedPackage firestore) {
+  final locked = project.locked;
+  final direct = [
+    for (final pkg in locked.values)
+      if (pkg.isDirect && pkg.onPubDev && _flutterFire.hasMatch(pkg.name))
+        pkg.name,
+  ]..sort();
+  final pods = [
+    for (final os in ['ios', 'macos'])
+      if (project.file('$os/Podfile.lock').existsSync()) '$os/',
+  ];
+  final podStep = pods.isEmpty
+      ? ''
+      : ' In ${pods.join(' and ')}, run `pod update Firebase` too, because '
+            'Podfile.lock still pins the old Firebase SDK.';
+  const release = ' Then release and ask users to update.';
+  final version = firestore.version;
+
+  // Below 6, the fix is a major version or two away, and so is everything
+  // that moves with it. --major-versions only takes direct dependencies.
+  if (compareVersions(version, '6.0.0') < 0) {
+    final names = direct.isEmpty
+        ? 'cloud_firestore firebase_core'
+        : direct.join(' ');
+    return 'cloud_firestore $version is a major version behind the fix, so move the '
+        'FlutterFire packages to their current majors together: '
+        '`flutter pub upgrade --major-versions $names` rewrites their constraints and '
+        'reaches ${EmudhraAdvisory.firestoreFixed} with firebase_core 5.1. Expect breaking '
+        'changes from the majors in between.$podStep$release';
+  }
+
+  final seven = version.startsWith('7.');
+  final floors = <String, String>{
+    'cloud_firestore': seven
+        ? EmudhraAdvisory.firestoreFixed
+        : EmudhraAdvisory.firestore6Fixed,
+    'firebase_core': seven ? '5.1.0' : '4.15.2',
+    // Below 4.2.0 it no longer compiles against cloud_firestore 6.7.1 and
+    // later (MockWriteBatch.update), and naming it doesn't move it.
+    'fake_cloud_firestore': '4.2.0',
+  };
+  final raise = [
+    for (final MapEntry(key: name, value: floor) in floors.entries)
+      if (locked[name] case final pkg?
+          when pkg.isDirect && compareVersions(pkg.version, floor) < 0)
+        '`$name` to `^$floor`',
+  ];
+  final names = {'cloud_firestore', 'firebase_core', ...direct}.toList()
+    ..sort();
+  final upgrade = '`flutter pub upgrade ${names.join(' ')}`';
+  final how = firestore.isDirect
+      ? 'In pubspec.yaml raise ${_and(raise)}, then run $upgrade. Raising the floors is '
+            'what moves them: named alone, pub keeps what is locked. This moves the '
+            'FlutterFire packages together and little else.'
+      : 'cloud_firestore comes in through another package, so add '
+            '`cloud_firestore: ^${floors['cloud_firestore']}` to dependencies to set its '
+            'floor${raise.isEmpty ? '' : ', raise ${_and(raise)}'}, then run $upgrade. If '
+            'pub cannot resolve that, the package that pulls it in needs upgrading first.';
+  return '$how$podStep$release';
+}
+
+String _and(List<String> items) => items.length < 2
+    ? items.join()
+    : '${items.sublist(0, items.length - 1).join(', ')} and ${items.last}';
 
 final _appDistributionPlugin = RegExp(
   r'''(?:com\.google\.firebase\.appdistribution["'\s)]+version\s*\(?\s*["']|firebase-appdistribution-gradle:)(\d+\.\d+\.\d+)''',
