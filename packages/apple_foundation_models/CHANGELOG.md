@@ -1,3 +1,9 @@
+## 0.5.2
+
+The `ios` topic is back in place of `foundation-models`. 0.5.1 dropped it, and the
+package fell from 6th to 27th for "on-device llm ios" on pub.dev; the package name
+already covers "foundation models". No code changes.
+
 ## 0.5.1
 
 The pub.dev description and topics now use the words people search for. No code changes.

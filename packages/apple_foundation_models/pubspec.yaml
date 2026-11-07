@@ -4,7 +4,7 @@ description: >-
   model with streaming, tool calling and schema-constrained structured output.
   Private, offline, free.
 
-version: 0.5.1
+version: 0.5.2
 repository: https://github.com/devShakib015/flutter_packages
 issue_tracker: https://github.com/devShakib015/flutter_packages/issues
 documentation: https://github.com/devShakib015/flutter_packages/tree/HEAD/packages/apple_foundation_models
@@ -22,11 +22,11 @@ screenshots:
     path: doc/stream.gif
 
 topics:
-  - foundation-models
   - apple-intelligence
   - llm
   - on-device
   - ai
+  - ios
 
 environment:
   sdk: ^3.5.0
