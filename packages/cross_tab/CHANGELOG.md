@@ -1,3 +1,8 @@
+## 0.2.3
+
+The description says "Broadcast Channel" as two words, the way people search
+for it; as one word it didn't match. No code changes.
+
 ## 0.2.2
 
 The pub.dev description and topics now use the words people search for. No code changes.
