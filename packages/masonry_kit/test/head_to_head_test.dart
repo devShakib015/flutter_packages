@@ -4,6 +4,7 @@
 // resolve a pre-release, so to re-measure, set the dev dependency to that version
 // in a scratch copy. The tests that say "the incumbent still jumps" then fail, and
 // when 0.8.0 goes stable the README needs revisiting.
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart'
     as incumbent;

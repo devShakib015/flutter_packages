@@ -1,5 +1,6 @@
 // A diagnostic panel: what this copy of the app is, what it is allowed to do,
 // and the one sentence worth showing a user when a grant will not apply.
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:macos_grants/macos_grants.dart';
 

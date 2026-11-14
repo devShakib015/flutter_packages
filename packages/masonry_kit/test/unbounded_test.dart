@@ -2,6 +2,7 @@
 // performLayout read childManager.childCount unconditionally, which for a
 // delegate with no childCount makes Flutter hunt for the last child and, on a
 // genuinely unbounded builder, fail.
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:masonry_kit/masonry_kit.dart';

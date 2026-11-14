@@ -8,6 +8,7 @@ library;
 // isSupported is true and every assertion here inverts. The browser half of
 // the suite lives in web_test.dart.
 import 'package:document_pip/document_pip.dart';
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';

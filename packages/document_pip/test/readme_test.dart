@@ -2,6 +2,7 @@
 // syntax; this catches a signature that has drifted, which is the failure that
 // actually reaches readers.
 import 'package:document_pip/document_pip.dart';
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

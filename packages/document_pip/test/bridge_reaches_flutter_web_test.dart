@@ -13,6 +13,7 @@ import 'dart:async';
 import 'dart:js_interop';
 
 import 'package:document_pip/src/pip_input_bridge.dart';
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';

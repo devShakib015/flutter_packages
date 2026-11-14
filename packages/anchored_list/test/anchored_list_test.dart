@@ -1,4 +1,5 @@
 import 'package:anchored_list/anchored_list.dart';
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

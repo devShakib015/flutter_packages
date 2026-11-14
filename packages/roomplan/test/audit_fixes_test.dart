@@ -1,5 +1,6 @@
 // Each test pins a defect found by the 2026-09-02 audit.
 import 'package:flutter/foundation.dart';
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:roomplan/roomplan.dart';

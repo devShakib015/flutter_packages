@@ -2,6 +2,7 @@
 // report SliverGeometry.zero, so maxScrollExtent left it out and the scrollbar
 // under-reported the page until the reader scrolled near it. That shows up in
 // exactly the arrangement this package exists for.
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:masonry_kit/masonry_kit.dart';

@@ -5,6 +5,7 @@
 // Measured effect on a 2,000-item grid jumped to 90%: peak live children fell
 // from 1,808 to 118, with the same 1,790 builder calls — the measurement work
 // is inherent to sequential masonry, holding all of it in memory was not.
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';

@@ -4,6 +4,7 @@
 // DocumentPipApp, so the page and the floating window are looking at the same
 // object. Scrub in one and the other moves, because there is only one.
 import 'package:document_pip/document_pip.dart';
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 
 void main() => runWidget(buildApp());

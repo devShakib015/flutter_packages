@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:apple_intelligence/apple_intelligence.dart';
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 
 void main() => runApp(const Demo());

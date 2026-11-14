@@ -1,4 +1,5 @@
 // Each test pins a defect found by the 2026-09-02 audit.
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:masonry_kit/masonry_kit.dart';

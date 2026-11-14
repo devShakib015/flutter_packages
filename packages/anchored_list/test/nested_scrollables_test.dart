@@ -2,6 +2,7 @@
 // TabBarView dragged the tabs sideways when it moved, and animateToIndex
 // refused a zero duration instead of behaving like jumpToIndex.
 import 'package:anchored_list/anchored_list.dart';
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

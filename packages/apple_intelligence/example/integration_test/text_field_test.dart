@@ -3,6 +3,7 @@
 // macOS was checked during development; this is the same check on iOS, where
 // the platform-view plumbing is completely different code.
 import 'package:apple_intelligence/apple_intelligence.dart';
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
